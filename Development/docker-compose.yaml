@@ -1,31 +1,31 @@
 version: '3.9'
 
 services:
-  java_db:
-    container_name: java_db
+  pgsql-db:
+    container_name: pgsql-db
     image: postgres:12
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-        - orbfin.tech_backend
+      - orbfin.tech_backend
 
-  orb_api:
-    container_name: orb_api
-    build: ./java
+  orb-accounts:
+    container_name: orb-accounts
+    build:
+      context: ./java
+      dockerfile: orb-accounts.Dockerfile
     environment:
-      DATABASE_URL: jdbc:postgresql://java_db:5432/postgres
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
     depends_on:
-      - java_db
-    ports:
-      - 8080:8080
+      - pgsql-db
     networks:
       - orbfin.tech_backend
 
@@ -35,21 +35,20 @@ services:
       context: ./nginx
     restart: always
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/sites-available:/etc/nginx/sites-available
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
       - ./nginx/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem
       - ./nginx/ssl/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
       - ./nginx/ssl/private/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
       - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
       - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
     ports:
+      - 8080:80
       - 443:443
     networks:
       - orbfin.tech_backend
 
 networks:
   orbfin.tech_backend:
-    external: true
     name: orbfin.tech_backend
   
 volumes:

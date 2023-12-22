@@ -1,1 +1,4 @@
 /.vscode/
+.env
+nginx/logs
+nginx/ssl
