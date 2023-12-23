@@ -9,6 +9,7 @@ tech/orbfin/api/Database/Invoice/DatabaseInvoiceRepository.class
 tech/orbfin/api/Database/Item/DatabaseItem.class
 tech/orbfin/api/GsonConfig.class
 tech/orbfin/api/OrbBackendApplication.class
+META-INF/spring-configuration-metadata.json
 tech/orbfin/api/Database/Invoice/DatabaseInvoice.class
 tech/orbfin/api/Database/Quote/DatabaseQuoteController.class
 tech/orbfin/api/Database/Item/DatabaseItemRepository.class
@@ -16,6 +17,7 @@ tech/orbfin/api/Endpoints/Quotes.class
 tech/orbfin/api/Stripe/StripeConfig.class
 tech/orbfin/api/Endpoints/Receipts.class
 tech/orbfin/api/Database/Invoice/DatabaseInvoiceController.class
+tech/orbfin/api/EnvConfig.class
 tech/orbfin/api/Database/Receipt/DatabaseReceiptRepository.class
 tech/orbfin/api/Stripe/Invoice/StripeInvoice.class
 tech/orbfin/api/Database/Quote/QuoteItem/QuoteItemListConverter$1.class

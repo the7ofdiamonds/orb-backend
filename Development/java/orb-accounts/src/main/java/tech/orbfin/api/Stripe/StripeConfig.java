@@ -8,12 +8,14 @@ import com.stripe.Stripe;
 import tech.orbfin.api.Stripe.Invoice.StripeInvoice;
 import tech.orbfin.api.Stripe.Quote.StripeQuote;
 
+import tech.orbfin.api.EnvConfig;
+
 @Configuration
 public class StripeConfig {
 
     public StripeConfig() {
-        // Set your Stripe API key here
-        Stripe.apiKey = "sk_test_51NKFzqKNsWPbtVUM5dY6xwIZN9eRW8cHN1d94YJz24KMjSGlLDKI6dA5Rq7JLsyvLlQKksl70Mp4gyR88NtAAh9800eky4lkdb";
+        EnvConfig envConfig = new EnvConfig();
+        Stripe.apiKey = envConfig.getStripeAPIKey();
     }
 
     @Bean

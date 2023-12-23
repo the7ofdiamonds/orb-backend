@@ -20,10 +20,8 @@ services:
     build:
       context: ./java
       dockerfile: orb-accounts.Dockerfile
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    env_file:
+    - .env
     depends_on:
       - pgsql-db
     networks:
@@ -43,7 +41,7 @@ services:
       - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
     ports:
       - 8080:80
-      - 443:443
+      - 9443:9443
     networks:
       - orbfin.tech_backend
 
@@ -51,5 +49,6 @@ networks:
   orbfin.tech_backend:
     name: orbfin.tech_backend
   
+
 volumes:
   pgdata: {}
