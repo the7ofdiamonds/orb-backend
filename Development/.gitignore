@@ -2,3 +2,4 @@
 .env
 nginx/logs
 nginx/ssl
+java/orb-accounts/target
