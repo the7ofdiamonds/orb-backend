@@ -1,0 +1,45 @@
+{
+  "groups": [
+    {
+      "name": "spring.datasource",
+      "type": "tech.orbfin.api.config.EnvConfig",
+      "sourceType": "tech.orbfin.api.config.EnvConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.datasource.google-client-i-d",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig"
+    },
+    {
+      "name": "spring.datasource.google-client-secret",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig"
+    },
+    {
+      "name": "spring.datasource.password",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig",
+      "defaultValue": "postgres"
+    },
+    {
+      "name": "spring.datasource.stripe-a-p-i-key",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig"
+    },
+    {
+      "name": "spring.datasource.url",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig",
+      "defaultValue": "jdbc:postgresql:\/\/localhost:5432\/postgres"
+    },
+    {
+      "name": "spring.datasource.username",
+      "type": "java.lang.String",
+      "sourceType": "tech.orbfin.api.config.EnvConfig",
+      "defaultValue": "postgres"
+    }
+  ],
+  "hints": []
+}
