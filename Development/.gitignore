@@ -1,5 +1,6 @@
 /.vscode/
 .env
+/pgdata/
 nginx/logs
 nginx/ssl
 java/orb-accounts/target

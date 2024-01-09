@@ -5,96 +5,66 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="474b4858-0383-4fbc-aca6-2b22ca200480" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../orb-finance/finance/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../../.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../../docker-compose.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../orb-accounts.Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.classpath" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/427d4994-8fc9-4b23-9063-245fcc0797bd.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/427d4994-8fc9-4b23-9063-245fcc0797bd/storage_v2/_src_/database/postgres.edMnLQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/427d4994-8fc9-4b23-9063-245fcc0797bd/storage_v2/_src_/database/postgres.edMnLQ/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/427d4994-8fc9-4b23-9063-245fcc0797bd/storage_v2/_src_/database/postgres.edMnLQ/schema/pg_catalog.0S1ZNQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/427d4994-8fc9-4b23-9063-245fcc0797bd/storage_v2/_src_/database/postgres.edMnLQ/schema/public.abK9xQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/orb-backend.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.project" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.settings/org.eclipse.core.resources.prefs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.settings/org.eclipse.jdt.apt.core.prefs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.settings/org.eclipse.jdt.core.prefs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.settings/org.eclipse.m2e.core.prefs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/HELP.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/DatabaseConfig.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoice.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Item/DatabaseItem.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Item/DatabaseItemController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Item/DatabaseItemRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuote.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuoteController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuoteRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Quote/QuoteItem/QuoteItem.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Quote/QuoteItem/QuoteItemListConverter.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceipt.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceiptController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceiptRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Endpoints/Invoices.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Endpoints/Quotes.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Endpoints/Receipts.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/OrbfinApplication.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Stripe/Invoice/StripeInvoice.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Stripe/Quote/StripeQuote.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/tech/orbfin/api/Stripe/StripeConfig.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/test/java/tech/orbfin/orbfin/OrbfinApplicationTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mvnw" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mvnw.cmd" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/.idea/src.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/DatabaseConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoice.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Item/DatabaseItem.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Item/DatabaseItemController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Item/DatabaseItemRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuote.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuoteController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Quote/DatabaseQuoteRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Quote/QuoteItem/QuoteItem.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Quote/QuoteItem/QuoteItemListConverter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceipt.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceiptController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceiptRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Endpoints/Invoices.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Endpoints/Quotes.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Endpoints/Receipts.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/EnvConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/GsonConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/LocalDateTimeSerializer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/OrbBackendApplication.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Stripe/Invoice/StripeInvoice.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Stripe/Quote/StripeQuote.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/orbfin/api/Stripe/StripeConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/tech/tech.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/main.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../nginx/conf.d/default.conf" beforeDir="false" afterPath="$PROJECT_DIR$/../../nginx/conf.d/default.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.project 2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/.classpath" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/.classpath" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/.settings/org.eclipse.core.resources.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/.settings/org.eclipse.core.resources.prefs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/.settings/org.eclipse.jdt.core.prefs" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/.settings/org.eclipse.jdt.core.prefs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/Endpoints/Invoices.java" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/controllers/Invoices.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/Endpoints/Quotes.java" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/controllers/Quotes.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/Endpoints/Receipts.java" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/controllers/Receipts.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/src/main/java/tech/orbfin/api/OrbBackendApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/accounts-0.0.1-SNAPSHOT.jar" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/target/accounts-0.0.1-SNAPSHOT.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/accounts-0.0.1-SNAPSHOT.jar.original" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/target/accounts-0.0.1-SNAPSHOT.jar.original" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/classes/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/classes/tech/orbfin/api/OrbBackendApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-finance/finance/src/main/java/tech/orbfin/api/finance/controllers/Finance.java" beforeDir="false" afterPath="$PROJECT_DIR$/../orb-finance/finance/src/main/java/tech/orbfin/api/finance/controllers/IndexController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-finance/finance/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-insurance/orb-insurance.Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../orb-insurance/orb-insurance.Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-investments/orb-investments.Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../orb-investments/orb-investments.Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/.mvn/wrapper/maven-wrapper.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/.mvn/wrapper/maven-wrapper.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/mvnw" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/mvnw.cmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/LoginApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/config/CacheConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/config/EnvConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/config/RedisConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/config/SecurityConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/config/SessionConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/controllers/IndexController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/controllers/UserController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/repository/CustomClientRegistrationRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/java/tech/orbfin/api/login/services/RedisService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/resources/application.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/main/resources/templates/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/login/src/test/java/tech/orbfin/api/login/LoginApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-login/orb-login.Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-products-services/orb-products-services.Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../orb-products-services/orb-products-services.Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../orb-real-estate/orb-real-estate.Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../orb-real-estate/orb-real-estate.Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../nginx/conf.d/default.conf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../redis/data/dump.rdb" beforeDir="false" afterPath="$PROJECT_DIR$/../../redis/data/dump.rdb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
@@ -102,28 +72,34 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 3
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="2aP3CCgxDPs67FFE4s0Ho6szw9X" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "production",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AccountsApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;production&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/java/orb-accounts&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/accounts" />
@@ -167,6 +143,10 @@
       <option name="presentableId" value="Default" />
       <updated>1704206256779</updated>
       <workItem from="1704206257818" duration="1074000" />
+      <workItem from="1704435003081" duration="1414000" />
+      <workItem from="1704753548257" duration="40000" />
+      <workItem from="1704824985100" duration="2066000" />
+      <workItem from="1704837636380" duration="424000" />
     </task>
     <servers />
   </component>

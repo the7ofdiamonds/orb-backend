@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: finance-service
+          uri: http://localhost:8084/
+          predicates:
+            - Path=/finance/**
+
+    session:
+      store-type: redis
+
+      data:
+        redis:
+          host: ${REDIS_HOST:localhost}
+          port: ${REDIS_PORT:6379}
+
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    root: debug
+
+server:
+  port: 8081
