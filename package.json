@@ -1,0 +1,13 @@
+{
+  "name": "orb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev-env": "docker compose up -d",
+    "update-prod": "git push orb-backend production",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "THE7OFDIAMONDS.TECH",
+  "license": "ISC"
+}
