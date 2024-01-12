@@ -12,7 +12,7 @@ import tech.orbfin.api.gateway.user.ChangePasswordRequest;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/")
 @RequiredArgsConstructor
 public class UserController {
 

@@ -1,5 +1,33 @@
+upstream orb-gateway {
+    server orb-gateway:8080;
+}
+
+upstream orb-accounts {
+    server orb-accounts:8081;
+}
+
+upstream orb-products-services {
+    server orb-products-services:8082;
+}
+
+upstream orb-finance {
+    server orb-finance:8083;
+}
+
+upstream orb-real-estate {
+    server orb-real-estate:8084;
+}
+
+upstream orb-investments {
+    server orb-investments:8085;
+}
+
+upstream orb-insurance {
+    server orb-insurance:8086;
+}
+
 server {
-    listen 80;
+    listen 8000;
     server_name ${DOMAIN_ONE};
 
     return 301 https://$host$request_uri;
@@ -10,49 +38,32 @@ server {
     server_name ${DOMAIN_ONE};
 
     location / {
-        proxy_pass http://orb-gateway:8080/;
+        proxy_pass http://orb-gateway/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Original-URI $request_uri;
-    }
-
-    location = /auth {
-        proxy_pass http://orb-gateway:8080/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Original-URI $request_uri;
     }
 
     location /accounts/ {
-        auth_request /auth;
+        auth_request /;
         auth_request_set $auth_status $upstream_status;
 
-        # If the authentication is successful, proxy the request to the backend
-        if ($auth_status = 200) {
-            proxy_pass http://localhost:8081/;  # Replace with the actual address of your Spring Boot app's /accounts endpoint
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+        if ($auth_status = 403) {
+            return 302 /;
         }
 
-        # If the authentication fails, return a 401 Unauthorized response
-        error_page 401 =401 /auth-error;
-        location = /auth-error {
-            return 401;
-            # You can customize the error page or redirect to a login page if needed
-            # return 302 /;
-        }
+        proxy_pass http://orb-accounts/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
 
     location /products-services/ {
-        auth_request /auth;
-        proxy_pass http://orb-products-services:8082/;
+        auth_request /;
+        proxy_pass http://orb-products-services/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -60,8 +71,8 @@ server {
     }
 
     location /finance/ {
-        auth_request /auth;
-        proxy_pass http://orb-finance:8083/;
+        auth_request /;
+        proxy_pass http://orb-finance/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -69,8 +80,8 @@ server {
     }
     
     location /real-estate/ {
-        auth_request /auth;
-        proxy_pass http://orb-real-estate:8084/;
+        auth_request /;
+        proxy_pass http://orb-real-estate/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -78,8 +89,8 @@ server {
     }
 
     location /investments/ {
-        auth_request /auth;
-        proxy_pass http://orb-investments:8085/;
+        auth_request /;
+        proxy_pass http://orb-investments/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -87,8 +98,8 @@ server {
     }
 
     location /insurance/ {
-        auth_request /auth;
-        proxy_pass http://orb-insurance:8086/;
+        auth_request /;
+        proxy_pass http://orb-insurance/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

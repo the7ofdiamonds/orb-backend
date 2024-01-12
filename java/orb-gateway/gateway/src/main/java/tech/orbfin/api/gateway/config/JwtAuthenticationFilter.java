@@ -77,6 +77,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldSkipAuthentication(HttpServletRequest request) {
-        return request.getServletPath().contains("/");
+        return "/".equals(request.getServletPath());
     }
 }

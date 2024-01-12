@@ -12,6 +12,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
@@ -28,25 +29,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(req ->
-                        req
-                                .requestMatchers(GET, "/").permitAll()
-                                .requestMatchers(POST, "/").permitAll()
-                                .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2Login ->
-                        oauth2Login
-                                .loginPage("/")
-                )
-                .logout(logout ->
-                        logout
-                                .logoutUrl("/logout")
-                                .addLogoutHandler(logoutHandler)
-                                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
-                );
+            .authorizeHttpRequests((req) ->
+                    req
+                        .anyRequest().permitAll()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .oauth2Login(oauth2Login ->
+                    oauth2Login
+                            .loginPage("/")
+            )
+            .logout(logout ->
+                    logout
+                            .logoutUrl("/logout")
+                            .addLogoutHandler(logoutHandler)
+                            .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+            );
 
         return http.build();
     }

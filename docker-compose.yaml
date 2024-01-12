@@ -164,7 +164,7 @@ services:
     # depends_on:
     #   - gateway
     ports:
-      - ${NGINX_PORT_ONE}:80
+      - ${NGINX_PORT_ONE}:8000
       - ${NGINX_PORT_ONE_SECURE}:443
     volumes:
       - ./nginx/templates/:/etc/nginx/templates
