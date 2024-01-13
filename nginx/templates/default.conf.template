@@ -1,31 +1,3 @@
-upstream orb-gateway {
-    server orb-gateway:8080;
-}
-
-upstream orb-accounts {
-    server orb-accounts:8081;
-}
-
-upstream orb-products-services {
-    server orb-products-services:8082;
-}
-
-upstream orb-finance {
-    server orb-finance:8083;
-}
-
-upstream orb-real-estate {
-    server orb-real-estate:8084;
-}
-
-upstream orb-investments {
-    server orb-investments:8085;
-}
-
-upstream orb-insurance {
-    server orb-insurance:8086;
-}
-
 server {
     listen 8000;
     server_name ${DOMAIN_ONE};
@@ -38,68 +10,7 @@ server {
     server_name ${DOMAIN_ONE};
 
     location / {
-        proxy_pass http://orb-gateway/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /accounts/ {
-        auth_request /;
-        auth_request_set $auth_status $upstream_status;
-
-        if ($auth_status = 403) {
-            return 302 /;
-        }
-
-        proxy_pass http://orb-accounts/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-
-    location /products-services/ {
-        auth_request /;
-        proxy_pass http://orb-products-services/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /finance/ {
-        auth_request /;
-        proxy_pass http://orb-finance/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    location /real-estate/ {
-        auth_request /;
-        proxy_pass http://orb-real-estate/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /investments/ {
-        auth_request /;
-        proxy_pass http://orb-investments/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /insurance/ {
-        auth_request /;
-        proxy_pass http://orb-insurance/;
+        proxy_pass http://orb-gateway:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
