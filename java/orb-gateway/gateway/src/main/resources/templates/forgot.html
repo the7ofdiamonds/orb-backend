@@ -1,0 +1,157 @@
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:tiles="http://www.thymeleaf.org"
+  lang="es">
+  <head>
+    <title tiles:fragment="title">ORBFIN LOGIN PAGE</title>
+    <script src="https://use.fontawesome.com/124faf2334.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100%;
+        background-color: black;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        min-height: 100vh;
+        gap: 1.5rem;
+        padding: 0 1rem;
+      }
+
+      h1 {
+        font-size: 7rem;
+      }
+
+      h1,
+      h2 {
+        color: white;
+        margin: 0;
+        padding: 0;
+        letter-spacing: 1rem;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: 'Courier New', Courier, monospace;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      form button {
+        padding: 0;
+        margin: 0;
+      }
+
+      button:hover {
+        box-shadow: unset;
+      }
+
+      form button h3 {
+        padding: 0.25rem;
+        margin: 0;
+      }
+
+      input {
+        border: none;
+        outline: none;
+        background: white;
+        padding: 0.5em;
+        box-shadow: inset 0 0 0.5em rgb(255, 255, 255);
+        width: 15rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        width: 100%;
+      }
+
+      .login-button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        height: 2.5rem;
+        width: 15rem;
+      }
+
+      button {
+        border: none;
+        box-shadow: 0.125em -0.125em 0.125em rgb(255, 255, 255),
+          0.125em 0.125em 0.125em rgb(255, 255, 255);
+        border-radius: 0.25rem;
+      }
+
+      button svg {
+        width: 1.5rem;
+        height: auto;
+      }
+
+      a {
+        text-decoration: none;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+      function submitForm() {
+        var email = $("#email").val();
+
+        // Create a JSON object with the email
+        var requestData = {
+          "email": email
+        };
+
+        // Make an asynchronous POST request using jQuery
+        $.ajax({
+          type: "POST",
+          url: "/forgot-password",
+          contentType: "application/json",
+          data: JSON.stringify(requestData),
+          success: function () {
+            console.log("Password reset request sent successfully.");
+          },
+          error: function (error) {
+            console.error("Error sending password reset request:", error.responseText);
+            alert("Error: " + error.responseText);
+          }
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <main tiles:fragment="content">
+      <h1>ORBFIN</h1>
+
+      <h2>Activate Your Account</h2>
+
+      <form id="forgotPasswordForm" name="f" th:action="@{/forgot-password}" method="post">
+        <input
+          type="text"
+          id="email"
+          name="email"
+          placeholder="Email" />
+
+        <button type="button" onclick="submitForm()">
+          <h3>SEND</h3>
+        </button>
+      </form>
+
+      <div th:if="${param.error}" class="alert alert-error">
+        Invalid username and password.
+      </div>
+    </main>
+  </body>
+</html>

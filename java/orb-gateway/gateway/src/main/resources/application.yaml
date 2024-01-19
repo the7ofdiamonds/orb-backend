@@ -13,9 +13,6 @@ spring:
     hibernate:
       ddl-auto: create-drop  # Change to "update" or "validate" for production
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect  # Use full class name for Hibernate dialect
 
   cloud:
     gateway:
@@ -27,6 +24,7 @@ spring:
           filters:
             - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
         - id: orb-products-services
           uri: ${PRODUCTS_SERVICES_URI:http://localhost:8082}
           predicates:
@@ -34,6 +32,7 @@ spring:
           filters:
             - RewritePath=/products-services/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
         - id: orb-finance
           uri: ${FINANCE_URI:http://localhost:8083}
           predicates:
@@ -41,6 +40,7 @@ spring:
           filters:
             - RewritePath=/finance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
         - id: orb-real-estate
           uri: ${REAL_ESTATE_URI:http://localhost:8084}
           predicates:
@@ -48,6 +48,7 @@ spring:
           filters:
             - RewritePath=/real-estate/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
         - id: orb-investments
           uri: ${INVESTMENTS_URI:http://localhost:8085}
           predicates:
@@ -55,6 +56,7 @@ spring:
           filters:
             - RewritePath=/investments/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
         - id: orb-insurance
           uri: ${INSURANCE_URI:http://localhost:8086}
           predicates:
@@ -62,12 +64,14 @@ spring:
           filters:
             - RewritePath=/insurance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+            - FilterAuth
 
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
+#    allow-circular-references: true
 
-  application:
+application:
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
@@ -75,9 +79,32 @@ spring:
       refresh-token:
         expiration: 86400000  # a day
 
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+          microsoft:
+            client-id: YOUR_MICROSOFT_CLIENT_ID
+            client-secret: YOUR_MICROSOFT_CLIENT_SECRET
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+          apple:
+            client-id: YOUR_APPLE_CLIENT_ID
+            client-secret: YOUR_APPLE_CLIENT_SECRET
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
 server:
   port: 8080
 
 logging:
   level:
+    org.springframework.security: trace
+    web:
+      server:
+        authentication: debug
     org.springframework.cloud.gateway: DEBUG
+
