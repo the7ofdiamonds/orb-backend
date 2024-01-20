@@ -24,8 +24,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table
-public class User implements UserDetails {
+@Table(name = "users")
+public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue
     private Integer id;
@@ -45,7 +45,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
-    public User(int id, String firstname, String lastname, String email, Collection<? extends GrantedAuthority> roles) {
+    public UserEntity(int id, String firstname, String lastname, String email, Collection<? extends GrantedAuthority> roles) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
