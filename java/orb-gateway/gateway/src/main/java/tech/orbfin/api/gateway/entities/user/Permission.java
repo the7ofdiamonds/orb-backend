@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.user;
+package tech.orbfin.api.gateway.entities.user;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

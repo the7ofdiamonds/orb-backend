@@ -11,60 +11,71 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop  # Change to "update" or "validate" for production
-    show-sql: false
+      ddl-auto: create-drop
+    properties:
+      show-sql: true
+      format_sql: true
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   cloud:
     gateway:
       routes:
+        - id: orb-authentication
+          uri: http://localhost:8080
+          predicates:
+            - Path=/
+            - Path=/signup/*
+            - Path=/change-password
+            - Path=/forgot-password
         - id: orb-accounts
           uri: ${ACCOUNTS_URI:http://localhost:8081}
           predicates:
             - Path=/accounts/**
           filters:
+            - FilterAuth
             - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
         - id: orb-products-services
           uri: ${PRODUCTS_SERVICES_URI:http://localhost:8082}
           predicates:
             - Path=/products-services/**
           filters:
+            - FilterAuth
             - RewritePath=/products-services/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
         - id: orb-finance
           uri: ${FINANCE_URI:http://localhost:8083}
           predicates:
             - Path=/finance/**
           filters:
+            - FilterAuth
             - RewritePath=/finance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
         - id: orb-real-estate
           uri: ${REAL_ESTATE_URI:http://localhost:8084}
           predicates:
             - Path=/real-estate/**
           filters:
+            - FilterAuth
             - RewritePath=/real-estate/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
         - id: orb-investments
           uri: ${INVESTMENTS_URI:http://localhost:8085}
           predicates:
             - Path=/investments/**
           filters:
+            - FilterAuth
             - RewritePath=/investments/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
         - id: orb-insurance
           uri: ${INSURANCE_URI:http://localhost:8086}
           predicates:
             - Path=/insurance/**
           filters:
+            - FilterAuth
             - RewritePath=/insurance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-            - FilterAuth
 
   main:
     web-application-type: reactive
@@ -82,20 +93,22 @@ application:
     oauth2:
       client:
         registration:
-          google:
-            client-id: YOUR_GOOGLE_CLIENT_ID
-            client-secret: YOUR_GOOGLE_CLIENT_SECRET
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          gateway:
+            provider:
+              google:
+                client-id: YOUR_GOOGLE_CLIENT_ID
+                client-secret: YOUR_GOOGLE_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-          microsoft:
-            client-id: YOUR_MICROSOFT_CLIENT_ID
-            client-secret: YOUR_MICROSOFT_CLIENT_SECRET
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+              microsoft:
+                client-id: YOUR_MICROSOFT_CLIENT_ID
+                client-secret: YOUR_MICROSOFT_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-          apple:
-            client-id: YOUR_APPLE_CLIENT_ID
-            client-secret: YOUR_APPLE_CLIENT_SECRET
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+              apple:
+                client-id: YOUR_APPLE_CLIENT_ID
+                client-secret: YOUR_APPLE_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
 server:
   port: 8080
@@ -108,3 +121,5 @@ logging:
         authentication: debug
     org.springframework.cloud.gateway: DEBUG
 
+    org.hibernate:
+      SQL: DEBUG

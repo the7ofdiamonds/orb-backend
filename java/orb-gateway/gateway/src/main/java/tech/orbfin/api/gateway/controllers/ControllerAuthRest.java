@@ -1,9 +1,11 @@
 package tech.orbfin.api.gateway.controllers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import tech.orbfin.api.gateway.request.RequestRegister;
 import tech.orbfin.api.gateway.exceptions.LogoutException;
-import tech.orbfin.api.gateway.service.ServiceAuth;
+import tech.orbfin.api.gateway.services.ServiceAuth;
 import tech.orbfin.api.gateway.request.RequestForgotPassword;
 import tech.orbfin.api.gateway.request.RequestChangePassword;
 
@@ -26,13 +28,16 @@ public class ControllerAuthRest {
     public ResponseEntity<Object> signup(@RequestBody RequestRegister request) {
         try {
             return ResponseEntity.ok(authService.register(request));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         } catch (Exception e) {
-            return ResponseEntity.ok("Registration failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed: " + e.getMessage());
         }
     }
 
     @PostMapping("/")
     public ResponseEntity<Object> login(HttpServletRequest request) {
+        log.info(String.valueOf(request));
         try {
           return ResponseEntity.ok(authService.authenticate(request));
         } catch (Exception e){

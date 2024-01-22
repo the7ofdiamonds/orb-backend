@@ -1,9 +1,9 @@
-package tech.orbfin.api.gateway.service;
+package tech.orbfin.api.gateway.services;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import tech.orbfin.api.gateway.request.RequestForgotPassword;
-import tech.orbfin.api.gateway.user.User;
+import tech.orbfin.api.gateway.entities.token.Token;
+import tech.orbfin.api.gateway.entities.token.TokenType;
+import tech.orbfin.api.gateway.entities.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositoryToken;
 import tech.orbfin.api.gateway.response.ResponseAuth;
@@ -11,10 +11,14 @@ import tech.orbfin.api.gateway.request.RequestRegister;
 import tech.orbfin.api.gateway.exceptions.LogoutException;
 import tech.orbfin.api.gateway.request.RequestChangePassword;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import jakarta.transaction.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.HttpHeaders;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
@@ -33,42 +39,59 @@ public class ServiceAuth {
     private final RepositoryUser repositoryUser;
     private final RepositoryToken repositoryToken;
     private final ServiceToken serviceToken;
-//    private final EmailAuth emailAuth;
 
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+
+    @Transactional
     public ResponseAuth register(@NotNull RequestRegister request) {
-        log.info(request.getPassword());
-        User user = User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
-                .email(request.getEmail())
-                .password(passwordEncoder().encode(request.getPassword()))
-                .build();
-        var savedUser = repositoryUser.save(user);
-        String token = serviceToken.generateToken(null, savedUser);
-        var refreshToken = serviceToken.refreshToken(user);
+        try {
+            var userExist = repositoryUser.existsByUsername(request.getUsername());
 
-        repositoryToken.saveToken(token);
+            if (userExist) {
+                throw new Exception("This Username is currently in use.");
+            }
 
-        return ResponseAuth.builder()
-                .accessToken(token)
-                .refreshToken(refreshToken)
-                .build();
+            var emailUsed = repositoryUser.existsByEmail(request.getEmail());
+
+            if (emailUsed) {
+                throw new Exception("This Email is currently in use.");
+            }
+
+            var user = new UserEntity(request.getUsername(), passwordEncoder().encode(request.getPassword()), request.getEmail(), request.getFirstname(), request.getLastname());
+            var savedUser = repositoryUser.save(user);
+
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("location", request.getLocation());
+
+            String token = serviceToken.generateToken(extraClaims, savedUser);
+            var refreshToken = serviceToken.refreshToken(user);
+
+            var jwt = new Token(token, TokenType.BEARER, refreshToken, savedUser.getId());
+
+            log.info(String.valueOf(jwt));
+            repositoryToken.saveAndFlush(jwt);
+
+            return new ResponseAuth(token, refreshToken, null);
+        } catch (Exception e){
+            System.err.println("Error while loading user by username: " + e.getMessage());
+
+            return new ResponseAuth(null, null, e.getMessage());
+        }
     }
 
     public ResponseAuth authenticate(@NotNull HttpServletRequest request) {
         String authorizationHeader = request.getHeader("Authorization");
-
+            log.info("authenticate");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String tokenValue = authorizationHeader.substring(7);
             String username = serviceToken.extractUsername(tokenValue);
-            Optional<User> optionalUser = repositoryUser.findByEmail(username);
+            Optional<UserEntity> optionalUser = repositoryUser.findByEmail(username);
 
             if (optionalUser.isPresent() && serviceToken.isTokenValid(tokenValue)) {
-                User user = optionalUser.get();
+                UserEntity user = optionalUser.get();
                 String newAccessToken = serviceToken.generateToken(null, user);
                 String refreshToken = serviceToken.refreshToken(user);
 
@@ -97,7 +120,7 @@ public class ServiceAuth {
             userEmail = serviceToken.extractUsername(token);
 
             if (userEmail != null) {
-                User user = this.repositoryUser.findByEmail(userEmail)
+                UserEntity user = this.repositoryUser.findByEmail(userEmail)
                         .orElseThrow();
                 revokeAllUserTokens(user);
 
@@ -112,8 +135,8 @@ public class ServiceAuth {
         throw new IllegalArgumentException("Invalid refresh token or user not found.");
     }
 
-    private void revokeAllUserTokens(@NotNull User user) {
-        var validUserTokens = repositoryToken.findAllValidTokenByUser(user.getId());
+    private void revokeAllUserTokens(@NotNull UserEntity user) {
+        var validUserTokens = repositoryToken.findAllValidTokenByUserid(user.getId());
 
         if (validUserTokens.isEmpty()) {
             return;
@@ -133,8 +156,8 @@ public class ServiceAuth {
 //        emailAuth.sendForgotPasswordEmail(email);
     }
     public void changePassword(@NotNull RequestChangePassword request) {
-        Optional<User> optionalUser = repositoryUser.findByEmail(request.getEmail());
-        User user = optionalUser.orElseThrow();
+        Optional<UserEntity> optionalUser = repositoryUser.findByEmail(request.getEmail());
+        UserEntity user = optionalUser.orElseThrow();
 
         if (!passwordEncoder().matches(request.getPassword(), user.getPassword())) {
             throw new IllegalStateException("Wrong password");

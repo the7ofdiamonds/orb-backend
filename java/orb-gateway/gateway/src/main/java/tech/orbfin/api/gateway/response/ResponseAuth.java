@@ -1,13 +1,13 @@
 package tech.orbfin.api.gateway.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import tech.orbfin.api.gateway.request.RequestRegister;
-import tech.orbfin.api.gateway.user.User;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
 @AllArgsConstructor
@@ -17,4 +17,5 @@ public class ResponseAuth {
     private String accessToken;
     @JsonProperty("refresh_token")
     private String refreshToken;
+    private String error;
 }

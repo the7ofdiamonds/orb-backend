@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.token;
+package tech.orbfin.api.gateway.entities.token;
 
 public enum TokenType {
     BEARER,

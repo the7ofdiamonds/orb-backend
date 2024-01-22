@@ -1,7 +1,11 @@
-package tech.orbfin.api.gateway.service;
+package tech.orbfin.api.gateway.services;
 
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
-import tech.orbfin.api.gateway.user.User;
+import tech.orbfin.api.gateway.entities.user.UserEntity;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Key;
 import java.util.*;
@@ -19,6 +23,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @Setter
 @Getter
@@ -32,15 +37,20 @@ public class ServiceToken {
 
     private RepositoryUser repositoryUser;
 
+    @Autowired
+    public ServiceToken(RepositoryUser repositoryUser) {
+        this.repositoryUser = repositoryUser;
+    }
+
     public String generateToken(
             Map<String, Object> extraClaims,
-            User user
+            UserEntity user
     ) {
         return buildToken(extraClaims, user, expiration);
     }
 
     public String refreshToken(
-            User user
+            UserEntity user
     ) {
         return buildToken(new HashMap<>(), user, refreshExpiration);
     }
@@ -52,7 +62,7 @@ public class ServiceToken {
 
     private String buildToken(
             Map<String, Object> extraClaims,
-            User user,
+            UserEntity user,
             long expiration
     ) {
         return Jwts
@@ -86,7 +96,7 @@ public class ServiceToken {
     public boolean isTokenValid(String token) {
         final String username = extractUsername(token);
 
-        return (repositoryUser.findByEmail(username).isPresent() && !isTokenExpired(token));
+        return (repositoryUser.existsByUsername(username) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {
