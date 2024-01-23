@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+@Component
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
@@ -18,8 +20,8 @@ public class ResponseLogout {
     private String success;
     private String error;
 
-    private String setSuccess(){
-        return this.success = "You have been successfully logged out as " + this.username + ". You are welcome back anytime thanks for stopping by.";
+    public ResponseLogout(String username){
+        this.success = "You have been successfully logged out as " + username + ". You are welcome back anytime thanks for stopping by.";
     }
 
     private Map<String, String> setHeaders() {

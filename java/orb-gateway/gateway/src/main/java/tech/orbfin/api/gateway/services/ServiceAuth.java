@@ -1,5 +1,9 @@
 package tech.orbfin.api.gateway.services;
 
+import lombok.AllArgsConstructor;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import tech.orbfin.api.gateway.request.*;
 import tech.orbfin.api.gateway.response.*;
 import tech.orbfin.api.gateway.entities.user.Role;
@@ -13,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.transaction.Transactional;
@@ -23,14 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class ServiceAuth {
     private final RepositoryUser repositoryUser;
     private final RepositoryToken repositoryToken;
@@ -41,7 +43,7 @@ public class ServiceAuth {
     }
     
     @Transactional
-    public ResponseRegister register(@NotNull RequestRegister request) {
+    public ResponseEntity<ResponseRegister> register(@NotNull RequestRegister request) {
         try {
             var userExist = repositoryUser.existsByUsername(request.getUsername());
 
@@ -75,27 +77,22 @@ public class ServiceAuth {
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            String success = "You have been successfully signed up and logged in as " + username;
-
-            return ResponseRegister.builder()
-                    .success(success)
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .error(null)
-                    .build();
+            return ResponseEntity.ok()
+                    .body(new ResponseRegister(username, savedUser.getEmail()));
         } catch (Exception e){
             System.err.println("Error while loading user by username: " + e.getMessage());
 
-            return ResponseRegister.builder()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .body(ResponseRegister.builder()
                     .success(null)
                     .accessToken(null)
                     .refreshToken(null)
-                    .error(e.getMessage())
-                    .build();
+                    .error("Internal server error: " + e.getMessage())
+                    .build());
         }
     }
 
-    public ResponseLogin login(@NotNull RequestLogin request){
+    public ResponseEntity<ResponseLogin> login(@NotNull RequestLogin request){
         try {
             var username = request.getUsername();
             var password = request.getPassword();
@@ -106,7 +103,12 @@ public class ServiceAuth {
             Optional<UserEntity> userEntity = repositoryUser.findByUsername(username);
 
             if (userEntity.isEmpty()) {
-                throw new UsernameNotFoundException("The username " + username + " can not be found.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
+                        .body(ResponseLogin.builder()
+                                .success(null)
+                                .error("The username " + username + " can not be found.")
+                                .build()
+                        );
             }
 
             var user = userEntity.get();
@@ -117,64 +119,71 @@ public class ServiceAuth {
             String accessToken = serviceToken.generateToken(extraClaims, user);
             String refreshToken = serviceToken.refreshToken(user);
 
-            String success = "You have been successfully logged in as " + username;
-
-            return ResponseLogin.builder()
-                    .success(success)
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .error(null)
-                    .build();
+            return ResponseEntity.ok()
+                    .body(new ResponseLogin(username, accessToken, refreshToken));
         } catch(Exception e) {
-            return ResponseLogin.builder()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .body(ResponseLogin.builder()
                     .success(null)
                     .accessToken(null)
                     .refreshToken(null)
-                    .error(e.getMessage())
-                    .build();
+                    .error("Internal server error: " + e.getMessage())
+                    .build());
         }
     }
     
-    public ResponseChange changePassword(@NotNull RequestChangePassword request) {
+    public ResponseEntity<ResponseChange> changePassword(@NotNull RequestChangePassword request) {
         try {
-            Optional<UserEntity> optionalUser = repositoryUser.findByEmail(request.getEmail());
-            UserEntity user = optionalUser.orElseThrow();
+            Optional<UserEntity> user = repositoryUser.findByEmail(request.getEmail());
 
-            if (!passwordEncoder().matches(request.getPassword(), user.getPassword())) {
-                throw new IllegalStateException("Wrong password");
+            if(user.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
+                        .body(ResponseChange.builder()
+                                .error("A user could not be found with this email. Check your inbox.")
+                                .build());
+            }
+
+            if (!passwordEncoder().matches(request.getPassword(), user.get().getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
+                        .body(ResponseChange.builder()
+                                .error("Wrong password. If you have forgot your password click the FORGOT button.")
+                                .build());
             }
 
             if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-                throw new IllegalStateException("Password are not the same");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
+                        .body(ResponseChange.builder()
+                                .error("You need to enter the new password twice, ensuring they match exactly.")
+                                .build());
             }
 
-            user.setPassword(passwordEncoder().encode(request.getNewPassword()));
+            user.get().setPassword(passwordEncoder().encode(request.getNewPassword()));
 
-            repositoryUser.save(user);
+            repositoryUser.save(user.get());
 
-            String success = "Your password has been changed.";
-
-            return ResponseChange.builder()
-                    .success(success)
-                    .error(null)
-                    .build();
+            return ResponseEntity.ok().body(new ResponseChange(user.get().getEmail()));
         } catch (Exception e) {
-            return ResponseChange.builder()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .body(ResponseChange.builder()
                     .success(null)
-                    .error(e.getMessage())
-                    .build();
+                    .error("Internal server error: " + e.getMessage())
+                    .build());
         }
     }
 
     @Transactional
-    public ResponseLogout logout(@NotNull RequestLogout request) {
+    public ResponseEntity<ResponseLogout> logout(@NotNull RequestLogout request) {
         log.info("service auth logout");
         try {
             String username = serviceToken.extractUsername(request.getToken());
             Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
             if (user.isEmpty()) {
-                throw new UsernameNotFoundException("The username " + username + " can not be found.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ResponseLogout.builder()
+                                .error("The username " + username + " can not be found.")
+                                .build()
+                        );
             }
 
             var userid = user.get().getId();
@@ -190,55 +199,79 @@ public class ServiceAuth {
                 repositoryToken.save(token);
             }
 
-            return ResponseLogout.builder()
-                    .error(null)
-                    .username(username)
-                    .build();
+            return ResponseEntity.ok()
+                    .body(new ResponseLogout(username));
         } catch (Exception e){
-            return ResponseLogout.builder()
-                    .error(e.getMessage())
-                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .body(ResponseLogout.builder()
+                            .success(null)
+                            .error("Internal server error: " + e.getMessage())
+                            .build());
         }
     }
 
-    public ResponseForgot forgotPassword(@NotNull RequestForgotPassword request ){
+    public ResponseEntity<ResponseForgot> forgotPassword(@NotNull RequestForgotPassword request ){
         try {
             String email = request.getEmail();
             String username = request.getUsername();
 
-            if(email.isEmpty() && username.isEmpty()){
-                throw new Exception("Either a username or email is required to restore your account.");
+            if(email == null && username == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
+                        .body(ResponseForgot.builder()
+                        .success(null)
+                        .error("Either a username or email is required to restore your account.")
+                        .build());
             }
 
-            if(!username.isEmpty()){
-               boolean userExist = repositoryUser.existsByUsername(username);
+            if(email != null) {
+                Optional<UserEntity> user = repositoryUser.findByEmail(email);
 
-               if(userExist){
-                   Optional<UserEntity> user = repositoryUser.findByUsername(username);
+                if(user.isPresent()) {
+                    log.info("Forgot password email sent");
+                    //                        emailAuth.sendForgotPasswordEmail(email);
 
-                   if(user.isPresent()) {
-                       log.info("Forgot password email sent");
+                    return ResponseEntity.ok()
+                            .body(new ResponseForgot(user.get().getEmail()));
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
+                            .body(ResponseForgot.builder()
+                            .success(null)
+                            .error("This email is not in use check your inbox.")
+                            .build());
+                }
+            }
+
+            boolean userExist = repositoryUser.existsByUsername(username);
+
+            if(userExist) {
+                Optional<UserEntity> user = repositoryUser.findByUsername(username);
+                log.info("user exist");
+                if (user.isPresent()) {
+                    log.info("Forgot password email sent");
 //                       emailAuth.sendForgotPasswordEmail(user.get().getEmail());
-                   }
-               }
+
+                    return ResponseEntity.ok()
+                            .body(new ResponseForgot(user.get().getEmail()));
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
+                            .body(ResponseForgot.builder()
+                            .success(null)
+                            .error("This user could not be found. Please provide your email.")
+                            .build());
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
+                        .body(ResponseForgot.builder()
+                        .success(null)
+                        .error("This username is not in use. Please provide your email.")
+                        .build());
             }
-
-            if(!email.isEmpty()) {
-//                        emailAuth.sendForgotPasswordEmail(email);
-                log.info("Forgot password email sent");
-            }
-
-            String success = "Check your email at " + email + " for a link to change your password.";
-
-            return ResponseForgot.builder()
-                    .success(success)
-                    .error(null)
-                    .build();
         } catch (Exception e) {
-            return ResponseForgot.builder()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .body(ResponseForgot.builder()
                     .success(null)
-                    .error(e.getMessage())
-                    .build();
+                    .error("Internal server error")
+                    .build());
         }
     }
 }

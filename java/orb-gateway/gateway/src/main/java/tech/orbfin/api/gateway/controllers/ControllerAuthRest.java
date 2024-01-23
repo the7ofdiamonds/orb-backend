@@ -20,26 +20,26 @@ public class ControllerAuthRest {
 
     @PostMapping("/signup")
     public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
-        return ResponseEntity.ok(authService.register(request));
+        return authService.register(request);
     }
 
     @PostMapping("/")
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
-        return ResponseEntity.ok(authService.login(request));
+        return authService.login(request);
     }
 
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
-        return ResponseEntity.ok(authService.changePassword(request));
+        return authService.changePassword(request);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
-        return ResponseEntity.ok(authService.logout(request));
+        return authService.logout(request);
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgotPassword request) {
-        return ResponseEntity.ok(authService.forgotPassword(request));
+        return authService.forgotPassword(request);
     }
 }
