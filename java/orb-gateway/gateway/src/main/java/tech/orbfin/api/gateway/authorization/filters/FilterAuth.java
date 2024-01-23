@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 @Component
 @AllArgsConstructor
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
-
     private final FilterJWT filterJWT;
 
     @Override

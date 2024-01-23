@@ -7,14 +7,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.redis.core.RedisHash;
+
+@RedisHash("Token")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class Token {
     @Id
-    @GeneratedValue
     private Integer id;
 
     @Column(unique = true, columnDefinition = "TEXT")
@@ -26,14 +27,15 @@ public class Token {
     @Column(unique = true, columnDefinition = "TEXT")
     private String refreshToken;
 
-//    @ManyToOne(fetch = FetchType.EAGER)
-//    @JoinColumn(name = "id")
     private Integer userid;
 
+    @Builder.Default
     private boolean isAuthenticated = true;
 
+    @Builder.Default
     private boolean expired = false;
 
+    @Builder.Default
     private boolean revoked = false;
 
     public Token(String token, TokenType type, String refreshToken, Integer userid){

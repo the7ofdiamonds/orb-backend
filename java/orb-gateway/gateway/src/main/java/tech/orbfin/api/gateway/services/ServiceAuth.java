@@ -1,15 +1,13 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.request.RequestForgotPassword;
+import tech.orbfin.api.gateway.request.*;
+import tech.orbfin.api.gateway.response.*;
+import tech.orbfin.api.gateway.entities.user.Role;
 import tech.orbfin.api.gateway.entities.token.Token;
 import tech.orbfin.api.gateway.entities.token.TokenType;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositoryToken;
-import tech.orbfin.api.gateway.response.ResponseAuth;
-import tech.orbfin.api.gateway.request.RequestRegister;
-import tech.orbfin.api.gateway.exceptions.LogoutException;
-import tech.orbfin.api.gateway.request.RequestChangePassword;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,17 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.transaction.Transactional;
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.jetbrains.annotations.NotNull;
 
 import org.springframework.stereotype.Service;
 
-import org.springframework.http.HttpHeaders;
-
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
@@ -43,10 +39,9 @@ public class ServiceAuth {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-
+    
     @Transactional
-    public ResponseAuth register(@NotNull RequestRegister request) {
+    public ResponseRegister register(@NotNull RequestRegister request) {
         try {
             var userExist = repositoryUser.existsByUsername(request.getUsername());
 
@@ -60,136 +55,190 @@ public class ServiceAuth {
                 throw new Exception("This Email is currently in use.");
             }
 
-            var user = new UserEntity(request.getUsername(), passwordEncoder().encode(request.getPassword()), request.getEmail(), request.getFirstname(), request.getLastname());
+            String username = request.getUsername();
+            String password = passwordEncoder().encode(request.getPassword());
+
+            var user = new UserEntity(username, password, request.getEmail(), request.getFirstname(), request.getLastname(), Role.USER);
             var savedUser = repositoryUser.save(user);
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", request.getLocation());
 
-            String token = serviceToken.generateToken(extraClaims, savedUser);
+            String accessToken = serviceToken.generateToken(extraClaims, savedUser);
             var refreshToken = serviceToken.refreshToken(user);
 
-            var jwt = new Token(token, TokenType.BEARER, refreshToken, savedUser.getId());
+            var jwt = new Token(accessToken, TokenType.BEARER, refreshToken, savedUser.getId());
 
             log.info(String.valueOf(jwt));
-            repositoryToken.saveAndFlush(jwt);
+            repositoryToken.save(jwt);
 
-            return new ResponseAuth(token, refreshToken, null);
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
+            SecurityContextHolder.getContext().setAuthentication(token);
+
+            String success = "You have been successfully signed up and logged in as " + username;
+
+            return ResponseRegister.builder()
+                    .success(success)
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .error(null)
+                    .build();
         } catch (Exception e){
             System.err.println("Error while loading user by username: " + e.getMessage());
 
-            return new ResponseAuth(null, null, e.getMessage());
+            return ResponseRegister.builder()
+                    .success(null)
+                    .accessToken(null)
+                    .refreshToken(null)
+                    .error(e.getMessage())
+                    .build();
         }
     }
 
-    public ResponseAuth authenticate(@NotNull HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-            log.info("authenticate");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String tokenValue = authorizationHeader.substring(7);
-            String username = serviceToken.extractUsername(tokenValue);
-            Optional<UserEntity> optionalUser = repositoryUser.findByEmail(username);
+    public ResponseLogin login(@NotNull RequestLogin request){
+        try {
+            var username = request.getUsername();
+            var password = request.getPassword();
 
-            if (optionalUser.isPresent() && serviceToken.isTokenValid(tokenValue)) {
-                UserEntity user = optionalUser.get();
-                String newAccessToken = serviceToken.generateToken(null, user);
-                String refreshToken = serviceToken.refreshToken(user);
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
+            SecurityContextHolder.getContext().setAuthentication(token);
 
-                return ResponseAuth.builder()
-                        .accessToken(newAccessToken)
-                        .refreshToken(refreshToken)
-                        .build();
+            Optional<UserEntity> userEntity = repositoryUser.findByUsername(username);
+
+            if (userEntity.isEmpty()) {
+                throw new UsernameNotFoundException("The username " + username + " can not be found.");
             }
-        }
 
-        return ResponseAuth.builder().build();
+            var user = userEntity.get();
+//       Add location plus other details to extra claims
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("location", "test location");
+
+            String accessToken = serviceToken.generateToken(extraClaims, user);
+            String refreshToken = serviceToken.refreshToken(user);
+
+            String success = "You have been successfully logged in as " + username;
+
+            return ResponseLogin.builder()
+                    .success(success)
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .error(null)
+                    .build();
+        } catch(Exception e) {
+            return ResponseLogin.builder()
+                    .success(null)
+                    .accessToken(null)
+                    .refreshToken(null)
+                    .error(e.getMessage())
+                    .build();
+        }
     }
+    
+    public ResponseChange changePassword(@NotNull RequestChangePassword request) {
+        try {
+            Optional<UserEntity> optionalUser = repositoryUser.findByEmail(request.getEmail());
+            UserEntity user = optionalUser.orElseThrow();
 
-    public ResponseAuth refreshToken(@NotNull HttpServletRequest request) {
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String token;
-        final String userEmail;
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Bearer Authorization Token unavailable in the header.");
-        }
-
-        token = authHeader.substring(7);
-
-        if (serviceToken.isTokenValid(token)) {
-            userEmail = serviceToken.extractUsername(token);
-
-            if (userEmail != null) {
-                UserEntity user = this.repositoryUser.findByEmail(userEmail)
-                        .orElseThrow();
-                revokeAllUserTokens(user);
-
-                var accessToken = serviceToken.generateToken(null, user);
-
-                return ResponseAuth.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(token)
-                        .build();
+            if (!passwordEncoder().matches(request.getPassword(), user.getPassword())) {
+                throw new IllegalStateException("Wrong password");
             }
+
+            if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
+                throw new IllegalStateException("Password are not the same");
+            }
+
+            user.setPassword(passwordEncoder().encode(request.getNewPassword()));
+
+            repositoryUser.save(user);
+
+            String success = "Your password has been changed.";
+
+            return ResponseChange.builder()
+                    .success(success)
+                    .error(null)
+                    .build();
+        } catch (Exception e) {
+            return ResponseChange.builder()
+                    .success(null)
+                    .error(e.getMessage())
+                    .build();
         }
-        throw new IllegalArgumentException("Invalid refresh token or user not found.");
     }
 
-    private void revokeAllUserTokens(@NotNull UserEntity user) {
-        var validUserTokens = repositoryToken.findAllValidTokenByUserid(user.getId());
+    @Transactional
+    public ResponseLogout logout(@NotNull RequestLogout request) {
+        log.info("service auth logout");
+        try {
+            String username = serviceToken.extractUsername(request.getToken());
+            Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
-        if (validUserTokens.isEmpty()) {
-            return;
+            if (user.isEmpty()) {
+                throw new UsernameNotFoundException("The username " + username + " can not be found.");
+            }
+
+            var userid = user.get().getId();
+            var tokens = repositoryToken.findAllValidTokenByUserid(userid);
+
+            if (tokens.isEmpty()) {
+                SecurityContextHolder.clearContext();
+            }
+
+            for (Token token : tokens) {
+                token.setExpired(true);
+                token.setRevoked(true);
+                repositoryToken.save(token);
+            }
+
+            return ResponseLogout.builder()
+                    .error(null)
+                    .username(username)
+                    .build();
+        } catch (Exception e){
+            return ResponseLogout.builder()
+                    .error(e.getMessage())
+                    .build();
         }
-
-        validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-
-        repositoryToken.saveAll(validUserTokens);
     }
 
-    public void forgotPassword(@NotNull RequestForgotPassword request ){
-        String email = request.getEmail();
-        log.info(email);
-//        emailAuth.sendForgotPasswordEmail(email);
-    }
-    public void changePassword(@NotNull RequestChangePassword request) {
-        Optional<UserEntity> optionalUser = repositoryUser.findByEmail(request.getEmail());
-        UserEntity user = optionalUser.orElseThrow();
+    public ResponseForgot forgotPassword(@NotNull RequestForgotPassword request ){
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
 
-        if (!passwordEncoder().matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalStateException("Wrong password");
-        }
+            if(email.isEmpty() && username.isEmpty()){
+                throw new Exception("Either a username or email is required to restore your account.");
+            }
 
-        if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-            throw new IllegalStateException("Password are not the same");
-        }
+            if(!username.isEmpty()){
+               boolean userExist = repositoryUser.existsByUsername(username);
 
-        user.setPassword(passwordEncoder().encode(request.getNewPassword()));
+               if(userExist){
+                   Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
-        repositoryUser.save(user);
-    }
+                   if(user.isPresent()) {
+                       log.info("Forgot password email sent");
+//                       emailAuth.sendForgotPasswordEmail(user.get().getEmail());
+                   }
+               }
+            }
 
-    public void logout(@NotNull HttpServletRequest request) {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+            if(!email.isEmpty()) {
+//                        emailAuth.sendForgotPasswordEmail(email);
+                log.info("Forgot password email sent");
+            }
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new LogoutException("Invalid Authorization header");
-        }
+            String success = "Check your email at " + email + " for a link to change your password.";
 
-        jwt = authHeader.substring(7);
-        var storedToken = repositoryToken.findByToken(jwt).orElse(null);
-
-        if (storedToken != null) {
-            storedToken.setExpired(true);
-            storedToken.setRevoked(true);
-            repositoryToken.save(storedToken);
-            SecurityContextHolder.clearContext();
-        } else {
-            throw new LogoutException("Token not found or invalid");
+            return ResponseForgot.builder()
+                    .success(success)
+                    .error(null)
+                    .build();
+        } catch (Exception e) {
+            return ResponseForgot.builder()
+                    .success(null)
+                    .error(e.getMessage())
+                    .build();
         }
     }
 }

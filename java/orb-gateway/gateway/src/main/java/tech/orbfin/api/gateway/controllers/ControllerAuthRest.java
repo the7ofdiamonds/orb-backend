@@ -1,17 +1,11 @@
 package tech.orbfin.api.gateway.controllers;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import tech.orbfin.api.gateway.request.RequestRegister;
-import tech.orbfin.api.gateway.exceptions.LogoutException;
+import tech.orbfin.api.gateway.request.*;
+import tech.orbfin.api.gateway.response.*;
 import tech.orbfin.api.gateway.services.ServiceAuth;
-import tech.orbfin.api.gateway.request.RequestForgotPassword;
-import tech.orbfin.api.gateway.request.RequestChangePassword;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,64 +19,27 @@ public class ControllerAuthRest {
     private final ServiceAuth authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Object> signup(@RequestBody RequestRegister request) {
-        try {
-            return ResponseEntity.ok(authService.register(request));
-        } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed: " + e.getMessage());
-        }
+    public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
+        return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/")
-    public ResponseEntity<Object> login(HttpServletRequest request) {
-        log.info(String.valueOf(request));
-        try {
-          return ResponseEntity.ok(authService.authenticate(request));
-        } catch (Exception e){
-            return  ResponseEntity.ok("Login failed: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-        try {
-            authService.logout(request);
-            return ResponseEntity.ok("You have been logged out successfully.");
-        } catch (LogoutException e) {
-            return ResponseEntity.ok("Logout failed: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<Object> forgotPassword(@RequestBody RequestForgotPassword request) {
-        try {
-
-            authService.forgotPassword(request);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.ok("Unable to change password: " + e.getMessage());
-        }
+    public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<Object> changePassword(@RequestBody RequestChangePassword request) {
-        try {
-            authService.changePassword(request);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.ok("Unable to change password: " + e.getMessage());
-        }
+    public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
+        return ResponseEntity.ok(authService.changePassword(request));
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<Object> refreshToken(HttpServletRequest request) {
-        try {
-            return ResponseEntity.ok(authService.refreshToken(request));
-        } catch (Exception e) {
-            return ResponseEntity.ok("Unable to provide refresh token: " + e.getMessage());
-        }
+    @PostMapping("/logout")
+    public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
+        return ResponseEntity.ok(authService.logout(request));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgotPassword request) {
+        return ResponseEntity.ok(authService.forgotPassword(request));
+    }
 }

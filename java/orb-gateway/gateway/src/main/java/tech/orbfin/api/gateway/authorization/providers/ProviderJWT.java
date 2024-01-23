@@ -1,5 +1,6 @@
 //package tech.orbfin.api.gateway.authorization.providers;
 //
+//import jakarta.security.enterprise.credential.RememberMeCredential;
 //import org.springframework.context.annotation.Configuration;
 //import tech.orbfin.api.gateway.authorization.AuthJwt;
 //import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
@@ -19,10 +20,14 @@
 //
 //    private final ServiceToken serviceToken;
 //
+//    private final AuthJwt authJwt;
+//
 //    @Override
 //    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-//        AuthJwt authJwt = (AuthJwt) authentication;
+//
 //        String token = authJwt.getToken();
+//
+//
 //        String secretKey = serviceToken.getSecretKey();
 //
 //        if(secretKey.equalsIgnoreCase(token)) {

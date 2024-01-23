@@ -1,11 +1,7 @@
 package tech.orbfin.api.gateway.entities.user;
 
-import tech.orbfin.api.gateway.entities.token.Token;
-
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import jakarta.persistence.*;
 
@@ -35,37 +31,30 @@ public class UserEntity implements UserDetails {
     private String firstname;
     private String lastname;
     private boolean isAuthenticated;
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-    private List<Role> roles = new ArrayList<>();
-    @OneToMany(mappedBy = "userid", fetch = FetchType.EAGER)
-    private List<Token> tokens;
+    private Role role;
 
-    public UserEntity(String username,  String password, String email, String firstname, String lastname){
+    public UserEntity(String username,  String password, String email, String firstname, String lastname, Role role){
         this.username = username;
         this.password = password;
         this.email = email;
         this.firstname = firstname;
         this.lastname = lastname;
+        this.role = role;
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return mapRolesToAuthorities(this.roles);
+    public String getUsername() {
+        return username;
     }
 
-    public Collection<GrantedAuthority> mapRolesToAuthorities(List<Role> roles){
-        return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-    }
     @Override
     public String getPassword() {
         return password;
     }
 
     @Override
-    public String getUsername() {
-        return username;
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singleton(new SimpleGrantedAuthority(this.role.toString()));
     }
 
     @Override

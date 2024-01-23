@@ -1,8 +1,12 @@
 spring:
+  session:
+    store-type: redis
+    timeout: 30m
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+
 
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/orb}
@@ -21,13 +25,41 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: orb-authentication-signup
+          uri: http://localhost:8080
+          predicates:
+            - Path=/signup/*
+          filters:
+            - PreserveHostHeader
+
+        - id: orb-authentication-change-password
+          uri: http://localhost:8080
+          predicates:
+            - Path=/change-password
+          filters:
+            - PreserveHostHeader
+
+        - id: orb-authentication-forgot-password
+          uri: http://localhost:8080
+          predicates:
+            - Path=/forgot-password
+          filters:
+            - PreserveHostHeader
+
+        - id: orb-authentication-logout
+          uri: http://localhost:8080
+          predicates:
+            - Path=/logout
+          filters:
+            - PreserveHostHeader
+
         - id: orb-authentication
           uri: http://localhost:8080
           predicates:
             - Path=/
-            - Path=/signup/*
-            - Path=/change-password
-            - Path=/forgot-password
+          filters:
+            - PreserveHostHeader
+
         - id: orb-accounts
           uri: ${ACCOUNTS_URI:http://localhost:8081}
           predicates:
@@ -36,6 +68,7 @@ spring:
             - FilterAuth
             - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+
         - id: orb-products-services
           uri: ${PRODUCTS_SERVICES_URI:http://localhost:8082}
           predicates:
@@ -44,6 +77,7 @@ spring:
             - FilterAuth
             - RewritePath=/products-services/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+
         - id: orb-finance
           uri: ${FINANCE_URI:http://localhost:8083}
           predicates:
@@ -52,6 +86,7 @@ spring:
             - FilterAuth
             - RewritePath=/finance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+
         - id: orb-real-estate
           uri: ${REAL_ESTATE_URI:http://localhost:8084}
           predicates:
@@ -60,6 +95,7 @@ spring:
             - FilterAuth
             - RewritePath=/real-estate/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+
         - id: orb-investments
           uri: ${INVESTMENTS_URI:http://localhost:8085}
           predicates:
@@ -68,6 +104,7 @@ spring:
             - FilterAuth
             - RewritePath=/investments/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+
         - id: orb-insurance
           uri: ${INSURANCE_URI:http://localhost:8086}
           predicates:

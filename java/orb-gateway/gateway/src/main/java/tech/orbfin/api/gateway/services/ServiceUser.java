@@ -44,7 +44,7 @@ public class ServiceUser implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserEntity loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             // Log the username being queried
             System.out.println("Loading user by username: " + username);
@@ -59,11 +59,7 @@ public class ServiceUser implements UserDetailsService {
             // Log user details
             System.out.println("Loaded user details: " + user);
 
-            return User.builder()
-                    .username(user.getEmail())
-                    .password(user.getPassword())
-                    .roles(String.valueOf(Arrays.asList(user.getRoles())))  // Assuming roles is a comma-separated string
-                    .build();
+            return new UserEntity(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstname(), user.getLastname(), user.getRole());
         } catch (Exception e) {
             // Log the exception
             System.err.println("Error while loading user by username: " + e.getMessage());

@@ -16,12 +16,10 @@
 //@Slf4j
 //@AllArgsConstructor
 //public class AuthManager implements ReactiveAuthenticationManager {
-//    @Autowired
 //    private final ProviderJWT ProviderJwt;
 //
 //    @Override
 //    public Mono<Authentication> authenticate(Authentication authentication) throws AuthenticationException {
-//
 //        ProviderJwt.authenticate(authentication);
 //        return null;
 //    }

@@ -6,11 +6,14 @@
 //import lombok.Getter;
 //import lombok.Setter;
 //
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.GrantedAuthority;
+//import org.springframework.stereotype.Component;
 //
-//@Getter
 //@Setter
+//@Getter
+//@Component
 //@AllArgsConstructor
 //public class AuthJwt implements Authentication {
 //    private final boolean authentication;

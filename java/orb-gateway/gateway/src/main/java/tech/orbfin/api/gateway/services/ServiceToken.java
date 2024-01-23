@@ -1,5 +1,9 @@
 package tech.orbfin.api.gateway.services;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpHeaders;
+import tech.orbfin.api.gateway.repositories.RepositoryToken;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 
@@ -36,6 +40,7 @@ public class ServiceToken {
     private long refreshExpiration;
 
     private RepositoryUser repositoryUser;
+    private RepositoryToken repositoryToken;
 
     @Autowired
     public ServiceToken(RepositoryUser repositoryUser) {
@@ -106,4 +111,20 @@ public class ServiceToken {
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
+
+//    private void revokeAllUserTokens(@NotNull UserEntity user) {
+//        var validUserTokens = repositoryToken.findAllValidTokenByUserid(user.getId());
+//
+//        if (validUserTokens.isEmpty()) {
+//            return;
+//        }
+//
+//        validUserTokens.forEach(token -> {
+//            token.setExpired(true);
+//            token.setRevoked(true);
+//            repositoryToken.save(token);
+//        });
+//
+//
+//    }
 }
