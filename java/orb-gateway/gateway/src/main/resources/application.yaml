@@ -117,7 +117,9 @@ spring:
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
-#    allow-circular-references: true
+    #    allow-circular-references: true
+  security:
+
 
 application:
   security:
@@ -126,8 +128,6 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 86400000  # a day
-
-    oauth2:
       client:
         registration:
           gateway:
@@ -137,15 +137,19 @@ application:
                 client-secret: YOUR_GOOGLE_CLIENT_SECRET
                 redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
+              apple:
+                client-id: YOUR_APPLE_CLIENT_ID
+                client-secret: YOUR_APPLE_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
               microsoft:
                 client-id: YOUR_MICROSOFT_CLIENT_ID
                 client-secret: YOUR_MICROSOFT_CLIENT_SECRET
                 redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-              apple:
-                client-id: YOUR_APPLE_CLIENT_ID
-                client-secret: YOUR_APPLE_CLIENT_SECRET
-                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+services:
+  config:
+    google: "/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/serviceAccount.json"
 
 server:
   port: 8080

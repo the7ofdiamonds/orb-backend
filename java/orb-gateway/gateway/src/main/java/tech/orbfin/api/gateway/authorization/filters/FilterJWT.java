@@ -1,7 +1,8 @@
 package tech.orbfin.api.gateway.authorization.filters;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.context.annotation.Primary;
-import tech.orbfin.api.gateway.services.ServiceToken;
+import tech.orbfin.api.gateway.services.ServiceTokenJW;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,12 +27,12 @@ import reactor.core.publisher.Mono;
 @Component
 public class FilterJWT implements GlobalFilter {
 
-    private final ServiceToken serviceToken;
+    private final ServiceTokenJW serviceTokenJW;
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public FilterJWT(ServiceToken serviceToken, UserDetailsService userDetailsService) {
-        this.serviceToken = serviceToken;
+    public FilterJWT(ServiceTokenJW serviceTokenJW, UserDetailsService userDetailsService) {
+        this.serviceTokenJW = serviceTokenJW;
         this.userDetailsService = userDetailsService;
     }
 
@@ -48,14 +49,15 @@ public class FilterJWT implements GlobalFilter {
         }
 
         String jwt = authHeader.substring(7);
-        boolean tokenIsValid = serviceToken.isTokenValid(jwt);
+
+        boolean tokenIsValid = serviceTokenJW.isTokenValid(jwt);
 
         if (!tokenIsValid) {
             return chain.filter(exchange);
         }
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String username = serviceToken.extractUsername(jwt);
+            String username = serviceTokenJW.extractUsername(jwt);
 
             if (username == null) {
                 return chain.filter(exchange);

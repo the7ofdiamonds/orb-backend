@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import lombok.Getter;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 
@@ -13,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Arrays;
+
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +53,6 @@ public class ServiceUser implements UserDetailsService {
 
             UserEntity user = userRepository.findByUsername(username)
                     .orElseThrow(() -> {
-                        // Log the error
                         System.err.println("User not found with username: " + username);
                         return new UsernameNotFoundException("User not found with username: " + username);
                     });

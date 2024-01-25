@@ -36,7 +36,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class ServiceAuth {
     private final RepositoryUser repositoryUser;
     private final RepositoryToken repositoryToken;
-    private final ServiceToken serviceToken;
+    private final ServiceTokenJW serviceTokenJW;
 
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -66,8 +66,8 @@ public class ServiceAuth {
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", request.getLocation());
 
-            String accessToken = serviceToken.generateToken(extraClaims, savedUser);
-            var refreshToken = serviceToken.refreshToken(user);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
+            var refreshToken = serviceTokenJW.refreshToken(user);
 
             var jwt = new Token(accessToken, TokenType.BEARER, refreshToken, savedUser.getId());
 
@@ -116,8 +116,8 @@ public class ServiceAuth {
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", "test location");
 
-            String accessToken = serviceToken.generateToken(extraClaims, user);
-            String refreshToken = serviceToken.refreshToken(user);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
+            String refreshToken = serviceTokenJW.refreshToken(user);
 
             return ResponseEntity.ok()
                     .body(new ResponseLogin(username, accessToken, refreshToken));
@@ -175,7 +175,7 @@ public class ServiceAuth {
     public ResponseEntity<ResponseLogout> logout(@NotNull RequestLogout request) {
         log.info("service auth logout");
         try {
-            String username = serviceToken.extractUsername(request.getToken());
+            String username = serviceTokenJW.extractUsername(request.getToken());
             Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
             if (user.isEmpty()) {
