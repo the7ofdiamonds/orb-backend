@@ -1,9 +1,12 @@
 package tech.orbfin.api.gateway.services;
 
-import com.google.firebase.auth.FirebaseAuthException;
 import io.jsonwebtoken.*;
 
-import tech.orbfin.api.gateway.repositories.RepositoryToken;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import tech.orbfin.api.gateway.entities.token.Token;
+import tech.orbfin.api.gateway.repositories.RepositorySession;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 
@@ -29,6 +32,7 @@ import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 @Service
 @Setter
 @Getter
+@RequiredArgsConstructor
 public class ServiceTokenJW {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
@@ -36,8 +40,10 @@ public class ServiceTokenJW {
     private long expiration;
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
+    @Autowired
     private RepositoryUser repositoryUser;
-    private RepositoryToken repositoryToken;
+    @Autowired
+    private RepositorySession repositorySession;
 
     private String buildToken(
             Map<String, Object> extraClaims,
@@ -95,37 +101,13 @@ public class ServiceTokenJW {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
+    public boolean isTokenExpired(String token) {
+        long currentTime = (new Date()).getTime();
+        long tokenExpiration = (extractExpiration(token)).getTime();
 
-    public boolean isTokenValid(String token) {
-        final String username = extractUsername(token);
-
-        if(!isTokenExpired(token)){
-            return false;
+        if(currentTime > tokenExpiration){
+            return true;
         }
-
-        if(repositoryUser.existsByUsername(username)){
-            return false;
-        }
-
-        return true;
+        return false;
     }
-
-//    private void revokeAllUserTokens(@NotNull UserEntity user) {
-//        var validUserTokens = repositoryToken.findAllValidTokenByUserid(user.getId());
-//
-//        if (validUserTokens.isEmpty()) {
-//            return;
-//        }
-//
-//        validUserTokens.forEach(token -> {
-//            token.setExpired(true);
-//            token.setRevoked(true);
-//            repositoryToken.save(token);
-//        });
-//
-//
-//    }
 }

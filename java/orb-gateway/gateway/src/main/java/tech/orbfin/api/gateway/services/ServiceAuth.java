@@ -1,17 +1,22 @@
 package tech.orbfin.api.gateway.services;
 
-import lombok.AllArgsConstructor;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import tech.orbfin.api.gateway.request.*;
 import tech.orbfin.api.gateway.response.*;
 import tech.orbfin.api.gateway.entities.user.Role;
-import tech.orbfin.api.gateway.entities.token.Token;
-import tech.orbfin.api.gateway.entities.token.TokenType;
+import tech.orbfin.api.gateway.entities.Session;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
-import tech.orbfin.api.gateway.repositories.RepositoryToken;
+import tech.orbfin.api.gateway.repositories.RepositorySession;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserRecord;
+
+import lombok.AllArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,9 +40,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @AllArgsConstructor
 public class ServiceAuth {
     private final RepositoryUser repositoryUser;
-    private final RepositoryToken repositoryToken;
+    private final RepositorySession repositorySession;
     private final ServiceTokenJW serviceTokenJW;
+    @Autowired
+    private final ServiceTokenFirebase serviceTokenFirebase;
 
+    private final ServiceUserFirebase serviceUserFirebase;
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -45,20 +53,23 @@ public class ServiceAuth {
     @Transactional
     public ResponseEntity<ResponseRegister> register(@NotNull RequestRegister request) {
         try {
-            var userExist = repositoryUser.existsByUsername(request.getUsername());
-
-            if (userExist) {
-                throw new Exception("This Username is currently in use.");
-            }
-
-            var emailUsed = repositoryUser.existsByEmail(request.getEmail());
-
-            if (emailUsed) {
-                throw new Exception("This Email is currently in use.");
-            }
-
+            String email = request.getEmail();
             String username = request.getUsername();
             String password = passwordEncoder().encode(request.getPassword());
+
+            var firebaseUser = serviceUserFirebase.createUser(email, username, request.getPassword(), request.getPhone());
+
+            var emailUsed = repositoryUser.existsByEmail(email);
+
+            if (emailUsed) {
+                throw new Exception("This Email is already in our records. Check your email.");
+            }
+
+            var userExist = repositoryUser.existsByUsername(username);
+
+            if (userExist) {
+                throw new Exception("This Username is already in our records. Check your email.");
+            }
 
             var user = new UserEntity(username, password, request.getEmail(), request.getFirstname(), request.getLastname(), Role.USER);
             var savedUser = repositoryUser.save(user);
@@ -66,13 +77,17 @@ public class ServiceAuth {
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", request.getLocation());
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
+//            String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
             var refreshToken = serviceTokenJW.refreshToken(user);
+            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            var uid = userRecord.getUid();
 
-            var jwt = new Token(accessToken, TokenType.BEARER, refreshToken, savedUser.getId());
+            String accessToken = serviceTokenFirebase.buildToken(extraClaims, uid);
+
+            var jwt = new Session(accessToken, "JWT", refreshToken, savedUser.getId());
 
             log.info(String.valueOf(jwt));
-            repositoryToken.save(jwt);
+            repositorySession.save(jwt);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
@@ -115,8 +130,9 @@ public class ServiceAuth {
 //       Add location plus other details to extra claims
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", "test location");
+            UserRecord userRecord = serviceUserFirebase.getUserByEmail(user.getEmail());
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
+            String accessToken = serviceTokenFirebase.buildToken(extraClaims, userRecord.getUid());
             String refreshToken = serviceTokenJW.refreshToken(user);
 
             return ResponseEntity.ok()
@@ -172,43 +188,46 @@ public class ServiceAuth {
     }
 
     @Transactional
-    public ResponseEntity<ResponseLogout> logout(@NotNull RequestLogout request) {
+    public Mono<ResponseEntity<ResponseLogout>> logout(@NotNull RequestLogout request) {
         log.info("service auth logout");
         try {
             String username = serviceTokenJW.extractUsername(request.getToken());
             Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
             if (user.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ResponseLogout.builder()
                                 .error("The username " + username + " can not be found.")
                                 .build()
-                        );
+                        ));
             }
 
             var userid = user.get().getId();
-            var tokens = repositoryToken.findAllValidTokenByUserid(userid);
+            var sessions = repositorySession.findAllValidSessionsByUserId(userid);
 
-            if (tokens.isEmpty()) {
-                SecurityContextHolder.clearContext();
-            }
+            sessions.collectList().subscribe(sessionsList -> {
+                if (sessionsList.isEmpty()) {
+                    SecurityContextHolder.clearContext();
+                }
 
-            for (Token token : tokens) {
-                token.setExpired(true);
-                token.setRevoked(true);
-                repositoryToken.save(token);
-            }
+                for (Session session : sessionsList) {
+                    session.setExpired(true);
+                    session.setRevoked(true);
+                    repositorySession.save(session).subscribe();
+                }
+            });
 
-            return ResponseEntity.ok()
-                    .body(new ResponseLogout(username));
+            return Mono.just(ResponseEntity.ok()
+                    .body(new ResponseLogout(username)));
         } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+            return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .body(ResponseLogout.builder()
                             .success(null)
                             .error("Internal server error: " + e.getMessage())
-                            .build());
+                            .build()));
         }
     }
+
 
     public ResponseEntity<ResponseForgot> forgotPassword(@NotNull RequestForgotPassword request ){
         try {

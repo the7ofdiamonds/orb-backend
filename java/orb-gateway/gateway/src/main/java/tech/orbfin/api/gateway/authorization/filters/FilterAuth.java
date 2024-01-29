@@ -17,13 +17,14 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
     private final FilterJWT filterJWT;
-
+    private final FilterFirebaseToken filterFirebaseToken;
     @Override
     public GatewayFilter apply(Config config) {
-        log.info("GatewayFilter");
+        log.info("Gateway Filter Apply");
         return (exchange, chain) -> Mono.fromRunnable(() -> {
             System.out.println("FilterAuth is being applied.");
                 filterJWT.filter(exchange, chain);
+                filterFirebaseToken.filter(exchange, chain);
         });
     }
 

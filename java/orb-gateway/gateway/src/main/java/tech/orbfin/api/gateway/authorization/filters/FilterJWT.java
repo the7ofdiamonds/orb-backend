@@ -1,7 +1,10 @@
 package tech.orbfin.api.gateway.authorization.filters;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import tech.orbfin.api.gateway.services.ServiceToken;
+import tech.orbfin.api.gateway.services.ServiceTokenFirebase;
 import tech.orbfin.api.gateway.services.ServiceTokenJW;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,59 +28,58 @@ import reactor.core.publisher.Mono;
 @Primary
 @Slf4j
 @Component
+@AllArgsConstructor
 public class FilterJWT implements GlobalFilter {
-
+    private final ServiceToken serviceToken;
     private final ServiceTokenJW serviceTokenJW;
     private final UserDetailsService userDetailsService;
 
-    @Autowired
-    public FilterJWT(ServiceTokenJW serviceTokenJW, UserDetailsService userDetailsService) {
-        this.serviceTokenJW = serviceTokenJW;
-        this.userDetailsService = userDetailsService;
-    }
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (shouldSkipAuthentication(exchange.getRequest())) {
-            return chain.filter(exchange);
-        }
+        try {
+            log.info("Filter JWT is being used");
+            log.info(String.valueOf(exchange.getRequest().getHeaders()));
 
-        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+            String jwt = serviceToken.getToken(exchange);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange);
-        }
-
-        String jwt = authHeader.substring(7);
-
-        boolean tokenIsValid = serviceTokenJW.isTokenValid(jwt);
-
-        if (!tokenIsValid) {
-            return chain.filter(exchange);
-        }
-
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String username = serviceTokenJW.extractUsername(jwt);
-
-            if (username == null) {
+            if (jwt == null) {
                 return chain.filter(exchange);
             }
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            log.info(jwt);
 
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-            );
+            boolean tokenIsValid = serviceTokenJW.isTokenExpired(jwt);
 
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (!tokenIsValid) {
+                log.info("Token is not valid");
+                return chain.filter(exchange);
+            }
+
+//            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+//                String username = serviceTokenJW.extractUsername(jwt);
+
+//                if (username == null) {
+//                    return chain.filter(exchange);
+//                }
+
+//                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+//                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+//                        userDetails,
+//                        null,
+//                        userDetails.getAuthorities()
+//                );
+
+//                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                log.info(SecurityContextHolder.getContext().toString());
+//            return securityContextRepository.save(exchange, SecurityContextHolder.getContext());
+//            }
+
+            return chain.filter(exchange);
+        } catch (Exception e){
+            log.info(e.getMessage());
         }
-
         return chain.filter(exchange);
-    }
-
-    private boolean shouldSkipAuthentication(org.springframework.http.server.reactive.ServerHttpRequest request) {
-        return "/".equals(request.getPath().toString());
     }
 }

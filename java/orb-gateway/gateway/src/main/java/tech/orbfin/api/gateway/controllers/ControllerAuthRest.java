@@ -1,5 +1,9 @@
 package tech.orbfin.api.gateway.controllers;
 
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 import tech.orbfin.api.gateway.request.*;
 import tech.orbfin.api.gateway.response.*;
 import tech.orbfin.api.gateway.services.ServiceAuth;
@@ -13,9 +17,9 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping
-@RequiredArgsConstructor
+@Component
+@AllArgsConstructor
 public class ControllerAuthRest {
-
     private final ServiceAuth authService;
 
     @PostMapping("/signup")
@@ -34,7 +38,7 @@ public class ControllerAuthRest {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
+    public Mono<ResponseEntity<ResponseLogout>> logout(@RequestHeader RequestLogout request) {
         return authService.logout(request);
     }
 

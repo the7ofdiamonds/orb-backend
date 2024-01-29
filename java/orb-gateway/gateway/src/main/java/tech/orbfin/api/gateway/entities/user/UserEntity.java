@@ -23,7 +23,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue
-    private Integer id;
+    private String id;
     private String username;
     private String password;
     @Column(unique = true)

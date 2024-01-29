@@ -1,13 +1,27 @@
 package tech.orbfin.api.gateway.authorization;
 
+import com.auth0.jwk.Jwk;
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwk.JwkProviderBuilder;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
-import tech.orbfin.api.gateway.services.ServiceTokenFirebase;
-import tech.orbfin.api.gateway.services.ServiceTokenJW;
-import tech.orbfin.api.gateway.services.ServiceUser;
+import tech.orbfin.api.gateway.services.*;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,122 +35,55 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
+import java.security.Key;
+import java.util.Base64;
+import java.util.Map;
+
+import static org.apache.commons.codec.binary.Base64.decodeBase64;
+
 @Setter
 @Getter
 @Slf4j
 @Component
+@NoArgsConstructor
 @AllArgsConstructor
 public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
+    @Autowired
+    private ServiceToken serviceToken;
     @Autowired
     private ServiceTokenJW serviceTokenJW;
     @Autowired
     private ServiceTokenFirebase serviceTokenFirebase;
+    @Autowired
+    private ServiceUserFirebase serviceUserFirebase;
     @Autowired
     private ServiceUser serviceUser;
     private Boolean tokenIsValid;
     private String username;
     private UserEntity user;
 
-    public AuthEntryPoint(){}
-
-//    public AuthEntryPoint(
-//    ServiceTokenJW serviceTokenJW,
-//    ServiceTokenFirebase serviceTokenFirebase,
-//    ServiceUser serviceUser){
-//        this.serviceTokenJW = serviceTokenJW;
-//        this.serviceTokenFirebase = serviceTokenFirebase;
-//        this.serviceUser = serviceUser;
-//    }
-
-    public AuthEntryPoint(String username){
-        this.username = username;
-    }
-
-    private String getToken(ServerWebExchange exchange){
-        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
-            return authHeader.substring(7);
-        }
-
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-        return null;
-    }
-
-    private int countOccurrences(String text, char searchChar) {
-        int count = 0;
-
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == searchChar) {
-                count++;
-            }
-        }
-
-        return count;
-    }
-
-    public String setAlgorithm(String token) {
-        String[] section = token.split(".");
-
-//        var dot = ".".charAt(0);
-//        int count = countOccurrences(token, dot);
-
-        String tokenSignature = "";
-
-        if(section.length == 3) {
-            tokenSignature = section[2];
-        }
-
-        byte[] utf8Bytes = tokenSignature.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        int sizeInBytes = utf8Bytes.length;
-
-        log.info(String.valueOf(sizeInBytes));
-
-        if(sizeInBytes == 32){
-            return "HS256";
-        }
-
-//        if(sizeInBytes >= 256){
-            return "RS256";
-//        }
-
-//        return "unknown";
-    }
-
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
         try {
             log.info("Authentication entry point commence");
-            String token = getToken(exchange);
-
+            String token = serviceToken.getToken(exchange);
+log.info(token);
             if (token == null) throw new Exception("A Token could not be found.");
-
-            String algorithm = setAlgorithm(token);
 
             log.info("Token is valid. Extracting username...");
 
-            log.info(algorithm);
+            var firebaseToken = serviceTokenFirebase.verifyToken(token);
 
-            UserEntity user = null;
+            if(firebaseToken != null){
+                log.info("Idtoken is valid");
+                FirebaseToken verifiedToken = FirebaseAuth.getInstance(FirebaseApp.getInstance("ORB")).verifyIdToken(token, true);
 
-            if(algorithm.equals("HS256")){
-                if(serviceTokenJW.isTokenValid(token)) {
-                    var username = serviceTokenJW.extractUsername(token);
-                    user = serviceUser.loadUserByUsername(username);
-                }
+                UserRecord user = serviceUserFirebase.getUser(verifiedToken.getUid());
             }
 
-            if(algorithm.equals("RS256")){
-                if(serviceTokenFirebase.verifyIdToken(token)){
-                    user = serviceTokenFirebase.getUser(token);
-                }
-            }
-
-            if(algorithm.equals("unknown")){
-                throw new Exception("Could not find an algorithm for this token.");
-            }
-            
             log.info("Setting authentication in SecurityContextHolder...");
+
+            log.info(String.valueOf(user));
 
             if(user != null) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(

@@ -1,6 +1,7 @@
 spring:
   session:
-    store-type: redis
+    redis:
+      repository-type: default
     timeout: 30m
   data:
     redis:
@@ -15,7 +16,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       show-sql: true
       format_sql: true
@@ -25,47 +26,46 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: orb-authentication-signup
-          uri: http://localhost:8080
-          predicates:
-            - Path=/signup/*
-          filters:
-            - PreserveHostHeader
-
-        - id: orb-authentication-change-password
-          uri: http://localhost:8080
-          predicates:
-            - Path=/change-password
-          filters:
-            - PreserveHostHeader
-
-        - id: orb-authentication-forgot-password
-          uri: http://localhost:8080
-          predicates:
-            - Path=/forgot-password
-          filters:
-            - PreserveHostHeader
-
-        - id: orb-authentication-logout
-          uri: http://localhost:8080
-          predicates:
-            - Path=/logout
-          filters:
-            - PreserveHostHeader
-
-        - id: orb-authentication
-          uri: http://localhost:8080
-          predicates:
-            - Path=/
-          filters:
-            - PreserveHostHeader
+#        - id: orb-authentication-signup
+#          uri: http://localhost:8080
+#          predicates:
+#            - Path=/signup/*
+#          filters:
+#            - PreserveHostHeader
+#
+#        - id: orb-authentication-change-password
+#          uri: http://localhost:8080
+#          predicates:
+#            - Path=/change-password
+#          filters:
+#            - PreserveHostHeader
+#
+#        - id: orb-authentication-forgot-password
+#          uri: http://localhost:8080
+#          predicates:
+#            - Path=/forgot-password
+#          filters:
+#            - PreserveHostHeader
+#
+#        - id: orb-authentication-logout
+#          uri: http://localhost:8080
+#          predicates:
+#            - Path=/logout
+#          filters:
+#            - PreserveHostHeader
+#
+#        - id: orb-authentication
+#          uri: http://localhost:8080
+#          predicates:
+#            - Path=/
+#          filters:
+#            - PreserveHostHeader
 
         - id: orb-accounts
           uri: ${ACCOUNTS_URI:http://localhost:8081}
           predicates:
             - Path=/accounts/**
           filters:
-            - FilterAuth
             - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
 
@@ -74,7 +74,6 @@ spring:
           predicates:
             - Path=/products-services/**
           filters:
-            - FilterAuth
             - RewritePath=/products-services/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
 
@@ -83,7 +82,6 @@ spring:
           predicates:
             - Path=/finance/**
           filters:
-            - FilterAuth
             - RewritePath=/finance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
 
@@ -92,7 +90,6 @@ spring:
           predicates:
             - Path=/real-estate/**
           filters:
-            - FilterAuth
             - RewritePath=/real-estate/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
 
@@ -110,9 +107,10 @@ spring:
           predicates:
             - Path=/insurance/**
           filters:
-            - FilterAuth
             - RewritePath=/insurance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+      default-filters:
+        - FilterAuth
 
   main:
     web-application-type: reactive
@@ -147,9 +145,10 @@ application:
                 client-secret: YOUR_MICROSOFT_CLIENT_SECRET
                 redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-services:
-  config:
-    google: "/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/serviceAccount.json"
+config:
+  firebase:
+    serviceAccountFilePath: "/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/serviceAccount.json"
+    databaseURL: "https://theorb-f3a48.firebaseio.com"
 
 server:
   port: 8080

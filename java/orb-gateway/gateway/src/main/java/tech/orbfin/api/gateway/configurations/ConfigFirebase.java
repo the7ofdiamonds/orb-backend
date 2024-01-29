@@ -1,36 +1,49 @@
 package tech.orbfin.api.gateway.configurations;
 
+import tech.orbfin.api.gateway.utils.JSON;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 
+@Setter
+@Getter
+@Slf4j
 @Configuration
 public class ConfigFirebase {
 
-    @Value("${services.config.google}")
-    private String firebaseConfigFile;
+    @Value(value = "${config.firebase.serviceAccountFilePath}")
+    private String serviceAccountFilePath;
+    @Value(value = "${config.firebase.databaseURL}")
+    private String databaseURL;
+
+    private String readServiceAccountContent() {
+        return JSON.readFileContent(serviceAccountFilePath);
+    }
 
     @Bean
-    public FirebaseApp initializeFirebase() throws IOException {
+    protected String setServiceAccountID() throws Exception {
+        return JSON.searchJsonValue(readServiceAccountContent(), "client_email");
+    }
 
-        FileInputStream serviceAccount =
-                new FileInputStream(firebaseConfigFile);
+    @Bean
+    public FirebaseApp initializeFirebase() throws Exception {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(new FileInputStream(serviceAccountFilePath)))
+                    .setServiceAccountId(setServiceAccountID())
+                    .setDatabaseUrl(databaseURL)
+                    .build();
 
-        FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .setDatabaseUrl("https://theorb-f3a48.firebaseio.com")
-                .build();
-
-        return FirebaseApp.initializeApp(options, "orbfin");
+            return FirebaseApp.initializeApp(options, "ORB");
     }
 }

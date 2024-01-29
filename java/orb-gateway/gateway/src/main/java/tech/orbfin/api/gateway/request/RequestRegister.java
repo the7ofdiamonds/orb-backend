@@ -15,6 +15,7 @@ public class RequestRegister {
     private String username;
     private String email;
     private String password;
+    private String phone;
     private String firstname;
     private String lastname;
     private Object location;
