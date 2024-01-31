@@ -8,7 +8,6 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/orb}
     username: ${DATABASE_USERNAME:postgres}
@@ -155,6 +154,8 @@ server:
 
 logging:
   level:
+    org.springframework.session: DEBUG
+    org.springframework.data.redis: DEBUG
     org.springframework.security: trace
     web:
       server:

@@ -1,6 +1,5 @@
 package tech.orbfin.api.gateway.services;
 
-import lombok.Getter;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 
@@ -8,13 +7,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
-import java.util.Arrays;
-
 
 @Service
 @RequiredArgsConstructor
@@ -27,20 +21,21 @@ public class ServiceUser implements UserDetailsService {
 
             UserEntity user = userRepository.findByEmail(email)
                     .orElseThrow(() -> {
-                       new Exception("User not found with email: " + email);
-                        return null;
+                        System.err.println("User not found with email: " + email);
+                        return new Exception("User not found with email: " + email);
                     });
 
-            // Log user details
             System.out.println("Loaded user details: " + user);
 
-            return user;
-
+            return UserEntity.builder()
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .firstname(user.getFirstname())
+                    .lastname(user.getLastname())
+                    .role(user.getRole())
+                    .build();
         } catch (Exception e) {
-            // Log the exception
             System.err.println("Error while loading user by username: " + e.getMessage());
-
-            // Rethrow the exception
             throw new Exception("Error while loading user by username", e);
         }
     }
@@ -48,7 +43,6 @@ public class ServiceUser implements UserDetailsService {
     @Override
     public UserEntity loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            // Log the username being queried
             System.out.println("Loading user by username: " + username);
 
             UserEntity user = userRepository.findByUsername(username)
@@ -57,15 +51,17 @@ public class ServiceUser implements UserDetailsService {
                         return new UsernameNotFoundException("User not found with username: " + username);
                     });
 
-            // Log user details
             System.out.println("Loaded user details: " + user);
 
-            return new UserEntity(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstname(), user.getLastname(), user.getRole());
+            return UserEntity.builder()
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .firstname(user.getFirstname())
+                    .lastname(user.getLastname())
+                    .role(user.getRole())
+                    .build();
         } catch (Exception e) {
-            // Log the exception
             System.err.println("Error while loading user by username: " + e.getMessage());
-
-            // Rethrow the exception
             throw new UsernameNotFoundException("Error while loading user by username", e);
         }
     }

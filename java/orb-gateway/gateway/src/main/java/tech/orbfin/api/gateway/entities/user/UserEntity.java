@@ -5,42 +5,35 @@ import java.util.Collections;
 
 import jakarta.persistence.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users_orbfin")
+@Data
+@Builder
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue
     private String id;
+    @Column(unique = true)
     private String username;
     private String password;
     @Column(unique = true)
     private String email;
     private String firstname;
     private String lastname;
+    private String phone;
     private boolean isAuthenticated;
     private Role role;
-
-    public UserEntity(String username,  String password, String email, String firstname, String lastname, Role role){
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.role = role;
-    }
+    private String providerGivenID;
 
     @Override
     public String getUsername() {

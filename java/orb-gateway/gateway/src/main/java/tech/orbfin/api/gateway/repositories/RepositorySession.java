@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.repositories;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import tech.orbfin.api.gateway.entities.Session;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,15 +18,18 @@ import reactor.core.publisher.Mono;
 public class RepositorySession {
     private final ReactiveRedisOperations<String, Session> operations;
 
+    @Autowired
     public RepositorySession(ReactiveRedisOperations<String, Session> operations) {
         this.operations = operations;
     }
 
     public Mono<Boolean> save(Session session) {
-        return Mono.from(operations.opsForValue().set(session.getId().toString(), session));
+        return operations.opsForValue()
+                .set(session.getId(), session)
+                .flatMap(success -> Mono.just(success ? true : false))
+                .log();
     }
 
-    // Find all valid sessions by user ID
     public Flux<Session> findAllValidSessionsByUserId(@Param("userId") String userId) {
         return operations.opsForHash()
                 .values(userId.toString())
@@ -37,8 +42,12 @@ public class RepositorySession {
     }
 
     // Find a session by token
-    public Mono<Session> findByToken(String token) {
-        return Mono.from(operations.opsForValue().get(token));
+    public Mono<Session> findByToken(Object token) {
+        return operations.opsForValue()
+                .get(token)
+                .flatMap(Mono::just)
+                .defaultIfEmpty(new Session())
+                .log();
     }
 
     // Update a session

@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.authorization.filters;
 
+import org.springframework.http.HttpStatus;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.ServiceTokenFirebase;
@@ -34,65 +35,31 @@ public class FilterFirebaseToken implements GlobalFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.info("Filter Firebase Token is being used");
 
-        String jwt = serviceToken.getToken(exchange);
+        log.info("Searching for session......");
+
+        Object jwt = serviceToken.getToken(exchange);
 
         if (jwt == null) {
             log.info("Firebase Token could not be found in the header.");
             return chain.filter(exchange);
         }
 
-        log.info("Seaching for session......");
+        log.info("Session has been located.");
+        serviceToken.getRefreshToken(jwt).doOnError(e -> {
+            throw new RuntimeException(e.getMessage(), e.getCause());
+        }).subscribe();
 
-        return repositorySession.findByToken(jwt)
-                .flatMap(session -> {
-                    try {
-                        var refreshToken = session.getRefreshToken();
-                        log.info("Result after processing refreshToken: {}", refreshToken);
-                        var newToken = serviceTokenFirebase.refreshToken((String) refreshToken);
-                        session.setToken(newToken);
-                       return repositorySession.updateSession(session);
-                    } catch (FirebaseAuthException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .flatMap(refreshToken -> {
-                    log.info("Refresh Token: {}", refreshToken);
-                    FirebaseToken validToken = null;
+//        if(refreshToken == null){
+//            log.info("Could not find a Refresh Token.");
+//        }
 
-                    try {
-                        validToken = serviceTokenFirebase.verifyToken(jwt);
-                    } catch (FirebaseAuthException e) {
-                        throw new RuntimeException(e);
-                    }
 
-                    if (validToken == null) {
-                        log.info("Token is not valid");
+//        log.info("Token has expired");
+//        log.info("The refresh token is valid");
+//        log.info("The refresh token has been used to issue a new access token.");
+//        log.info("Access Granted");
 
-                        log.info("Using Refresh Token");
-
-//                        return Mono.empty();
-                    }
-
-                    String uid = validToken.getUid();
-                    Map<String, Object> claims = validToken.getClaims();
-
-                    log.info("UID: {}", uid);
-
-                    try {
-                        log.info("Email: {}", serviceUserFirebase.getUser(uid).getEmail());
-                    } catch (FirebaseAuthException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    log.info("Claims: {}", claims.toString());
-
-                    // Your authentication logic here
-
-                    return chain.filter(exchange);
-                })
-                .onErrorResume(e -> {
-                    log.error("Error in filter", e);
-                    return chain.filter(exchange);
-                });
+        return Mono.empty();
     }
 }
+

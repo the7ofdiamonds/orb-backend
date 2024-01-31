@@ -1,22 +1,19 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.request.*;
-import tech.orbfin.api.gateway.response.*;
+import tech.orbfin.api.gateway.entities.token.Token;
 import tech.orbfin.api.gateway.entities.user.Role;
 import tech.orbfin.api.gateway.entities.Session;
 import tech.orbfin.api.gateway.entities.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
+import tech.orbfin.api.gateway.request.*;
+import tech.orbfin.api.gateway.response.*;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserRecord;
 
 import lombok.AllArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,155 +48,196 @@ public class ServiceAuth {
     }
     
     @Transactional
-    public ResponseEntity<ResponseRegister> register(@NotNull RequestRegister request) {
+    public ResponseRegister register(@NotNull RequestRegister request) {
         try {
             String email = request.getEmail();
             String username = request.getUsername();
             String password = passwordEncoder().encode(request.getPassword());
+            String firstname = request.getFirstname();
+            String lastname = request.getLastname();
+            String phone = request.getPhone();
+            Object location = request.getLocation();
 
-            var firebaseUser = serviceUserFirebase.createUser(email, username, request.getPassword(), request.getPhone());
+            log.info("Registering user with the email {} .....", email);
 
-            var emailUsed = repositoryUser.existsByEmail(email);
+            UserRecord userRecord = serviceUserFirebase.createUser(email, username, request.getPassword(), phone);
+            var firebaseID = userRecord.getUid();
+            var firebaseEmail = userRecord.getEmail();
+
+            log.info("{} has been saved to Firebase with the email {} and User ID {}", username, firebaseEmail, firebaseID);
+
+            var emailUsed = repositoryUser.existsByEmail(firebaseEmail);
 
             if (emailUsed) {
+//                Send email
                 throw new Exception("This Email is already in our records. Check your email.");
             }
 
             var userExist = repositoryUser.existsByUsername(username);
 
             if (userExist) {
+//                Send email
                 throw new Exception("This Username is already in our records. Check your email.");
             }
 
-            var user = new UserEntity(username, password, request.getEmail(), request.getFirstname(), request.getLastname(), Role.USER);
+//            Check on the roles
+            var user = UserEntity.builder()
+                    .username(username)
+                    .password(password)
+                    .firstname(firstname)
+                    .lastname(lastname)
+                    .phone(phone)
+                    .role(Role.USER)
+                    .providerGivenID(firebaseID)
+                    .build();
             var savedUser = repositoryUser.save(user);
 
+            log.info("{} has been signed up successfully", username);
+            log.info("Creating a session for {} ....", username);
+
             Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("location", request.getLocation());
+            extraClaims.put("location", location);
 
-//            String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
-            var refreshToken = serviceTokenJW.refreshToken(user);
-            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
-            var uid = userRecord.getUid();
+            String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
+            String refreshToken = serviceTokenJW.refreshToken(user);
 
-            String accessToken = serviceTokenFirebase.buildToken(extraClaims, uid);
+            var session = new Session<>(accessToken, "JWT", refreshToken, savedUser.getId());
 
-            var jwt = new Session(accessToken, "JWT", refreshToken, savedUser.getId());
-
-            log.info(String.valueOf(jwt));
-            repositorySession.save(jwt);
+            repositorySession.save(session).subscribe();
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            return ResponseEntity.ok()
-                    .body(new ResponseRegister(username, savedUser.getEmail()));
-        } catch (Exception e){
-            System.err.println("Error while loading user by username: " + e.getMessage());
+            log.info("Session created successfully for {}", username);
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                    .body(ResponseRegister.builder()
+            return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
+        } catch (Exception e){
+            System.err.println("Error while signing up user : " + e.getMessage());
+
+            return ResponseRegister.builder()
                     .success(null)
                     .accessToken(null)
                     .refreshToken(null)
-                    .error("Internal server error: " + e.getMessage())
-                    .build());
+                    .error(e.getMessage())
+                    .build();
         }
     }
 
-    public ResponseEntity<ResponseLogin> login(@NotNull RequestLogin request){
+    public ResponseLogin login(@NotNull RequestLogin request){
         try {
-            var username = request.getUsername();
+            log.info("Login function has been called.");
+
             var password = request.getPassword();
+            Object location = request.getLocation();
 
-            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
-            SecurityContextHolder.getContext().setAuthentication(token);
-
-            Optional<UserEntity> userEntity = repositoryUser.findByUsername(username);
+            Optional<UserEntity> userEntity = repositoryUser.findByUsername(request.getUsername());
 
             if (userEntity.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
-                        .body(ResponseLogin.builder()
+                return ResponseLogin.builder()
                                 .success(null)
-                                .error("The username " + username + " can not be found.")
-                                .build()
-                        );
+                                .error("The username " + request.getUsername() + " can not be found.")
+                                .build();
             }
 
             var user = userEntity.get();
-//       Add location plus other details to extra claims
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("location", "test location");
-            UserRecord userRecord = serviceUserFirebase.getUserByEmail(user.getEmail());
+            var email = user.getEmail();
+            var username = user.getUsername();
+            var role = user.getRole();
 
-            String accessToken = serviceTokenFirebase.buildToken(extraClaims, userRecord.getUid());
+            log.info("{} {} is attempting to login.", role, username);
+
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("location", location);
+
+            UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
+
+            if(userRecord == null){
+                log.info("Firebase User with the email {} does not exists.", email);
+            }
+
+            log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
+
+            Token<String> accessToken = serviceTokenFirebase.buildToken(extraClaims, userRecord.getUid());
             String refreshToken = serviceTokenJW.refreshToken(user);
 
-            return ResponseEntity.ok()
-                    .body(new ResponseLogin(username, accessToken, refreshToken));
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
+            SecurityContextHolder.getContext().setAuthentication(token);
+
+            repositorySession.save(new Session<>(accessToken, "Firebase Token", refreshToken, user.getId()))
+                    .doOnError(e -> {
+                        throw new RuntimeException(e);
+                    })
+                    .subscribe();
+
+            log.info("Session created successfully for {}", username);
+
+            return new ResponseLogin(username, accessToken, refreshToken);
         } catch(Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                    .body(ResponseLogin.builder()
+            return ResponseLogin.builder()
                     .success(null)
                     .accessToken(null)
                     .refreshToken(null)
                     .error("Internal server error: " + e.getMessage())
-                    .build());
+                    .build();
         }
     }
     
-    public ResponseEntity<ResponseChange> changePassword(@NotNull RequestChangePassword request) {
+    public ResponseChange changePassword(@NotNull RequestChangePassword request) {
         try {
-            Optional<UserEntity> user = repositoryUser.findByEmail(request.getEmail());
+            String email = request.getEmail();
+            String password = request.getPassword();
+            String newPassword = request.getNewPassword();
+            String confirmationPassword = request.getConfirmationPassword();
+
+            Optional<UserEntity> user = repositoryUser.findByEmail(email);
+
+            log.info("User with the email {} is attempting to change their password.", email);
 
             if(user.isEmpty()){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
-                        .body(ResponseChange.builder()
+                return ResponseChange.builder()
                                 .error("A user could not be found with this email. Check your inbox.")
-                                .build());
+                                .build();
             }
 
-            if (!passwordEncoder().matches(request.getPassword(), user.get().getPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
-                        .body(ResponseChange.builder()
+            if (!passwordEncoder().matches(password, user.get().getPassword())) {
+                return ResponseChange.builder()
                                 .error("Wrong password. If you have forgot your password click the FORGOT button.")
-                                .build());
+                                .build();
             }
 
-            if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
-                        .body(ResponseChange.builder()
+            if (!newPassword.equals(confirmationPassword)) {
+                return ResponseChange.builder()
                                 .error("You need to enter the new password twice, ensuring they match exactly.")
-                                .build());
+                                .build();
             }
 
-            user.get().setPassword(passwordEncoder().encode(request.getNewPassword()));
+            UserEntity savedUser = user.get();
 
-            repositoryUser.save(user.get());
+            savedUser.setPassword(passwordEncoder().encode(newPassword));
 
-            return ResponseEntity.ok().body(new ResponseChange(user.get().getEmail()));
+            repositoryUser.save(savedUser);
+//  Send Password Changed Email
+            return new ResponseChange(user.get().getEmail());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                    .body(ResponseChange.builder()
+            return ResponseChange.builder()
                     .success(null)
                     .error("Internal server error: " + e.getMessage())
-                    .build());
+                    .build();
         }
     }
 
     @Transactional
-    public Mono<ResponseEntity<ResponseLogout>> logout(@NotNull RequestLogout request) {
-        log.info("service auth logout");
+    public ResponseLogout logout(@NotNull RequestLogout request) {
         try {
             String username = serviceTokenJW.extractUsername(request.getToken());
             Optional<UserEntity> user = repositoryUser.findByUsername(username);
 
+            log.info("service auth logout");
+
             if (user.isEmpty()) {
-                return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ResponseLogout.builder()
-                                .error("The username " + username + " can not be found.")
-                                .build()
-                        ));
+                return ResponseLogout.builder()
+                        .error("The username " + username + " can not be found.")
+                        .build();
             }
 
             var userid = user.get().getId();
@@ -217,29 +255,26 @@ public class ServiceAuth {
                 }
             });
 
-            return Mono.just(ResponseEntity.ok()
-                    .body(new ResponseLogout(username)));
+            return new ResponseLogout(username);
         } catch (Exception e){
-            return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                    .body(ResponseLogout.builder()
-                            .success(null)
-                            .error("Internal server error: " + e.getMessage())
-                            .build()));
+            return ResponseLogout.builder()
+                    .success(null)
+                    .error("Internal server error: " + e.getMessage())
+                    .build();
         }
     }
 
 
-    public ResponseEntity<ResponseForgot> forgotPassword(@NotNull RequestForgotPassword request ){
+    public ResponseForgot forgotPassword(@NotNull RequestForgotPassword request ){
         try {
             String email = request.getEmail();
             String username = request.getUsername();
 
             if(email == null && username == null){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
-                        .body(ResponseForgot.builder()
+                return ResponseForgot.builder()
                         .success(null)
                         .error("Either a username or email is required to restore your account.")
-                        .build());
+                        .build();
             }
 
             if(email != null) {
@@ -249,14 +284,12 @@ public class ServiceAuth {
                     log.info("Forgot password email sent");
                     //                        emailAuth.sendForgotPasswordEmail(email);
 
-                    return ResponseEntity.ok()
-                            .body(new ResponseForgot(user.get().getEmail()));
+                    return new ResponseForgot(user.get().getEmail());
                 } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
-                            .body(ResponseForgot.builder()
+                    return ResponseForgot.builder()
                             .success(null)
                             .error("This email is not in use check your inbox.")
-                            .build());
+                            .build();
                 }
             }
 
@@ -269,28 +302,24 @@ public class ServiceAuth {
                     log.info("Forgot password email sent");
 //                       emailAuth.sendForgotPasswordEmail(user.get().getEmail());
 
-                    return ResponseEntity.ok()
-                            .body(new ResponseForgot(user.get().getEmail()));
+                    return new ResponseForgot(user.get().getEmail());
                 } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
-                            .body(ResponseForgot.builder()
+                    return ResponseForgot.builder()
                             .success(null)
                             .error("This user could not be found. Please provide your email.")
-                            .build());
+                            .build();
                 }
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND.value())
-                        .body(ResponseForgot.builder()
+                return ResponseForgot.builder()
                         .success(null)
                         .error("This username is not in use. Please provide your email.")
-                        .build());
+                        .build();
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                    .body(ResponseForgot.builder()
+            return ResponseForgot.builder()
                     .success(null)
                     .error("Internal server error")
-                    .build());
+                    .build();
         }
     }
 }
