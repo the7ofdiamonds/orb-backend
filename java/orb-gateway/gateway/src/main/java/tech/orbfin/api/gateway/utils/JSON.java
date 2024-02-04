@@ -2,6 +2,7 @@ package tech.orbfin.api.gateway.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileInputStream;
@@ -10,6 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
+@UtilityClass
 public class JSON {
 
     public static String searchJsonValue(String json, String key) {

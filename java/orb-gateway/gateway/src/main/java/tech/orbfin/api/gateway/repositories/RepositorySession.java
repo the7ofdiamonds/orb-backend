@@ -1,17 +1,17 @@
 package tech.orbfin.api.gateway.repositories;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import tech.orbfin.api.gateway.entities.Session;
+import tech.orbfin.api.gateway.model.Session;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Repository
@@ -25,7 +25,7 @@ public class RepositorySession {
 
     public Mono<Boolean> save(Session session) {
         return operations.opsForValue()
-                .set(session.getId(), session)
+                .set(session.getId().toString(), session)
                 .flatMap(success -> Mono.just(success ? true : false))
                 .log();
     }
@@ -46,13 +46,12 @@ public class RepositorySession {
         return operations.opsForValue()
                 .get(token)
                 .flatMap(Mono::just)
-                .defaultIfEmpty(new Session())
-                .log();
+                .defaultIfEmpty(new Session());
     }
 
     // Update a session
     public Mono<Boolean> updateSession(Session session) {
-        return Mono.from(operations.opsForValue().set(session.getId(), session));
+        return Mono.from(operations.opsForValue().set(session.getId().toString(), session));
     }
 
     // Delete a session by ID

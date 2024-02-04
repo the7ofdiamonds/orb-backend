@@ -31,7 +31,6 @@ public class ConfigFirebase {
         return JSON.readFileContent(serviceAccountFilePath);
     }
 
-    @Bean
     protected String setServiceAccountID() throws Exception {
         return JSON.searchJsonValue(readServiceAccountContent(), "client_email");
     }

@@ -10,21 +10,31 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import reactor.core.publisher.Mono;
+import tech.orbfin.api.gateway.services.ServiceToken;
 
 @Slf4j
 @Order(-1)
-@Component
 @AllArgsConstructor
+@Component
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
+    private final ServiceToken serviceToken;
     private final FilterJWT filterJWT;
     private final FilterFirebaseToken filterFirebaseToken;
+
     @Override
     public GatewayFilter apply(Config config) {
         log.info("Gateway Filter Apply");
         return (exchange, chain) -> Mono.fromRunnable(() -> {
             System.out.println("FilterAuth is being applied.");
+            String token = serviceToken.getToken(exchange);
+
+            if (token != null) {
+//                filterFirebaseToken.filter(exchange, chain);
                 filterJWT.filter(exchange, chain);
-                filterFirebaseToken.filter(exchange, chain);
+//                    .then(Mono.defer(
+//                        () -> filterFirebaseToken.filter(exchange, chain)));
+            }
+
         });
     }
 

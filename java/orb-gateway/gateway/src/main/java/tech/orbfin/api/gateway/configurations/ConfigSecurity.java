@@ -1,6 +1,10 @@
 package tech.orbfin.api.gateway.configurations;
 
+import tech.orbfin.api.gateway.configurations.ConfigCORS;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 
 import tech.orbfin.api.gateway.authorization.AuthEntryPoint;
@@ -21,14 +25,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.session.data.redis.config.annotation.web.server.EnableRedisWebSession;
 
-@Configuration
-@EnableWebFluxSecurity
 @AllArgsConstructor
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+@Configuration
 public class ConfigSecurity {
     private final AuthEntryPoint authEntryPoint;
+    @Autowired
     private final ConfigCORS configCORS;
-//    @Autowired
-//    private ReactiveRedisOperationsSessionRepository sessionRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,6 +42,7 @@ public class ConfigSecurity {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
+//                .x509(Customizer -> Customizer.authenticationManager())
                 .addFilterAt(configCORS.corsWebFilter(), SecurityWebFiltersOrder.CORS)
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
@@ -52,19 +57,4 @@ public class ConfigSecurity {
 
         return http.build();
     }
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowCredentials(true);
-//        configuration.addAllowedOrigin("*");
-//        configuration.addAllowedMethod("*");
-//        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//
-//        return source;
-//    }
 }

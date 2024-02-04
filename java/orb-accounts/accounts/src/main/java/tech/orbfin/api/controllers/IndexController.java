@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(
-        origins = "https://the7ofdiamonds.development",
-        allowCredentials = "true",
-        methods = {RequestMethod.GET, RequestMethod.POST},
-        allowedHeaders = {"Authorization", "Content-Type"}
-)
+//@CrossOrigin(
+//        origins = {"https://the7ofdiamonds.development", "*"},
+//        allowCredentials = "true",
+//        methods = {RequestMethod.GET, RequestMethod.POST},
+//        allowedHeaders = {"Authorization", "Refresh-Token", "Content-Type"}
+//)
 @RestController
 public class IndexController {
 

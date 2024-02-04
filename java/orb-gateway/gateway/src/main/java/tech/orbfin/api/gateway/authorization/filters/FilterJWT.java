@@ -1,23 +1,17 @@
 package tech.orbfin.api.gateway.authorization.filters;
 
-import com.google.firebase.auth.FirebaseAuthException;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.services.ServiceToken;
-import tech.orbfin.api.gateway.services.ServiceTokenFirebase;
 import tech.orbfin.api.gateway.services.ServiceTokenJW;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
 import org.springframework.stereotype.Component;
 
@@ -32,7 +26,7 @@ import reactor.core.publisher.Mono;
 public class FilterJWT implements GlobalFilter {
     private final ServiceToken serviceToken;
     private final ServiceTokenJW serviceTokenJW;
-    private final UserDetailsService userDetailsService;
+    private final RepositoryUser repositoryUser;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -43,32 +37,54 @@ public class FilterJWT implements GlobalFilter {
             String jwt = serviceToken.getToken(exchange);
 
             if (jwt == null) {
+                log.info("A Token could not be found in the header.");
                 return chain.filter(exchange);
             }
 
-            log.info(jwt);
+            log.info("Validating token ...");
 
-            boolean tokenIsValid = serviceTokenJW.isTokenExpired(jwt);
+            boolean tokenIsExpired = serviceTokenJW.isTokenExpired(jwt);
 
-            if (!tokenIsValid) {
-                log.info("Token is not valid");
-                return chain.filter(exchange);
+            if (tokenIsExpired) {
+                log.info("Token is expired");
+
+                String username = serviceTokenJW.extractUsername(jwt);
+
+                if (username.isEmpty()){
+                    throw new Exception("This user does not exist please login again to gain access.");
+                }
+
+                log.info("Searching for session to use Refresh Token ......");
+
+//                return serviceToken.getRefreshToken(jwt)
+//                        .map(rToken -> {
+//                            boolean isExpired = serviceTokenJW.isTokenExpired((String) rToken);
+//
+//                            if(isExpired == true){
+//                                return;
+//                            }
+//
+//                            String uname = serviceTokenJW.extractUsername((String) rToken);
+//
+//                            Optional<UserEntity> usr = repositoryUser.findByUsername(uname);
+//
+//                            if(usr.isEmpty()){
+//                                return;
+//                            }
+//                            log.info("Refresh Token: " + rToken);
+//                            return rToken;
+//                        });
+            } else {
+                log.info("Searching for session using validated token ......");
+
+                log.info("Session has been located.");
+
+                log.info("Access Granted");
+
             }
 
-//            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-//                String username = serviceTokenJW.extractUsername(jwt);
 
-//                if (username == null) {
-//                    return chain.filter(exchange);
-//                }
 
-//                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-//                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-//                        userDetails,
-//                        null,
-//                        userDetails.getAuthorities()
-//                );
 
 //                SecurityContextHolder.getContext().setAuthentication(authToken);
 

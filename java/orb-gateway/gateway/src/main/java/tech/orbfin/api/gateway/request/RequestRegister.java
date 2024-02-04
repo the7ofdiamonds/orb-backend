@@ -1,16 +1,15 @@
 package tech.orbfin.api.gateway.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
-@Component
 @Data
 @Builder
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Component
 public class RequestRegister {
     private String username;
     private String email;

@@ -2,13 +2,11 @@ package tech.orbfin.api.gateway.services;
 
 import io.jsonwebtoken.*;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import tech.orbfin.api.gateway.entities.token.Token;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
-import tech.orbfin.api.gateway.entities.user.UserEntity;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -106,8 +104,9 @@ public class ServiceTokenJW {
         long tokenExpiration = (extractExpiration(token)).getTime();
 
         if(currentTime > tokenExpiration){
-            return true;
+            return false;
         }
-        return false;
+
+        return true;
     }
 }

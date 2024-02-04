@@ -1,26 +1,12 @@
 package tech.orbfin.api.gateway.authorization;
 
-import com.auth0.jwk.Jwk;
-import com.auth0.jwk.JwkProvider;
-import com.auth0.jwk.JwkProviderBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import tech.orbfin.api.gateway.entities.user.UserEntity;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.services.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,10 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
-
-import java.security.Key;
-import java.util.Base64;
-import java.util.Map;
 
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 

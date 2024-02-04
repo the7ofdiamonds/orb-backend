@@ -1,20 +1,52 @@
 package tech.orbfin.api.gateway.repositories;
 
-import tech.orbfin.api.gateway.entities.user.UserEntity;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
-import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 
+@AllArgsConstructor
 @Repository
-public interface RepositoryUser extends JpaRepository<UserEntity, Integer> {
-    boolean existsByUsername(String username);
+public class RepositoryUser {
 
-    boolean existsByEmail(String email);
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    Optional<UserEntity> findByEmail(String email);
+    public UserEntity save(UserEntity user){
+        return null;
+    }
 
-    Optional<UserEntity> findByUsername(String username);
+    public boolean existsByEmail(String email){
+        return false;
+    }
+
+    public boolean existsByUsername(String username){
+        return false;
+    }
+
+    public UserEntity findUserByEmail(String email){
+        return null;
+    }
+
+    public UserEntity findUserByUsername(String username) {
+        String query = "SELECT u.user_login, u.user_email, m.meta_key, m.meta_value " +
+                "FROM wp_users u " +
+                "JOIN wp_usermeta m ON u.ID = m.user_id " +
+                "WHERE u.user_login = :username";
+
+        try {
+            return (UserEntity) entityManager
+                    .createNativeQuery(query, "UserDetailsWithMetaMapping")
+                    .setParameter("username", username)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void update(){}
+
+    public void delete(){}
 }

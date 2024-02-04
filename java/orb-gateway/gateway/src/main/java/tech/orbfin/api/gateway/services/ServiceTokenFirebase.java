@@ -11,7 +11,6 @@ import com.google.firebase.auth.FirebaseToken;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
-import tech.orbfin.api.gateway.entities.token.Token;
 
 @Slf4j
 @AllArgsConstructor
@@ -20,22 +19,22 @@ public class ServiceTokenFirebase {
     @Autowired
     private ServiceAuthFirebase auth;
 
-    public Token<String> buildToken(
+    public String buildToken(
             Map<String, Object> extraClaims,
             String uid
     ) throws FirebaseAuthException {
         try{
-            return new Token<>(auth.getFirebaseAuth()
-                    .createCustomToken(uid, extraClaims));
+            return auth.getFirebaseAuth()
+                    .createCustomToken(uid, extraClaims);
         } catch (FirebaseAuthException e){
             throw new FirebaseAuthException(e);
         }
 
     }
 
-    public FirebaseToken verifyToken(Object idToken) throws FirebaseAuthException {
+    public FirebaseToken verifyToken(String idToken) throws FirebaseAuthException {
         try {
-            return auth.getFirebaseAuth().verifyIdToken((String) idToken, true);
+            return auth.getFirebaseAuth().verifyIdToken(idToken, true);
         }catch(FirebaseAuthException e){
             throw new FirebaseAuthException(e);
         }

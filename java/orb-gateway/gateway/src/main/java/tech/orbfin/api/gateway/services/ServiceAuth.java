@@ -1,13 +1,22 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.entities.token.Token;
-import tech.orbfin.api.gateway.entities.user.Role;
-import tech.orbfin.api.gateway.entities.Session;
-import tech.orbfin.api.gateway.entities.user.UserEntity;
+import tech.orbfin.api.gateway.model.user.Role;
+import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
-import tech.orbfin.api.gateway.request.*;
-import tech.orbfin.api.gateway.response.*;
+
+import tech.orbfin.api.gateway.request.RequestRegister;
+import tech.orbfin.api.gateway.request.RequestLogin;
+import tech.orbfin.api.gateway.request.RequestChangePassword;
+import tech.orbfin.api.gateway.request.RequestLogout;
+import tech.orbfin.api.gateway.request.RequestForgotPassword;
+
+import tech.orbfin.api.gateway.response.ResponseRegister;
+import tech.orbfin.api.gateway.response.ResponseLogin;
+import tech.orbfin.api.gateway.response.ResponseChange;
+import tech.orbfin.api.gateway.response.ResponseLogout;
+import tech.orbfin.api.gateway.response.ResponseForgot;
 
 import com.google.firebase.auth.UserRecord;
 
@@ -36,9 +45,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Service
 @AllArgsConstructor
 public class ServiceAuth {
-    private final RepositoryUser repositoryUser;
-    private final RepositorySession repositorySession;
-    private final ServiceTokenJW serviceTokenJW;
+    private RepositoryUser repositoryUser;
+    private RepositorySession repositorySession;
+    private ServiceTokenJW serviceTokenJW;
     @Autowired
     private final ServiceTokenFirebase serviceTokenFirebase;
 
@@ -130,17 +139,17 @@ public class ServiceAuth {
             var password = request.getPassword();
             Object location = request.getLocation();
 
-            Optional<UserEntity> userEntity = repositoryUser.findByUsername(request.getUsername());
+            UserEntity userEntity = repositoryUser.findUserByEmail(request.getUsername());
 
-            if (userEntity.isEmpty()) {
+            if (userEntity == null) {
                 return ResponseLogin.builder()
                                 .success(null)
                                 .error("The username " + request.getUsername() + " can not be found.")
                                 .build();
             }
 
-            var user = userEntity.get();
-            var email = user.getEmail();
+            var user = userEntity;
+            var email = userEntity.getEmail();
             var username = user.getUsername();
             var role = user.getRole();
 
@@ -157,7 +166,7 @@ public class ServiceAuth {
 
             log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
 
-            Token<String> accessToken = serviceTokenFirebase.buildToken(extraClaims, userRecord.getUid());
+            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
             String refreshToken = serviceTokenJW.refreshToken(user);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
@@ -189,17 +198,17 @@ public class ServiceAuth {
             String newPassword = request.getNewPassword();
             String confirmationPassword = request.getConfirmationPassword();
 
-            Optional<UserEntity> user = repositoryUser.findByEmail(email);
+            UserEntity user = repositoryUser.findUserByEmail(email);
 
             log.info("User with the email {} is attempting to change their password.", email);
 
-            if(user.isEmpty()){
+            if(user == null){
                 return ResponseChange.builder()
                                 .error("A user could not be found with this email. Check your inbox.")
                                 .build();
             }
 
-            if (!passwordEncoder().matches(password, user.get().getPassword())) {
+            if (!passwordEncoder().matches(password, user.getPassword())) {
                 return ResponseChange.builder()
                                 .error("Wrong password. If you have forgot your password click the FORGOT button.")
                                 .build();
@@ -211,13 +220,11 @@ public class ServiceAuth {
                                 .build();
             }
 
-            UserEntity savedUser = user.get();
+            user.setPassword(passwordEncoder().encode(newPassword));
 
-            savedUser.setPassword(passwordEncoder().encode(newPassword));
-
-            repositoryUser.save(savedUser);
+            UserEntity savedUser = repositoryUser.save(user);
 //  Send Password Changed Email
-            return new ResponseChange(user.get().getEmail());
+            return new ResponseChange(savedUser.getEmail());
         } catch (Exception e) {
             return ResponseChange.builder()
                     .success(null)
@@ -230,17 +237,17 @@ public class ServiceAuth {
     public ResponseLogout logout(@NotNull RequestLogout request) {
         try {
             String username = serviceTokenJW.extractUsername(request.getToken());
-            Optional<UserEntity> user = repositoryUser.findByUsername(username);
+            UserEntity user = repositoryUser.findUserByUsername(username);
 
             log.info("service auth logout");
 
-            if (user.isEmpty()) {
+            if (user == null) {
                 return ResponseLogout.builder()
                         .error("The username " + username + " can not be found.")
                         .build();
             }
 
-            var userid = user.get().getId();
+            var userid = user.getId();
             var sessions = repositorySession.findAllValidSessionsByUserId(userid);
 
             sessions.collectList().subscribe(sessionsList -> {
@@ -278,13 +285,13 @@ public class ServiceAuth {
             }
 
             if(email != null) {
-                Optional<UserEntity> user = repositoryUser.findByEmail(email);
+                UserEntity user = repositoryUser.findUserByEmail(email);
 
-                if(user.isPresent()) {
+                if(user != null) {
                     log.info("Forgot password email sent");
                     //                        emailAuth.sendForgotPasswordEmail(email);
 
-                    return new ResponseForgot(user.get().getEmail());
+                    return new ResponseForgot(user.getEmail());
                 } else {
                     return ResponseForgot.builder()
                             .success(null)
@@ -296,13 +303,14 @@ public class ServiceAuth {
             boolean userExist = repositoryUser.existsByUsername(username);
 
             if(userExist) {
-                Optional<UserEntity> user = repositoryUser.findByUsername(username);
+                UserEntity user = repositoryUser.findUserByUsername(username);
                 log.info("user exist");
-                if (user.isPresent()) {
+
+                if (user != null) {
                     log.info("Forgot password email sent");
 //                       emailAuth.sendForgotPasswordEmail(user.get().getEmail());
 
-                    return new ResponseForgot(user.get().getEmail());
+                    return new ResponseForgot(user.getEmail());
                 } else {
                     return ResponseForgot.builder()
                             .success(null)

@@ -17,38 +17,34 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping
-@Component
 @AllArgsConstructor
+@Component
 public class ControllerAuthRest {
-    private final ServiceAuth authService;
+
+    private ServiceAuth serviceAuth;
 
     @PostMapping("/signup")
     public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
-        return ResponseEntity.ok()
-                .body(authService.register(request));
+        return ResponseEntity.ok().body(serviceAuth.register(request));
     }
 
     @PostMapping("/")
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
-        return ResponseEntity.ok()
-                .body(authService.login(request));
+        return ResponseEntity.ok().body(serviceAuth.login(request));
     }
 
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
-        return ResponseEntity.ok()
-                .body(authService.changePassword(request));
+        return ResponseEntity.ok().body(serviceAuth.changePassword(request));
     }
 
     @PostMapping("/logout")
     public Mono<ResponseEntity<ResponseLogout>> logout(@RequestHeader RequestLogout request) {
-        return Mono.just(ResponseEntity.ok()
-                .body(authService.logout(request)));
+        return Mono.just(ResponseEntity.ok().body(serviceAuth.logout(request)));
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgotPassword request) {
-        return ResponseEntity.ok()
-                .body(authService.forgotPassword(request));
+        return ResponseEntity.ok().body(serviceAuth.forgotPassword(request));
     }
 }

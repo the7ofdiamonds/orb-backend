@@ -20,7 +20,7 @@ public class ConfigCORS {
         corsConfig.addAllowedOrigin("http://localhost:8000");
         corsConfig.addAllowedMethod("*");
         corsConfig.setExposedHeaders(Collections.singletonList("*"));
-        corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);

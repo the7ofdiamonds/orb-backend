@@ -4,13 +4,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 import tech.orbfin.api.gateway.exceptions.LogoutException;
 
 @Getter
 @Setter
-@AllArgsConstructor
 public class RequestLogout {
     private String token;
+
+    public RequestLogout(String token) {
+        this.token = token;
+    }
 
     public static RequestLogout fromHttpServletRequest(HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
