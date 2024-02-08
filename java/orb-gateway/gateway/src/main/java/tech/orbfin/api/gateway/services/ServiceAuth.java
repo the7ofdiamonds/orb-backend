@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.transaction.annotation.Transactional;
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.UserEntity;
@@ -29,8 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-
-import jakarta.transaction.Transactional;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -91,6 +90,7 @@ public class ServiceAuth {
 
 //            Check on the roles
             var user = UserEntity.builder()
+                    .email(email)
                     .username(username)
                     .password(password)
                     .firstname(firstname)

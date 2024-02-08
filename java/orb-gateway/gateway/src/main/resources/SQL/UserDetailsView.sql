@@ -1,5 +1,5 @@
 CREATE VIEW user_details_view AS
-SELECT u.ID AS id, u.user_email AS email, u.display_name AS username, u.user_pass AS passowrd,
+SELECT u.ID AS id, u.user_email AS email, u.display_name AS username, u.user_pass AS password,
 	MAX(CASE WHEN m.meta_key = 'phone_number' THEN m.meta_value END) AS phone,
     MAX(CASE WHEN m.meta_key = 'first_name' THEN m.meta_value END) AS firstname,
 	MAX(CASE WHEN m.meta_key = 'last_name' THEN m.meta_value END) AS lastname,

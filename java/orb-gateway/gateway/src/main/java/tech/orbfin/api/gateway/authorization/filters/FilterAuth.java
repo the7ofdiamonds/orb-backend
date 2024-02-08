@@ -29,12 +29,18 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
             String token = serviceToken.getToken(exchange);
 
             if (token != null) {
-//                filterFirebaseToken.filter(exchange, chain);
-                filterJWT.filter(exchange, chain);
-//                    .then(Mono.defer(
-//                        () -> filterFirebaseToken.filter(exchange, chain)));
+                Mono.empty();
             }
 
+            var parts = token.split(".");
+            String signature = parts[1];
+            int sigSize = signature.getBytes().length;
+
+            if (sigSize == 32){
+                filterJWT.filter(exchange, chain);
+            }
+
+            filterFirebaseToken.filter(exchange, chain);
         });
     }
 

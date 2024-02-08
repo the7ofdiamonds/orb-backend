@@ -5,17 +5,36 @@ import jakarta.persistence.PersistenceContext;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
 @AllArgsConstructor
 @Repository
+@Transactional
 public class RepositoryUser {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public UserEntity save(UserEntity user){
-        return null;
+    public UserEntity save(UserEntity user) {
+        // Assuming user has fields like username, password, and email
+        String storedProcedure = "{CALL addNewUser(?, ?, ?, ?, ?, ?)}";
+
+        try {
+           entityManager.createNativeQuery(storedProcedure)
+                    .setParameter(1, user.getEmail())
+                    .setParameter(2, user.getPassword())
+                    .setParameter(3, user.getEmail())
+                    .setParameter(4, user.getFirstname())
+                    .setParameter(5, user.getLastname())
+                    .setParameter(6, user.getPhone())
+                    .executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save user. Rolling back transaction.", e);
+        }
+
+        return user;
     }
 
     public boolean existsByEmail(String email){
