@@ -1,13 +1,30 @@
 package tech.orbfin.api.gateway.repositories;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.StoredProcedureQuery;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+@Slf4j
 @AllArgsConstructor
 @Repository
 @Transactional
@@ -35,6 +52,64 @@ public class RepositoryUser {
         }
 
         return user;
+    }
+
+    public UserEntity loginUser(String username, String password) {
+        StoredProcedureQuery storedProcedure = entityManager.createStoredProcedureQuery("loginUser")
+                .registerStoredProcedureParameter(1, String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter(2, String.class, ParameterMode.IN)
+                .setParameter(1, username)
+                .setParameter(2, password);
+
+        try {
+            storedProcedure.execute();
+
+            String jsonResult = (String) storedProcedure.getSingleResult();
+
+            if (jsonResult != null) {
+                JSONObject jsonObject = new JSONObject(jsonResult);
+
+                JSONArray rolesArray = jsonObject.getJSONArray("roles");
+
+                Collection<Role> roles = new ArrayList<>();
+                for (int i = 0; i < rolesArray.length(); i++) {
+                    String roleString = rolesArray.getString(i);
+                    Role roleEnum = mapToRoleEnum(roleString);
+                    if (roleEnum != null) {
+                        roles.add(roleEnum);
+                    }
+                }
+
+                boolean isAuthenticated = jsonObject.getBoolean("isAuthenticated");
+
+                return UserEntity.builder()
+                        .id(String.valueOf(jsonObject.getInt("id")))
+                        .username(jsonObject.getString("username"))
+                        .password(jsonObject.getString("password"))
+                        .email(jsonObject.getString("email"))
+                        .roles(roles)
+                        .firstname(jsonObject.getString("firstname"))
+                        .lastname(jsonObject.getString("lastname"))
+                        .phone(jsonObject.getString("phone"))
+                        .isAuthenticated(isAuthenticated)
+                        .providerGivenID(jsonObject.getString("providerGivenID"))
+                        .build();
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to execute stored procedure. Rolling back transaction.", e);
+        }
+    }
+
+    private Role mapToRoleEnum(String roleString) {
+        for (Role roleEnum : Role.values()) {
+            if (roleString.toLowerCase().contains(roleEnum.name().toLowerCase())) {
+                return roleEnum;
+            }
+        }
+        return null;
     }
 
     public boolean existsByEmail(String email){

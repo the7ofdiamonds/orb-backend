@@ -1,7 +1,7 @@
 package tech.orbfin.api.gateway.model.user;
 
 public enum Role {
-    ADMIN,
+    ADMINISTRATOR,
     MANAGER,
     EDITOR,
     CONTRIBUTOR,

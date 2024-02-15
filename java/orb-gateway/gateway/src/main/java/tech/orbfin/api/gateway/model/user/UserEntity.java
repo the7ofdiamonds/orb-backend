@@ -2,6 +2,7 @@ package tech.orbfin.api.gateway.model.user;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import lombok.*;
 
@@ -22,7 +23,7 @@ public class UserEntity implements UserDetails {
     private String lastname;
     private String phone;
     private boolean isAuthenticated;
-    private Role role;
+    private Collection<Role> roles;
     private String providerGivenID;
 
     @Override
@@ -37,7 +38,9 @@ public class UserEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority(this.role.toString()));
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .collect(Collectors.toList());
     }
 
     @Override

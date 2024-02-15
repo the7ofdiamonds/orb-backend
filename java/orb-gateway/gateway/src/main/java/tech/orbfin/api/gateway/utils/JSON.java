@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
@@ -89,4 +87,22 @@ public class JSON {
             }
         }
     }
+
+    public static Object deserialize(String serializedString) throws IOException, ClassNotFoundException {
+        // Convert the serialized string to a byte array
+        ByteArrayInputStream bais = new ByteArrayInputStream(serializedString.getBytes());
+
+        // Create an ObjectInputStream to read the serialized data
+        ObjectInputStream ois = new ObjectInputStream(bais);
+
+        // Read the object from the stream
+        Object object = ois.readObject();
+
+        // Close the ObjectInputStream
+        ois.close();
+
+        // Return the deserialized object
+        return object;
+    }
+
 }

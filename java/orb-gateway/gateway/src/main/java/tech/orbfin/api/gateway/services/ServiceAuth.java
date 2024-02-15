@@ -1,9 +1,9 @@
 package tech.orbfin.api.gateway.services;
 
-import org.springframework.transaction.annotation.Transactional;
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.UserEntity;
+
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 
@@ -19,12 +19,15 @@ import tech.orbfin.api.gateway.response.ResponseChange;
 import tech.orbfin.api.gateway.response.ResponseLogout;
 import tech.orbfin.api.gateway.response.ResponseForgot;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.google.firebase.auth.UserRecord;
 
 import lombok.AllArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -96,7 +99,7 @@ public class ServiceAuth {
                     .firstname(firstname)
                     .lastname(lastname)
                     .phone(phone)
-                    .role(Role.USER)
+                    .roles(Collections.singleton(Role.USER))
                     .providerGivenID(firebaseID)
                     .build();
             var savedUser = repositoryUser.save(user);
@@ -139,7 +142,7 @@ public class ServiceAuth {
             var password = request.getPassword();
             Object location = request.getLocation();
 
-            UserEntity userEntity = repositoryUser.findUserByEmail(request.getUsername());
+            UserEntity userEntity = repositoryUser.loginUser(request.getUsername(), password);
 
             if (userEntity == null) {
                 return ResponseLogin.builder()
@@ -148,10 +151,9 @@ public class ServiceAuth {
                                 .build();
             }
 
-            var user = userEntity;
             var email = userEntity.getEmail();
-            var username = user.getUsername();
-            var role = user.getRole();
+            var username = userEntity.getUsername();
+            var role = userEntity.getRoles();
 
             log.info("{} {} is attempting to login.", role, username);
 
@@ -166,13 +168,13 @@ public class ServiceAuth {
 
             log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
-            String refreshToken = serviceTokenJW.refreshToken(user);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, userEntity);
+            String refreshToken = serviceTokenJW.refreshToken(userEntity);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            repositorySession.save(new Session<>(accessToken, "Firebase Token", refreshToken, user.getId()))
+            repositorySession.save(new Session<>(accessToken, "Firebase Token", refreshToken, userEntity.getId()))
                     .doOnError(e -> {
                         throw new RuntimeException(e);
                     })
