@@ -1,7 +1,10 @@
 package tech.orbfin.api.gateway.repositories;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import tech.orbfin.api.gateway.model.user.Role;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
@@ -17,13 +20,6 @@ import org.json.JSONArray;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import tech.orbfin.api.gateway.model.user.Role;
-import tech.orbfin.api.gateway.model.user.UserEntity;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 @Slf4j
 @AllArgsConstructor
 @Repository
@@ -34,7 +30,6 @@ public class RepositoryUser {
     private EntityManager entityManager;
 
     public UserEntity save(UserEntity user) {
-        // Assuming user has fields like username, password, and email
         String storedProcedure = "{CALL addNewUser(?, ?, ?, ?, ?, ?)}";
 
         try {

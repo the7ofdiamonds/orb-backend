@@ -28,19 +28,21 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
             System.out.println("FilterAuth is being applied.");
             String token = serviceToken.getToken(exchange);
 
-            if (token != null) {
+            if (token == null) {
                 Mono.empty();
             }
 
-            var parts = token.split(".");
-            String signature = parts[1];
-            int sigSize = signature.getBytes().length;
+            String header = ServiceToken.getTokenHeader(token);
+            String algo = ServiceToken.getTokenAlgo(header);
 
-            if (sigSize == 32){
+            if (algo.equals("HS256")){
                 filterJWT.filter(exchange, chain);
             }
 
-            filterFirebaseToken.filter(exchange, chain);
+            if (algo.equals("RS256")) {
+                log.info("Filter Firebase Token is being used");
+                filterFirebaseToken.filter(exchange, chain);
+            }
         });
     }
 

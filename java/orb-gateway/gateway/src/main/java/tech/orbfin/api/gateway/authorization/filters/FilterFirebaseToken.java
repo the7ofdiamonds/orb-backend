@@ -33,10 +33,6 @@ public class FilterFirebaseToken implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        log.info("Filter Firebase Token is being used");
-
-        log.info("Looking for Firebase Token.");
-
         String jwt = serviceToken.getToken(exchange);
 
         if (jwt == null) {
