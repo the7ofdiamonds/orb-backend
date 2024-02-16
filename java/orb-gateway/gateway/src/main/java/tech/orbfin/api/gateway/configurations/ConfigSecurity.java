@@ -1,19 +1,14 @@
 package tech.orbfin.api.gateway.configurations;
 
-import tech.orbfin.api.gateway.configurations.ConfigCORS;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 
-import tech.orbfin.api.gateway.authorization.AuthEntryPoint;
+import tech.orbfin.api.gateway.authentication.AuthEntryPoint;
 import lombok.AllArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import org.springframework.http.HttpMethod;
 
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
@@ -22,8 +17,6 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import org.springframework.session.data.redis.config.annotation.web.server.EnableRedisWebSession;
 
 @AllArgsConstructor
 @EnableWebFluxSecurity

@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.authorization.filters;
+package tech.orbfin.api.gateway.authentication.filters;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +36,7 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
             String algo = ServiceToken.getTokenAlgo(header);
 
             if (algo.equals("HS256")){
+                log.info("Filter JWT is being used");
                 filterJWT.filter(exchange, chain);
             }
 

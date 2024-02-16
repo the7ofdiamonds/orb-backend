@@ -1,10 +1,11 @@
 //package tech.orbfin.api.gateway.authorization.providers;
 //
-//import jakarta.security.enterprise.credential.RememberMeCredential;
-//import org.springframework.context.annotation.Configuration;
 //import tech.orbfin.api.gateway.authorization.AuthJwt;
 //import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 //import tech.orbfin.api.gateway.services.ServiceToken;
+//
+//import jakarta.security.enterprise.credential.RememberMeCredential;
+//import org.springframework.context.annotation.Configuration;
 //
 //import lombok.AllArgsConstructor;
 //import lombok.extern.slf4j.Slf4j;
@@ -19,22 +20,16 @@
 //public class ProviderJWT implements AuthenticationProvider {
 //
 //    private final ServiceToken serviceToken;
-//
 //    private final AuthJwt authJwt;
 //
 //    @Override
 //    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+//        try {
 //
-//        String token = authJwt.getToken();
-//
-//
-//        String secretKey = serviceToken.getSecretKey();
-//
-//        if(secretKey.equalsIgnoreCase(token)) {
-//            log.info("Request have valid key");
-//            return new AuthJwt(true, token);
+//            return new AuthJwt(true);
+//        } catch (AuthenticationException e) {
+//            throw new BadCredentialsException("Secret key in header did not match Application Secret key...");
 //        }
-//        throw new BadCredentialsException("Secret key in header did not match Application Secret key...");
 //    }
 //
 //    @Override

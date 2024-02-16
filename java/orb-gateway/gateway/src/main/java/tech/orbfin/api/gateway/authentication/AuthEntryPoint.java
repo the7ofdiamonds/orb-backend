@@ -1,11 +1,10 @@
-package tech.orbfin.api.gateway.authorization;
+package tech.orbfin.api.gateway.authentication;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import lombok.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.services.*;
 
@@ -30,15 +29,10 @@ import static org.apache.commons.codec.binary.Base64.decodeBase64;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
-    @Autowired
     private ServiceToken serviceToken;
-    @Autowired
     private ServiceTokenJW serviceTokenJW;
-    @Autowired
     private ServiceTokenFirebase serviceTokenFirebase;
-    @Autowired
     private ServiceUserFirebase serviceUserFirebase;
-    @Autowired
     private ServiceUser serviceUser;
     private Boolean tokenIsValid;
     private String username;
@@ -48,24 +42,44 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
         try {
             log.info("Authentication entry point commence");
-            String token = serviceToken.getToken(exchange);
-log.info(token);
+            String token = ServiceToken.getToken(exchange);
+
             if (token == null) throw new Exception("A Token could not be found.");
+
+            String header = ServiceToken.getTokenHeader(token);
+            String algo = ServiceToken.getTokenAlgo(header);
 
             log.info("Token is valid. Extracting username...");
 
-            var firebaseToken = serviceTokenFirebase.verifyToken(token);
+            UserEntity user = null;
 
-            if(firebaseToken != null){
-                log.info("Idtoken is valid");
+            if (algo.equals("HS256")){
+                boolean tokenExpired = serviceTokenJW.isTokenExpired(token);
+
+                if(tokenExpired) {
+                    log.info("Token is expired.");
+                }
+
+                log.info("Token is valid");
+                String username = serviceTokenJW.extractUsername(token);
+                user = serviceUser.findUserByUsername(username);
+            }
+
+            if (algo.equals("RS256")) {
+                var firebaseToken = serviceTokenFirebase.verifyToken(token);
+
+                if (firebaseToken == null) {
+                    log.info("IDToken is not valid.");
+                }
+
+                log.info("IDToken is valid");
                 FirebaseToken verifiedToken = FirebaseAuth.getInstance(FirebaseApp.getInstance("ORB")).verifyIdToken(token, true);
 
-                UserRecord user = serviceUserFirebase.getUser(verifiedToken.getUid());
+                UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.getUid());
+                user = serviceUser.findUserByEmail(firebaseUser.getEmail());
             }
 
             log.info("Setting authentication in SecurityContextHolder...");
-
-            log.info(String.valueOf(user));
 
             if(user != null) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(

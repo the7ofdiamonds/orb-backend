@@ -14,6 +14,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 @Builder
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserEntity implements UserDetails {
     private String id;
     private String email;
@@ -22,6 +24,8 @@ public class UserEntity implements UserDetails {
     private String firstname;
     private String lastname;
     private String phone;
+//    Is verified
+//    Is email verified
     private boolean isAuthenticated;
     private Collection<Role> roles;
     private String providerGivenID;

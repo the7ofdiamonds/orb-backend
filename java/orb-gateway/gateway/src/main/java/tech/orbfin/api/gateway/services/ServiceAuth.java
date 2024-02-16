@@ -50,10 +50,9 @@ public class ServiceAuth {
     private RepositoryUser repositoryUser;
     private RepositorySession repositorySession;
     private ServiceTokenJW serviceTokenJW;
-    @Autowired
     private final ServiceTokenFirebase serviceTokenFirebase;
-
     private final ServiceUserFirebase serviceUserFirebase;
+
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -99,10 +98,10 @@ public class ServiceAuth {
                     .firstname(firstname)
                     .lastname(lastname)
                     .phone(phone)
-                    .roles(Collections.singleton(Role.USER))
+                    .roles(Collections.singleton(Role.SUBSCRIBER))
                     .providerGivenID(firebaseID)
                     .build();
-            var savedUser = repositoryUser.save(user);
+            var savedUser = repositoryUser.signupUser(user);
 
             log.info("{} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
@@ -224,7 +223,7 @@ public class ServiceAuth {
 
             user.setPassword(passwordEncoder().encode(newPassword));
 
-            UserEntity savedUser = repositoryUser.save(user);
+            UserEntity savedUser = repositoryUser.signupUser(user);
 //  Send Password Changed Email
             return new ResponseChange(savedUser.getEmail());
         } catch (Exception e) {

@@ -1,12 +1,9 @@
-package tech.orbfin.api.gateway.authorization.filters;
+package tech.orbfin.api.gateway.authentication.filters;
 
-import org.springframework.http.HttpStatus;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.ServiceTokenFirebase;
 import tech.orbfin.api.gateway.services.ServiceUserFirebase;
-
-import java.util.Map;
 
 import reactor.core.publisher.Mono;
 
@@ -33,6 +30,7 @@ public class FilterFirebaseToken implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.info(String.valueOf(exchange.getRequest().getHeaders()));
         String jwt = serviceToken.getToken(exchange);
 
         if (jwt == null) {

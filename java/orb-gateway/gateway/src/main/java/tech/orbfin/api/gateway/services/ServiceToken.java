@@ -21,9 +21,9 @@ import java.util.Base64;
 @Getter
 @RequiredArgsConstructor
 public class ServiceToken {
-private final RepositorySession repositorySession;
+    private final RepositorySession repositorySession;
 
-    public String getToken(ServerWebExchange exchange){
+    public static String getToken(ServerWebExchange exchange){
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
         if(authHeader != null && authHeader.startsWith("Bearer ")){
