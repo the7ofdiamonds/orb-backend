@@ -34,7 +34,7 @@ public class ControllerAuthRest {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
+    public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChange request) {
         return ResponseEntity.ok().body(serviceAuth.changePassword(request));
     }
 
@@ -44,7 +44,7 @@ public class ControllerAuthRest {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgotPassword request) {
+    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) {
         return ResponseEntity.ok().body(serviceAuth.forgotPassword(request));
     }
 }

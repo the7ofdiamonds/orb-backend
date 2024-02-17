@@ -9,9 +9,9 @@ import tech.orbfin.api.gateway.repositories.RepositorySession;
 
 import tech.orbfin.api.gateway.request.RequestRegister;
 import tech.orbfin.api.gateway.request.RequestLogin;
-import tech.orbfin.api.gateway.request.RequestChangePassword;
+import tech.orbfin.api.gateway.request.RequestChange;
 import tech.orbfin.api.gateway.request.RequestLogout;
-import tech.orbfin.api.gateway.request.RequestForgotPassword;
+import tech.orbfin.api.gateway.request.RequestForgot;
 
 import tech.orbfin.api.gateway.response.ResponseRegister;
 import tech.orbfin.api.gateway.response.ResponseLogin;
@@ -25,12 +25,9 @@ import com.google.firebase.auth.UserRecord;
 
 import lombok.AllArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,7 +87,6 @@ public class ServiceAuth {
                 throw new Exception("This Username is already in our records. Check your email.");
             }
 
-//            Check on the roles
             var user = UserEntity.builder()
                     .email(email)
                     .username(username)
@@ -103,7 +99,7 @@ public class ServiceAuth {
                     .build();
             var savedUser = repositoryUser.signupUser(user);
 
-            log.info("{} has been signed up successfully", username);
+            log.info("Username {} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
 
             Map<String, Object> extraClaims = new HashMap<>();
@@ -138,20 +134,32 @@ public class ServiceAuth {
         try {
             log.info("Login function has been called.");
 
+            var username = request.getUsername();
             var password = request.getPassword();
             Object location = request.getLocation();
 
-            UserEntity userEntity = repositoryUser.loginUser(request.getUsername(), password);
+            boolean userExists = repositoryUser.existsByUsername(username);
 
-            if (userEntity == null) {
+            if (!userExists) {
                 return ResponseLogin.builder()
                                 .success(null)
-                                .error("The username " + request.getUsername() + " can not be found.")
+                                .error("The username " + username + " can not be found.")
                                 .build();
             }
 
+            boolean usernamePasswordMatches = repositoryUser.usernamePasswordMatches(username, password);
+
+            if (!usernamePasswordMatches) {
+                return ResponseLogin.builder()
+                        .success(null)
+                        .error("The username " + username + " and the password provided do not match.")
+                        .build();
+            }
+
+            UserEntity userEntity = repositoryUser.loginUser(username, password);
+
             var email = userEntity.getEmail();
-            var username = userEntity.getUsername();
+            username = userEntity.getUsername();
             var role = userEntity.getRoles();
 
             log.info("{} {} is attempting to login.", role, username);
@@ -192,7 +200,7 @@ public class ServiceAuth {
         }
     }
     
-    public ResponseChange changePassword(@NotNull RequestChangePassword request) {
+    public ResponseChange changePassword(@NotNull RequestChange request) {
         try {
             String email = request.getEmail();
             String password = request.getPassword();
@@ -273,7 +281,7 @@ public class ServiceAuth {
     }
 
 
-    public ResponseForgot forgotPassword(@NotNull RequestForgotPassword request ){
+    public ResponseForgot forgotPassword(@NotNull RequestForgot request ){
         try {
             String email = request.getEmail();
             String username = request.getUsername();

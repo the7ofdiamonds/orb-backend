@@ -1,26 +1,25 @@
 package tech.orbfin.api.gateway.authentication;
 
+import tech.orbfin.api.gateway.model.user.UserEntity;
+import tech.orbfin.api.gateway.services.*;
+
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
-import lombok.*;
-import tech.orbfin.api.gateway.model.user.UserEntity;
-import tech.orbfin.api.gateway.services.*;
-
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
-
-import static org.apache.commons.codec.binary.Base64.decodeBase64;
 
 @Setter
 @Getter

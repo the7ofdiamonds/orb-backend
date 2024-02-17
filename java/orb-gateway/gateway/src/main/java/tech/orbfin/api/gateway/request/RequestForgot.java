@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-public class RequestForgotPassword {
+public class RequestForgot {
     private String email;
     private String username;
 }

@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
+import tech.orbfin.api.gateway.authentication.AuthJWT;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.ServiceTokenJW;
@@ -81,13 +82,12 @@ public class FilterJWT implements GlobalFilter {
             UserEntity user = serviceUser.findUserByUsername(username);
 
             if(user != null) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        user.getAuthorities()
+                AuthJWT authJWT = new AuthJWT(
+                        true,
+                        user.getUsername()
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                SecurityContextHolder.getContext().setAuthentication(authJWT);
 
                 log.info("Valid token found for user: {}", user);
             }

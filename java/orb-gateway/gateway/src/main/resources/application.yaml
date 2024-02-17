@@ -155,6 +155,8 @@ logging:
     org.springframework.session: DEBUG
     org.springframework.data.redis: DEBUG
     org.springframework.security: trace
+    org.springframework: DEBUG
+
     web:
       server:
         authentication: debug
