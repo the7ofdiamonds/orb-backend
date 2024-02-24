@@ -58,6 +58,24 @@ services:
     networks:
       - api.orbfin.tech
 
+  communications:
+    container_name: orb-communications
+    restart: always
+    depends_on:
+      - kafka
+    ports:
+      - 8087:8087
+    build:
+      context: ./java/orb-communications
+      dockerfile: orb-communications.Dockerfile
+    env_file:
+    - .env
+    volumes:
+    - ./java/orb-communications/communications/target:/app
+    hostname: orb-communications
+    networks:
+      - api.orbfin.tech
+
   accounts:
     container_name: orb-accounts
     restart: always
