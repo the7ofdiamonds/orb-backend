@@ -1,5 +1,8 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import tech.orbfin.api.gateway.configurations.ConfigTopics;
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.UserEntity;
@@ -40,6 +43,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import org.springframework.kafka.core.KafkaTemplate;
+
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -50,6 +55,8 @@ public class ServiceAuth {
     private final ServiceTokenFirebase serviceTokenFirebase;
     private final ServiceUserFirebase serviceUserFirebase;
 
+    @Autowired
+    private KafkaTemplate<String,Object> kafkaTemplate;
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -66,7 +73,7 @@ public class ServiceAuth {
             Object location = request.getLocation();
 
             log.info("Registering user with the email {} .....", email);
-
+            kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
             UserRecord userRecord = serviceUserFirebase.createUser(email, username, request.getPassword(), phone);
             var firebaseID = userRecord.getUid();
             var firebaseEmail = userRecord.getEmail();
@@ -77,6 +84,7 @@ public class ServiceAuth {
 
             if (emailUsed) {
 //                Send email
+                kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
                 throw new Exception("This Email is already in our records. Check your email.");
             }
 
@@ -84,6 +92,7 @@ public class ServiceAuth {
 
             if (userExist) {
 //                Send email
+                kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
                 throw new Exception("This Username is already in our records. Check your email.");
             }
 

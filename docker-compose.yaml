@@ -32,7 +32,9 @@ services:
     container_name: zookeeper
     ports:
       - "2181:2181"
-
+    networks:
+      - api.orbfin.tech
+      
   kafka:
     image: wurstmeister/kafka
     container_name: kafka
@@ -41,6 +43,8 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    networks:
+      - api.orbfin.tech
 
   gateway:
     env_file:
@@ -220,4 +224,8 @@ networks:
   #   external: true
       
 volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
   pgdata:
