@@ -10,9 +10,23 @@ import org.springframework.kafka.config.TopicBuilder;
 public class ConfigKafka {
 
     @Bean
-    public NewTopic topic() {
+    public NewTopic signup() {
         return TopicBuilder
-                .name(ConfigTopics.NEW_USER_SIGN_UP)
+                .name(ConfigTopics.USER_SIGN_UP)
+                .build();
+    }
+
+    @Bean
+    public NewTopic passwordChanged() {
+        return TopicBuilder
+                .name(ConfigTopics.PASSWORD_CHANGED)
+                .build();
+    }
+
+    @Bean
+    public NewTopic passwordForgot() {
+        return TopicBuilder
+                .name(ConfigTopics.PASSWORD_RECOVERY)
                 .build();
     }
 }

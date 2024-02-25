@@ -57,6 +57,7 @@ public class ServiceAuth {
 
     @Autowired
     private KafkaTemplate<String,Object> kafkaTemplate;
+
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -73,30 +74,44 @@ public class ServiceAuth {
             Object location = request.getLocation();
 
             log.info("Registering user with the email {} .....", email);
-            kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
+
+//            Check the location
+
+            boolean firebaseUserByPhone = serviceUserFirebase.userExistByPhone(phone);
+
+            if (firebaseUserByPhone) {
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, phone);
+                throw new Exception("This Phone Number is already in our records. Check your phone for text messages from ORBFIN.");
+            }
+
+            boolean firebaseUser = serviceUserFirebase.userExistByEmail(email);
+
+            if (firebaseUser) {
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+                throw new Exception("This Email is already in our records. Check your email.");
+            }
+
             UserRecord userRecord = serviceUserFirebase.createUser(email, username, request.getPassword(), phone);
             var firebaseID = userRecord.getUid();
             var firebaseEmail = userRecord.getEmail();
 
             log.info("{} has been saved to Firebase with the email {} and User ID {}", username, firebaseEmail, firebaseID);
 
-            var emailUsed = repositoryUser.existsByEmail(firebaseEmail);
+            boolean emailUsed = repositoryUser.existsByEmail(firebaseEmail);
 
             if (emailUsed) {
-//                Send email
-                kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
                 throw new Exception("This Email is already in our records. Check your email.");
             }
 
-            var userExist = repositoryUser.existsByUsername(username);
+            boolean userExist = repositoryUser.existsByUsername(username);
 
             if (userExist) {
-//                Send email
-                kafkaTemplate.send(ConfigTopics.NEW_USER_SIGN_UP, email);
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
                 throw new Exception("This Username is already in our records. Check your email.");
             }
 
-            var user = UserEntity.builder()
+            UserEntity user = UserEntity.builder()
                     .email(email)
                     .username(username)
                     .password(password)
@@ -106,7 +121,7 @@ public class ServiceAuth {
                     .roles(Collections.singleton(Role.SUBSCRIBER))
                     .providerGivenID(firebaseID)
                     .build();
-            var savedUser = repositoryUser.signupUser(user);
+            UserEntity savedUser = repositoryUser.signupUser(user);
 
             log.info("Username {} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
@@ -117,7 +132,7 @@ public class ServiceAuth {
             String accessToken = serviceTokenJW.generateToken(extraClaims, savedUser);
             String refreshToken = serviceTokenJW.refreshToken(user);
 
-            var session = new Session<>(accessToken, "JWT", refreshToken, savedUser.getId());
+            Session session = new Session<>(accessToken, "JWT", refreshToken, savedUser.getId());
 
             repositorySession.save(session).subscribe();
 
@@ -125,6 +140,8 @@ public class ServiceAuth {
             SecurityContextHolder.getContext().setAuthentication(token);
 
             log.info("Session created successfully for {}", username);
+
+            kafkaTemplate.send(ConfigTopics.USER_SIGN_UP, email);
 
             return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
         } catch (Exception e){
@@ -211,22 +228,29 @@ public class ServiceAuth {
     
     public ResponseChange changePassword(@NotNull RequestChange request) {
         try {
-            String email = request.getEmail();
+            String username = request.getUsername();
             String password = request.getPassword();
             String newPassword = request.getNewPassword();
             String confirmationPassword = request.getConfirmationPassword();
 
-            UserEntity user = repositoryUser.findUserByEmail(email);
+            boolean userExistsByUsername = repositoryUser.existsByUsername(username);
 
-            log.info("User with the email {} is attempting to change their password.", email);
-
-            if(user == null){
+            if(!userExistsByUsername){
                 return ResponseChange.builder()
-                                .error("A user could not be found with this email. Check your inbox.")
-                                .build();
+                        .error("A user could not be found with this email. Check your inbox.")
+                        .build();
             }
 
-            if (!passwordEncoder().matches(password, user.getPassword())) {
+            boolean validCredentials = repositoryUser.usernamePasswordMatches(username, password);
+
+            UserEntity user = null;
+// Password needs to match check for how wordpress does this
+            log.info(String.valueOf(validCredentials));
+            if (validCredentials) {
+                user = repositoryUser.findUserByUsername(username);
+            }
+
+            if (user == null || !passwordEncoder().matches(password, user.getPassword())) {
                 return ResponseChange.builder()
                                 .error("Wrong password. If you have forgot your password click the FORGOT button.")
                                 .build();
@@ -238,11 +262,15 @@ public class ServiceAuth {
                                 .build();
             }
 
-            user.setPassword(passwordEncoder().encode(newPassword));
+            String email = user.getEmail();
 
-            UserEntity savedUser = repositoryUser.signupUser(user);
-//  Send Password Changed Email
-            return new ResponseChange(savedUser.getEmail());
+            log.info("User with the email {} is attempting to change their password.", email);
+
+            repositoryUser.changePassword(newPassword);
+
+            kafkaTemplate.send(ConfigTopics.PASSWORD_CHANGED, email);
+
+            return new ResponseChange(email);
         } catch (Exception e) {
             return ResponseChange.builder()
                     .success(null)
@@ -306,8 +334,9 @@ public class ServiceAuth {
                 UserEntity user = repositoryUser.findUserByEmail(email);
 
                 if(user != null) {
+                    kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+
                     log.info("Forgot password email sent");
-                    //                        emailAuth.sendForgotPasswordEmail(email);
 
                     return new ResponseForgot(user.getEmail());
                 } else {
@@ -322,11 +351,13 @@ public class ServiceAuth {
 
             if(userExist) {
                 UserEntity user = repositoryUser.findUserByUsername(username);
+
                 log.info("user exist");
 
                 if (user != null) {
+                    kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+
                     log.info("Forgot password email sent");
-//                       emailAuth.sendForgotPasswordEmail(user.get().getEmail());
 
                     return new ResponseForgot(user.getEmail());
                 } else {

@@ -176,14 +176,26 @@ public class RepositoryUser {
 
                 Collection<Role> roles = new ArrayList<>();
                 for (int i = 0; i < rolesArray.length(); i++) {
-                    String roleString = rolesArray.getString(i);
-                    Role roleEnum = Role.mapToRoleEnum(roleString);
-                    if (roleEnum != null) {
-                        roles.add(roleEnum);
+                    Object roleObject = rolesArray.get(i);
+                    if (roleObject != null && roleObject instanceof String) {
+                        String roleString = (String) roleObject;
+                        Role roleEnum = Role.mapToRoleEnum(roleString);
+                        if (roleEnum != null) {
+                            roles.add(roleEnum);
+                        }
                     }
                 }
 
-                boolean isAuthenticated = jsonObject.getBoolean("isAuthenticated");
+                Object isAuthenticatedObject = jsonObject.get("isAuthenticated");
+                boolean isAuthenticated = isAuthenticatedObject != null && isAuthenticatedObject instanceof Boolean
+                        ? (boolean) isAuthenticatedObject
+                        : false;
+
+                String providerGivenID = null;
+                Object providerGivenIDObject = jsonObject.opt("providerGivenID");
+                if (providerGivenIDObject != null && providerGivenIDObject != JSONObject.NULL) {
+                    providerGivenID = providerGivenIDObject.toString();
+                }
 
                 return UserEntity.builder()
                         .id(String.valueOf(jsonObject.getInt("id")))
@@ -195,7 +207,7 @@ public class RepositoryUser {
                         .lastname(jsonObject.getString("lastname"))
                         .phone(jsonObject.getString("phone"))
                         .isAuthenticated(isAuthenticated)
-                        .providerGivenID(jsonObject.getString("providerGivenID"))
+                        .providerGivenID(providerGivenID)
                         .build();
             } else {
                 return null;
@@ -254,6 +266,9 @@ public class RepositoryUser {
         }
     }
 
+    public void changePassword(String password){
+
+    }
     public void update(){}
 
     public void delete(){}

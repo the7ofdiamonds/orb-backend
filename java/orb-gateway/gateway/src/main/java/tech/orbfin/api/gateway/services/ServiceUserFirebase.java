@@ -12,6 +12,26 @@ import org.springframework.stereotype.Service;
 public class ServiceUserFirebase {
     private ServiceAuthFirebase auth;
 
+    public boolean userExistByPhone(String phone) throws FirebaseAuthException {
+        try {
+            auth.getFirebaseAuth().getUserByPhoneNumber(phone);
+
+            return true;
+        } catch (FirebaseAuthException e) {
+            return false;
+        }
+    }
+
+    public boolean userExistByEmail(String email) throws FirebaseAuthException {
+        try {
+            auth.getFirebaseAuth().getUserByEmail(email);
+
+            return true;
+        } catch (FirebaseAuthException e) {
+            return false;
+        }
+    }
+
     public UserRecord createUser(String email, String username, String password, String phone) throws FirebaseAuthException {
         try {
             UserRecord.CreateRequest request = new UserRecord.CreateRequest()
@@ -27,7 +47,6 @@ public class ServiceUserFirebase {
         } catch (FirebaseAuthException e){
             throw new FirebaseAuthException(e);
         }
-        // Send email
     }
 
     public UserRecord getUser(String uid) throws FirebaseAuthException {
@@ -43,7 +62,6 @@ public class ServiceUserFirebase {
                 .setPassword(newPassword);
 
         auth.getFirebaseAuth().updateUser(request);
-        // Send Password changed Email
     }
 
     public void changeUsername(String uid, String displayName) throws FirebaseAuthException {
@@ -51,7 +69,6 @@ public class ServiceUserFirebase {
                 .setDisplayName(displayName);
 
         auth.getFirebaseAuth().updateUser(request);
-        // Send Username Changed Email
     }
 
     public void changePhone(String uid, String phone) throws FirebaseAuthException {

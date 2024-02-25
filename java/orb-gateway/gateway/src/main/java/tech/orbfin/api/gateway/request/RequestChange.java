@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class RequestChange {
-    private String email;
+    private String username;
     private String password;
     private String newPassword;
     private String confirmationPassword;
 
     public RequestChange() {
-        this.email = null;
+        this.username = null;
         this.password = null;
         this.newPassword = null;
         this.confirmationPassword = null;
