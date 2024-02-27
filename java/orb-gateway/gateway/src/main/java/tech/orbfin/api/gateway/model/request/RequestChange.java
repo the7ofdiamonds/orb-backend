@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.request;
+package tech.orbfin.api.gateway.model.request;
 
 import lombok.Getter;
 import lombok.Setter;

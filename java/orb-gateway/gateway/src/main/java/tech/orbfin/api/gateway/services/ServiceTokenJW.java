@@ -4,8 +4,8 @@ import io.jsonwebtoken.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
-import tech.orbfin.api.gateway.repositories.RepositoryUser;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class ServiceTokenJW {
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
     @Autowired
-    private RepositoryUser repositoryUser;
+    private IRepositoryUser iRepositoryUser;
     @Autowired
     private RepositorySession repositorySession;
 

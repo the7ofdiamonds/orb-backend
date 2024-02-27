@@ -1,12 +1,10 @@
 package tech.orbfin.api.gateway.services;
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import tech.orbfin.api.gateway.repositories.RepositoryUser;
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
@@ -14,13 +12,13 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class ServiceUser {
-    private final RepositoryUser userRepository;
+    private final IRepositoryUser iRepositoryUser;
 
     public boolean userExistsByEmail(String email) throws Exception {
         try {
             log.info("Checking if user exists by email: " + email);
 
-            boolean userExists = userRepository.existsByEmail(email);
+            boolean userExists = iRepositoryUser.existsByEmail(email);
 
             return userExists;
         } catch (Exception e) {
@@ -33,7 +31,7 @@ public class ServiceUser {
         try{
             log.info("Loading user by email: " + email);
 
-            UserEntity user = userRepository.findUserByEmail(email);
+            UserEntity user = iRepositoryUser.findUserByEmail(email);
 
             log.info("Loaded user details: " + user);
 
@@ -54,7 +52,7 @@ public class ServiceUser {
         try {
             log.info("Checking if user exists by username: " + username);
 
-            boolean userExists = userRepository.existsByUsername(username);
+            boolean userExists = iRepositoryUser.existsByUsername(username);
 
             return userExists;
         } catch (Exception e) {
@@ -67,7 +65,7 @@ public class ServiceUser {
         try{
             log.info("Loading user by username: " + username);
 
-            UserEntity user = userRepository.findUserByUsername(username);
+            UserEntity user = iRepositoryUser.findUserByUsername(username);
 
             log.info("Loaded user details for username {}: {}", username, user);
 

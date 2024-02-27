@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.response;
+package tech.orbfin.api.gateway.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

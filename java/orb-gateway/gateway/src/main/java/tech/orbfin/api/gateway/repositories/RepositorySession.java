@@ -30,7 +30,7 @@ public class RepositorySession {
                 .log();
     }
 
-    public Flux<Session> findAllValidSessionsByUserId(@Param("userId") String userId) {
+    public Flux<Session> findAllValidSessionsByUserId(@Param("userId") Long userId) {
         return operations.opsForHash()
                 .values(userId.toString())
                 .flatMap(sessionObjects ->

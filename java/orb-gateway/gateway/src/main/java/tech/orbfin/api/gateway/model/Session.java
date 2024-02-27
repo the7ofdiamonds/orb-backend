@@ -26,13 +26,13 @@ public class Session<T, U> implements Serializable {
     private T token;
     private String type;
     private U refreshToken;
-    private String userid;
+    private Long userid;
     private boolean isAuthenticated;
     private boolean expired;
     private boolean revoked;
 
 
-    public Session(T token, String type, U refreshToken, String userid) {
+    public Session(T token, String type, U refreshToken, Long userid) {
         this.id = token;
         this.token = token;
         this.type = type;
@@ -46,7 +46,7 @@ public class Session<T, U> implements Serializable {
             @JsonProperty("token") T token,
             @JsonProperty("type") String type,
             @JsonProperty("refreshToken") U refreshToken,
-            @JsonProperty("userid") String userid,
+            @JsonProperty("userid") Long userid,
             @JsonProperty("isAuthenticated") Boolean isAuthenticated,
             @JsonProperty("expired") Boolean expired,
             @JsonProperty("revoked") Boolean revoked) {

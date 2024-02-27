@@ -1,10 +1,8 @@
-package tech.orbfin.api.gateway.request;
+package tech.orbfin.api.gateway.model.request;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
 import tech.orbfin.api.gateway.exceptions.LogoutException;
 
 @Getter

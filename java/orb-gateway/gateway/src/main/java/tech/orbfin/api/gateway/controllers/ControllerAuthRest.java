@@ -1,7 +1,8 @@
 package tech.orbfin.api.gateway.controllers;
 
-import tech.orbfin.api.gateway.request.*;
-import tech.orbfin.api.gateway.response.*;
+import tech.orbfin.api.gateway.model.request.*;
+import tech.orbfin.api.gateway.model.response.*;
+
 import tech.orbfin.api.gateway.services.ServiceAuth;
 
 import reactor.core.publisher.Mono;

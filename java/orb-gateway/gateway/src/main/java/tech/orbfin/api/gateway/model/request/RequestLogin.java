@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.request;
+package tech.orbfin.api.gateway.model.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

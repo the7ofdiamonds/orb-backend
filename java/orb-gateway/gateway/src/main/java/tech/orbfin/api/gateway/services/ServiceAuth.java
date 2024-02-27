@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.services;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import tech.orbfin.api.gateway.configurations.ConfigTopics;
@@ -7,22 +9,20 @@ import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
-import tech.orbfin.api.gateway.repositories.RepositoryUser;
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 
-import tech.orbfin.api.gateway.request.RequestRegister;
-import tech.orbfin.api.gateway.request.RequestLogin;
-import tech.orbfin.api.gateway.request.RequestChange;
-import tech.orbfin.api.gateway.request.RequestLogout;
-import tech.orbfin.api.gateway.request.RequestForgot;
+import tech.orbfin.api.gateway.model.request.RequestRegister;
+import tech.orbfin.api.gateway.model.request.RequestLogin;
+import tech.orbfin.api.gateway.model.request.RequestChange;
+import tech.orbfin.api.gateway.model.request.RequestLogout;
+import tech.orbfin.api.gateway.model.request.RequestForgot;
 
-import tech.orbfin.api.gateway.response.ResponseRegister;
-import tech.orbfin.api.gateway.response.ResponseLogin;
-import tech.orbfin.api.gateway.response.ResponseChange;
-import tech.orbfin.api.gateway.response.ResponseLogout;
-import tech.orbfin.api.gateway.response.ResponseForgot;
-
-import org.springframework.transaction.annotation.Transactional;
+import tech.orbfin.api.gateway.model.response.ResponseRegister;
+import tech.orbfin.api.gateway.model.response.ResponseLogin;
+import tech.orbfin.api.gateway.model.response.ResponseChange;
+import tech.orbfin.api.gateway.model.response.ResponseLogout;
+import tech.orbfin.api.gateway.model.response.ResponseForgot;
 
 import com.google.firebase.auth.UserRecord;
 
@@ -49,7 +49,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 @Service
 @AllArgsConstructor
 public class ServiceAuth {
-    private RepositoryUser repositoryUser;
+    private IRepositoryUser iRepositoryUser;
     private RepositorySession repositorySession;
     private ServiceTokenJW serviceTokenJW;
     private final ServiceTokenFirebase serviceTokenFirebase;
@@ -74,7 +74,7 @@ public class ServiceAuth {
             Object location = request.getLocation();
 
             log.info("Registering user with the email {} .....", email);
-
+            log.info(password);
 //            Check the location
 
             boolean firebaseUserByPhone = serviceUserFirebase.userExistByPhone(phone);
@@ -97,34 +97,36 @@ public class ServiceAuth {
 
             log.info("{} has been saved to Firebase with the email {} and User ID {}", username, firebaseEmail, firebaseID);
 
-            boolean emailUsed = repositoryUser.existsByEmail(firebaseEmail);
+            boolean emailUsed = iRepositoryUser.existsByEmail(firebaseEmail);
 
             if (emailUsed) {
                 kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
                 throw new Exception("This Email is already in our records. Check your email.");
             }
 
-            boolean userExist = repositoryUser.existsByUsername(username);
+            boolean userExist = iRepositoryUser.existsByUsername(username);
 
             if (userExist) {
                 kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
                 throw new Exception("This Username is already in our records. Check your email.");
             }
 
+            UserEntity savedUser = iRepositoryUser.signupUser(
+                    email, username, password, firstname, lastname, phone);
+
+            log.info("Username {} has been signed up successfully", username);
+            log.info("Creating a session for {} ....", username);
+
             UserEntity user = UserEntity.builder()
                     .email(email)
                     .username(username)
-                    .password(password)
+                    .password("password")
                     .firstname(firstname)
                     .lastname(lastname)
                     .phone(phone)
                     .roles(Collections.singleton(Role.SUBSCRIBER))
                     .providerGivenID(firebaseID)
                     .build();
-            UserEntity savedUser = repositoryUser.signupUser(user);
-
-            log.info("Username {} has been signed up successfully", username);
-            log.info("Creating a session for {} ....", username);
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
@@ -156,15 +158,16 @@ public class ServiceAuth {
         }
     }
 
+    @Transactional
     public ResponseLogin login(@NotNull RequestLogin request){
         try {
             log.info("Login function has been called.");
 
             var username = request.getUsername();
-            var password = request.getPassword();
+            var password = passwordEncoder().encode(request.getPassword());
             Object location = request.getLocation();
 
-            boolean userExists = repositoryUser.existsByUsername(username);
+            boolean userExists = iRepositoryUser.existsByUsername(username);
 
             if (!userExists) {
                 return ResponseLogin.builder()
@@ -173,7 +176,7 @@ public class ServiceAuth {
                                 .build();
             }
 
-            boolean usernamePasswordMatches = repositoryUser.usernamePasswordMatches(username, password);
+            boolean usernamePasswordMatches = iRepositoryUser.usernamePasswordMatches(username, "password");
 
             if (!usernamePasswordMatches) {
                 return ResponseLogin.builder()
@@ -182,7 +185,7 @@ public class ServiceAuth {
                         .build();
             }
 
-            UserEntity userEntity = repositoryUser.loginUser(username, password);
+            UserEntity userEntity = iRepositoryUser.loginUser(username, "password");
 
             var email = userEntity.getEmail();
             username = userEntity.getUsername();
@@ -233,22 +236,28 @@ public class ServiceAuth {
             String newPassword = request.getNewPassword();
             String confirmationPassword = request.getConfirmationPassword();
 
-            boolean userExistsByUsername = repositoryUser.existsByUsername(username);
+            boolean userExistsByUsername = iRepositoryUser.existsByUsername(username);
 
             if(!userExistsByUsername){
                 return ResponseChange.builder()
-                        .error("A user could not be found with this email. Check your inbox.")
+                        .error("A user could not be found with this Username. Check your inbox.")
                         .build();
             }
 
-            boolean validCredentials = repositoryUser.usernamePasswordMatches(username, password);
+            boolean validCredentials = iRepositoryUser.usernamePasswordMatches(username, "password");
 
             UserEntity user = null;
 // Password needs to match check for how wordpress does this
-            log.info(String.valueOf(validCredentials));
+
             if (validCredentials) {
-                user = repositoryUser.findUserByUsername(username);
+                user = iRepositoryUser.findUserByUsername(username);
             }
+
+            log.info(password + " Sent password");
+            String encryptedPass = passwordEncoder().encode(password);
+
+            log.info(encryptedPass);
+            log.info(user.getPassword() + " Saved password");
 
             if (user == null || !passwordEncoder().matches(password, user.getPassword())) {
                 return ResponseChange.builder()
@@ -266,7 +275,13 @@ public class ServiceAuth {
 
             log.info("User with the email {} is attempting to change their password.", email);
 
-            repositoryUser.changePassword(newPassword);
+            boolean passwordChanged = iRepositoryUser.changePassword(email, username, password, newPassword);
+
+            if(!passwordChanged){
+                return ResponseChange.builder()
+                        .error("There was na error chaning your password.")
+                        .build();
+            }
 
             kafkaTemplate.send(ConfigTopics.PASSWORD_CHANGED, email);
 
@@ -283,7 +298,7 @@ public class ServiceAuth {
     public ResponseLogout logout(@NotNull RequestLogout request) {
         try {
             String username = serviceTokenJW.extractUsername(request.getToken());
-            UserEntity user = repositoryUser.findUserByUsername(username);
+            UserEntity user = iRepositoryUser.findUserByUsername(username);
 
             log.info("service auth logout");
 
@@ -331,7 +346,7 @@ public class ServiceAuth {
             }
 
             if(email != null) {
-                UserEntity user = repositoryUser.findUserByEmail(email);
+                UserEntity user = iRepositoryUser.findUserByEmail(email);
 
                 if(user != null) {
                     kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
@@ -347,10 +362,10 @@ public class ServiceAuth {
                 }
             }
 
-            boolean userExist = repositoryUser.existsByUsername(username);
+            boolean userExist = iRepositoryUser.existsByUsername(username);
 
             if(userExist) {
-                UserEntity user = repositoryUser.findUserByUsername(username);
+                UserEntity user = iRepositoryUser.findUserByUsername(username);
 
                 log.info("user exist");
 
