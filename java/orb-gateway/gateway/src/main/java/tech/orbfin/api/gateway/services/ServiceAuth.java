@@ -52,43 +52,29 @@ public class ServiceAuth {
     @Autowired
     private KafkaTemplate<String,Object> kafkaTemplate;
 
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-    
+    public final PasswordEncoder passwordEncoder;
+
     @Transactional
     public ResponseRegister register(@NotNull RequestRegister request) {
         try {
             String email = request.getEmail();
             String username = request.getUsername();
-            String password = passwordEncoder().encode(request.getPassword());
+            String password = request.getPassword();
             String firstname = request.getFirstname();
             String lastname = request.getLastname();
             String phone = request.getPhone();
             Object location = request.getLocation();
 
             log.info("Registering user with the email {} .....", email);
-            log.info(password);
 //            Check the location
 
             UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
 
-            User savedUser = serviceUser.signupUser(
-                    email, username, password, firstname, lastname, phone);
+            User user = serviceUser.signupUser(
+                    email, username, passwordEncoder.encode(password), firstname, lastname, phone);
 
             log.info("Username {} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
-
-            User user = User.builder()
-                    .email(email)
-                    .username(username)
-                    .password(password)
-                    .firstname(firstname)
-                    .lastname(lastname)
-                    .phone(phone)
-                    .roles(Collections.singleton(Role.SUBSCRIBER))
-                    .providerGivenID(firebaseUser.getUid())
-                    .build();
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
@@ -96,11 +82,11 @@ public class ServiceAuth {
             String accessToken = serviceTokenJW.generateToken(extraClaims, user);
             String refreshToken = serviceTokenJW.refreshToken(user);
 
-            Session<String, Object> session = new Session<>(accessToken, "JWT", refreshToken, savedUser.getId());
+            Session<String, Object> session = new Session<>(accessToken, "JWT", refreshToken, user.getId());
 
             repositorySession.save(session).subscribe();
 
-            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, passwordEncoder.encode(password));
             SecurityContextHolder.getContext().setAuthentication(token);
 
             log.info("Session created successfully for {}", username);
@@ -126,7 +112,7 @@ public class ServiceAuth {
             log.info("Login function has been called.");
 
             var username = request.getUsername();
-            var password = passwordEncoder().encode(request.getPassword());
+            var password = request.getPassword();
             Object location = request.getLocation();
 
             User userEntity = serviceUser.loginUser(username, password);

@@ -1,10 +1,13 @@
 package tech.orbfin.api.gateway.services;
 
 import tech.orbfin.api.gateway.configurations.ConfigTopics;
+
 import tech.orbfin.api.gateway.model.request.RequestChange;
 import tech.orbfin.api.gateway.model.request.RequestForgot;
+
 import tech.orbfin.api.gateway.model.response.ResponseChange;
 import tech.orbfin.api.gateway.model.response.ResponseForgot;
+
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
@@ -22,21 +25,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Slf4j
-@Service
 @AllArgsConstructor
+@Service
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
 
     @Autowired
     private KafkaTemplate<String,Object> kafkaTemplate;
 
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    @Autowired
+    public final PasswordEncoder passwordEncoder;
 
     public User signupUser(
             String email,
@@ -64,7 +65,7 @@ public class ServiceUser {
             Optional<User> user = iRepositoryUser.signupUser(
                     email,
                     username,
-                    password,
+                    passwordEncoder.encode(password),
                     firstName,
                     lastName,
                     phone
@@ -78,7 +79,8 @@ public class ServiceUser {
 
     public User loginUser(
             String username,
-            String password) throws Exception {
+            String password
+    ) throws Exception {
         try {
             boolean usernameExists = iRepositoryUser.existsByUsername(username);
 
@@ -86,15 +88,13 @@ public class ServiceUser {
                throw new Exception("The username " + username + " can not be found.");
             }
 
-            boolean usernamePasswordMatches = iRepositoryUser.usernamePasswordMatches(username, password);
+            User user = findUserByUsername(username);
 
-            if (!usernamePasswordMatches) {
+            if(!passwordEncoder.matches(password, user.getPassword())){
                 throw new Exception("The username " + username + " and the password provided do not match.");
             }
 
-            Optional<User> user = iRepositoryUser.loginUser(username, password);
-
-            return user.orElseThrow();
+            return user;
         } catch (Exception e){
             throw new Exception("There was an error logging in user: " + e);
         }
@@ -145,18 +145,10 @@ public class ServiceUser {
                         .build();
             }
 
-            boolean validCredentials = iRepositoryUser.usernamePasswordMatches(username, password);
-
-// Password needs to match check for how wordpress does this
+//// Password needs to match check for how wordpress does this
             User user = findUserByUsername(username);
 
-            log.info(password + " Sent password");
-            String encryptedPass = passwordEncoder().encode(password);
-
-            log.info(encryptedPass);
-            log.info(user.getPassword() + " Saved password");
-
-            if (!validCredentials || !passwordEncoder().matches(password, user.getPassword())) {
+            if (!passwordEncoder.matches(password, user.getPassword())) {
                 return ResponseChange.builder()
                         .error("Wrong password. If you have forgot your password click the FORGOT button.")
                         .build();
@@ -172,7 +164,7 @@ public class ServiceUser {
 
             log.info("User with the email {} is attempting to change their password.", email);
 
-            boolean passwordChanged = iRepositoryUser.changePassword(email, username, password, newPassword);
+            boolean passwordChanged = iRepositoryUser.changePassword(email, username, passwordEncoder.encode(newPassword));
 
             if(!passwordChanged){
                 return ResponseChange.builder()
@@ -203,6 +195,8 @@ public class ServiceUser {
                         .build();
             }
 
+            User user = null;
+
             if(email != null) {
                 boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
 
@@ -212,9 +206,11 @@ public class ServiceUser {
                             .error("This email is not in use check your inbox.")
                             .build();
                 }
+
+                user = findUserByEmail(email);
             }
 
-            if(username != null){
+            if(username != null && user == null){
                 boolean userExistByUsername = iRepositoryUser.existsByUsername(username);
 
                 if(!userExistByUsername){
@@ -224,10 +220,10 @@ public class ServiceUser {
                             .build();
                 }
 
-                User user = findUserByUsername(username);
-
-                email = user.getEmail();
+                user = findUserByUsername(username);
             }
+
+            email = user.getEmail();
 
             kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
 

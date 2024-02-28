@@ -58,11 +58,10 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_user_pass") String password,
             @Param("p_new_display_name") String newUsername);
 
-    @Query(nativeQuery = true, value = "CALL changePassword(:p_user_email, :p_display_name, :p_user_pass, :p_user_pass_new)")
+    @Query(nativeQuery = true, value = "CALL changePassword(:p_user_email, :p_display_name, :p_user_pass_new)")
     public boolean changePassword(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
             @Param("p_user_pass_new") String newPassword);
 
     @Query(nativeQuery = true, value = "CALL changeFirstName(:p_user_email, :p_display_name, :p_user_pass, :p_new_first_name)")
