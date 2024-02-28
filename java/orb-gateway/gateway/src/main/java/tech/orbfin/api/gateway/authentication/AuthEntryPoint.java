@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.authentication;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.services.*;
 
@@ -32,7 +34,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
     private ServiceTokenJW serviceTokenJW;
     private ServiceTokenFirebase serviceTokenFirebase;
     private ServiceUserFirebase serviceUserFirebase;
-    private ServiceUser serviceUser;
+    private ServiceUserDetails serviceUserDetails;
     private Boolean tokenIsValid;
     private String username;
     private UserEntity user;
@@ -50,7 +52,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
 
             log.info("Token is valid. Extracting username...");
 
-            UserEntity user = null;
+            UserDetails user = null;
 
             if (algo.equals("HS256")){
                 boolean tokenExpired = serviceTokenJW.isTokenExpired(token);
@@ -61,7 +63,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
 
                 log.info("Token is valid");
                 String username = serviceTokenJW.extractUsername(token);
-                user = serviceUser.findUserByUsername(username);
+                user = serviceUserDetails.loadUserByUsername(username);
             }
 
             if (algo.equals("RS256")) {
@@ -75,7 +77,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
                 FirebaseToken verifiedToken = FirebaseAuth.getInstance(FirebaseApp.getInstance("ORB")).verifyIdToken(token, true);
 
                 UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.getUid());
-                user = serviceUser.findUserByEmail(firebaseUser.getEmail());
+                user = serviceUserDetails.loadUserByEmail(firebaseUser.getEmail());
             }
 
             log.info("Setting authentication in SecurityContextHolder...");

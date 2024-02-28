@@ -20,8 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping
 @AllArgsConstructor
 @Component
-public class ControllerAuthRest {
-
+public class ControllerAuth {
     private ServiceAuth serviceAuth;
 
     @PostMapping("/signup")
@@ -34,18 +33,8 @@ public class ControllerAuthRest {
         return ResponseEntity.ok().body(serviceAuth.login(request));
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChange request) {
-        return ResponseEntity.ok().body(serviceAuth.changePassword(request));
-    }
-
     @PostMapping("/logout")
     public Mono<ResponseEntity<ResponseLogout>> logout(@RequestHeader RequestLogout request) {
         return Mono.just(ResponseEntity.ok().body(serviceAuth.logout(request)));
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) {
-        return ResponseEntity.ok().body(serviceAuth.forgotPassword(request));
     }
 }

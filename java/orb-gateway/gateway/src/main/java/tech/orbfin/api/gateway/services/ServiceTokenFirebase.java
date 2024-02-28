@@ -24,7 +24,7 @@ public class ServiceTokenFirebase {
             String uid
     ) throws FirebaseAuthException {
         try{
-            return auth.getFirebaseAuth()
+            return auth.firebaseAuth
                     .createCustomToken(uid, extraClaims);
         } catch (FirebaseAuthException e){
             throw new FirebaseAuthException(e);
@@ -34,7 +34,7 @@ public class ServiceTokenFirebase {
 
     public FirebaseToken verifyToken(String idToken) throws FirebaseAuthException {
         try {
-            return auth.getFirebaseAuth().verifyIdToken(idToken, true);
+            return auth.firebaseAuth.verifyIdToken(idToken, true);
         }catch(FirebaseAuthException e){
             throw new FirebaseAuthException(e);
         }
@@ -42,7 +42,7 @@ public class ServiceTokenFirebase {
 
     public FirebaseToken refreshToken(String refreshToken) throws FirebaseAuthException {
         try {
-            return auth.getFirebaseAuth().verifySessionCookie(refreshToken, true);
+            return auth.firebaseAuth.verifySessionCookie(refreshToken, true);
         } catch (FirebaseAuthException e){
             throw new FirebaseAuthException(e);
         }

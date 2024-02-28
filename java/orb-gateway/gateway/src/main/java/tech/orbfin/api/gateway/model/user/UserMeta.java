@@ -19,7 +19,7 @@ public class UserMeta {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserEntity userEntity;
+    private User user;
 
     @Column(name = "meta_key")
     private String metaKey;
@@ -42,6 +42,6 @@ public class UserMeta {
 
     @Override
     public String toString() {
-        return "UserMeta{id=" + id + ", userEntity=" + userEntity + ", metaKey='" + metaKey + "', metaValue='" + metaValue + "'}";
+        return "UserMeta{id=" + id + ", userEntity=" + user + ", metaKey='" + metaKey + "', metaValue='" + metaValue + "'}";
     }
 }

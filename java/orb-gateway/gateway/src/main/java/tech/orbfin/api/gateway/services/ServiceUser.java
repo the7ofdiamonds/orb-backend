@@ -1,12 +1,29 @@
 package tech.orbfin.api.gateway.services;
 
-import lombok.AllArgsConstructor;
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-import tech.orbfin.api.gateway.model.user.UserEntity;
+import tech.orbfin.api.gateway.configurations.ConfigTopics;
+import tech.orbfin.api.gateway.model.request.RequestChange;
+import tech.orbfin.api.gateway.model.request.RequestForgot;
+import tech.orbfin.api.gateway.model.response.ResponseChange;
+import tech.orbfin.api.gateway.model.response.ResponseForgot;
+import tech.orbfin.api.gateway.model.user.User;
 
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+
+import java.util.Optional;
+
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.springframework.stereotype.Service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.kafka.core.KafkaTemplate;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Slf4j
 @Service
@@ -14,71 +31,214 @@ import org.springframework.stereotype.Service;
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
 
-    public boolean userExistsByEmail(String email) throws Exception {
+    @Autowired
+    private KafkaTemplate<String,Object> kafkaTemplate;
+
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    public User signupUser(
+            String email,
+            String username,
+            String password,
+            String firstName,
+            String lastName,
+            String phone
+    ) throws Exception {
         try {
-            log.info("Checking if user exists by email: " + email);
+            boolean emailUsed = iRepositoryUser.existsByEmail(email);
 
-            boolean userExists = iRepositoryUser.existsByEmail(email);
+            if (emailUsed) {
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+                throw new Exception("This Email is already in our records. Check your email.");
+            }
 
-            return userExists;
-        } catch (Exception e) {
-            System.err.println("Error while searching for user by email: " + e.getMessage());
-            throw new Exception("Error while searching for user by email", e);
+            boolean usernameExist = iRepositoryUser.existsByUsername(username);
+
+            if (usernameExist) {
+                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+                throw new Exception("This Username is already in our records. Check your email.");
+            }
+
+            Optional<User> user = iRepositoryUser.signupUser(
+                    email,
+                    username,
+                    password,
+                    firstName,
+                    lastName,
+                    phone
+            );
+
+            return user.orElseThrow();
+        } catch (Exception e){
+            throw new Exception("There was an error during the login process: " + e);
         }
     }
 
-    public UserEntity findUserByEmail(String email) throws Exception {
-        try{
+    public User loginUser(
+            String username,
+            String password) throws Exception {
+        try {
+            boolean usernameExists = iRepositoryUser.existsByUsername(username);
+
+            if (!usernameExists) {
+               throw new Exception("The username " + username + " can not be found.");
+            }
+
+            boolean usernamePasswordMatches = iRepositoryUser.usernamePasswordMatches(username, password);
+
+            if (!usernamePasswordMatches) {
+                throw new Exception("The username " + username + " and the password provided do not match.");
+            }
+
+            Optional<User> user = iRepositoryUser.loginUser(username, password);
+
+            return user.orElseThrow();
+        } catch (Exception e){
+            throw new Exception("There was an error logging in user: " + e);
+        }
+    }
+
+    public User findUserByEmail(String email) throws Exception {
+        try {
             log.info("Loading user by email: " + email);
 
-            UserEntity user = iRepositoryUser.findUserByEmail(email);
+            Optional<User> user = iRepositoryUser.findUserByEmail(email);
 
             log.info("Loaded user details: " + user);
 
-            return UserEntity.builder()
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .firstname(user.getFirstname())
-                    .lastname(user.getLastname())
-                    .roles(user.getRoles())
-                    .build();
+            return user.orElseThrow();
         } catch (Exception e) {
             System.err.println("Error while loading user by username: " + e.getMessage());
             throw new Exception("Error while loading user by username", e);
         }
     }
 
-    public boolean userExistsByUsername(String username) throws Exception {
+    public User findUserByUsername(String username) throws Exception {
         try {
-            log.info("Checking if user exists by username: " + username);
-
-            boolean userExists = iRepositoryUser.existsByUsername(username);
-
-            return userExists;
-        } catch (Exception e) {
-            System.err.println("Error while searching for a user by username: " + e.getMessage());
-            throw new Exception("Error while searching for a user by username", e);
-        }
-    }
-
-    public UserEntity findUserByUsername(String username) throws Exception {
-        try{
             log.info("Loading user by username: " + username);
 
-            UserEntity user = iRepositoryUser.findUserByUsername(username);
+            Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
             log.info("Loaded user details for username {}: {}", username, user);
 
-            return UserEntity.builder()
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .firstname(user.getFirstname())
-                    .lastname(user.getLastname())
-                    .roles(user.getRoles())
-                    .build();
+            return user.orElseThrow();
         } catch (Exception e) {
             System.err.println("Error while loading user by username: " + e.getMessage());
             throw new Exception("Error while loading user by username", e);
+        }
+    }
+
+    public ResponseChange changePassword(@NotNull RequestChange request) {
+        try {
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newPassword = request.getNewPassword();
+            String confirmationPassword = request.getConfirmationPassword();
+
+            boolean userExistsByUsername = iRepositoryUser.existsByUsername(username);
+
+            if(!userExistsByUsername){
+                return ResponseChange.builder()
+                        .error("A user could not be found with this Username. Check your inbox.")
+                        .build();
+            }
+
+            boolean validCredentials = iRepositoryUser.usernamePasswordMatches(username, password);
+
+// Password needs to match check for how wordpress does this
+            User user = findUserByUsername(username);
+
+            log.info(password + " Sent password");
+            String encryptedPass = passwordEncoder().encode(password);
+
+            log.info(encryptedPass);
+            log.info(user.getPassword() + " Saved password");
+
+            if (!validCredentials || !passwordEncoder().matches(password, user.getPassword())) {
+                return ResponseChange.builder()
+                        .error("Wrong password. If you have forgot your password click the FORGOT button.")
+                        .build();
+            }
+
+            if (!newPassword.equals(confirmationPassword)) {
+                return ResponseChange.builder()
+                        .error("You need to enter the new password twice, ensuring they match exactly.")
+                        .build();
+            }
+
+            String email = user.getEmail();
+
+            log.info("User with the email {} is attempting to change their password.", email);
+
+            boolean passwordChanged = iRepositoryUser.changePassword(email, username, password, newPassword);
+
+            if(!passwordChanged){
+                return ResponseChange.builder()
+                        .error("There was na error changing your password.")
+                        .build();
+            }
+
+            kafkaTemplate.send(ConfigTopics.PASSWORD_CHANGED, email);
+
+            return new ResponseChange(email);
+        } catch (Exception e) {
+            return ResponseChange.builder()
+                    .success(null)
+                    .error("Internal server error: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    public ResponseForgot forgotPassword(@NotNull RequestForgot request ){
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+
+            if(email == null && username == null){
+                return ResponseForgot.builder()
+                        .success(null)
+                        .error("Either a username or email is required to restore your account.")
+                        .build();
+            }
+
+            if(email != null) {
+                boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
+
+                if(!userExistByEmail){
+                    return ResponseForgot.builder()
+                            .success(null)
+                            .error("This email is not in use check your inbox.")
+                            .build();
+                }
+            }
+
+            if(username != null){
+                boolean userExistByUsername = iRepositoryUser.existsByUsername(username);
+
+                if(!userExistByUsername){
+                    return ResponseForgot.builder()
+                            .success(null)
+                            .error("This username " + username + " is not in use. Please provide your email.")
+                            .build();
+                }
+
+                User user = findUserByUsername(username);
+
+                email = user.getEmail();
+            }
+
+            kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+
+            return ResponseForgot.builder()
+                    .success("Check your email at " + email + " for further instructions")
+                    .build();
+        } catch (Exception e) {
+            return ResponseForgot.builder()
+                    .success(null)
+                    .error("Internal server error: " + e)
+                    .build();
         }
     }
 }

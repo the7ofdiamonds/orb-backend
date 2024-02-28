@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.authentication.AuthJWT;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.services.ServiceToken;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import tech.orbfin.api.gateway.services.ServiceUser;
+import tech.orbfin.api.gateway.services.ServiceUserDetails;
 
 @Primary
 @Slf4j
@@ -32,7 +34,7 @@ public class FilterJWT implements GlobalFilter {
     private final ServiceToken serviceToken;
     private final ServiceTokenJW serviceTokenJW;
     private final ServiceUser serviceUser;
-
+    private final ServiceUserDetails serviceUserDetails;
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         try {
@@ -79,7 +81,7 @@ public class FilterJWT implements GlobalFilter {
 
             }
 
-            UserEntity user = serviceUser.findUserByUsername(username);
+            UserDetails user = serviceUserDetails.loadUserByUsername(username);
 
             if(user != null) {
                 AuthJWT authJWT = new AuthJWT(

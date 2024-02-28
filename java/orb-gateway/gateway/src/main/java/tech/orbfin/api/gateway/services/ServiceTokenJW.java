@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 import tech.orbfin.api.gateway.repositories.RepositorySession;
 import tech.orbfin.api.gateway.model.user.UserEntity;
@@ -45,7 +46,7 @@ public class ServiceTokenJW {
 
     private String buildToken(
             Map<String, Object> extraClaims,
-            UserEntity user,
+            User user,
             long expiration
     ) {
         return Jwts
@@ -60,13 +61,13 @@ public class ServiceTokenJW {
 
     public String generateToken(
             Map<String, Object> extraClaims,
-            UserEntity user
+            User user
     ) {
         return buildToken(extraClaims, user, expiration);
     }
 
     public String refreshToken(
-            UserEntity user
+            User user
     ) {
         return buildToken(new HashMap<>(), user, refreshExpiration);
     }

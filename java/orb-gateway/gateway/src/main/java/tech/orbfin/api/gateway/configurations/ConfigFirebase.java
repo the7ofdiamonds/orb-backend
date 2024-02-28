@@ -2,9 +2,7 @@ package tech.orbfin.api.gateway.configurations;
 
 import tech.orbfin.api.gateway.utils.JSON;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
+import java.io.FileInputStream;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.FileInputStream;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 
 @Setter
 @Getter
