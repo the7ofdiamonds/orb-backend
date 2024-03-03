@@ -1,24 +1,25 @@
 package tech.orbfin.api.gateway.model.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import org.springframework.stereotype.Component;
 
-@Component
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@Data
-@Builder
-@Setter
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
+@Data
+@Setter
+@Getter
+@Component
 public class ResponseChange {
-    private String success;
+    private String successMessage;
     private String email;
-    private String error;
+    private String errorMessage;
 
     public ResponseChange(String email){
-        this.success = "Your password has been changed an email to confirm this was sent to " + email + ".";
-//        Send Password Changed email
+        this.successMessage = "Your password has been changed an email to confirm this was sent to " + email + ".";
     }
 }

@@ -1,9 +1,13 @@
 package tech.orbfin.api.gateway.model.request;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 import org.springframework.stereotype.Component;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
 @Getter
 @Setter
 @Component

@@ -2,29 +2,27 @@ package tech.orbfin.api.gateway.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
-@Component
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
+@Data
+@Setter
+@Getter
+@Component
 public class ResponseLogin {
-    private String success;
+    private String successMessage;
     private String username;
-    @JsonProperty("access_token")
     private String accessToken;
-    @JsonProperty("refresh_token")
     private String refreshToken;
-    private String error;
+    private String errorMessage;
 
     public ResponseLogin(String username, String accessToken, String refreshToken){
-        this.success = "You have been successfully logged in as " + username + ".";
+        this.successMessage = "You have been successfully logged in as " + username + ".";
+        this.username = username;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }

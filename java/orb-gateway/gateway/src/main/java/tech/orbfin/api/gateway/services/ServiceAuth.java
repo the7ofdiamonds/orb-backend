@@ -1,22 +1,15 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.configurations.ConfigTopics;
+import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
-import tech.orbfin.api.gateway.repositories.RepositorySession;
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+import tech.orbfin.api.gateway.repositories.IRepositorySession;
 
-import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.User;
-
-import tech.orbfin.api.gateway.model.request.RequestRegister;
 import tech.orbfin.api.gateway.model.request.RequestLogin;
-import tech.orbfin.api.gateway.model.request.RequestLogout;
-
-import tech.orbfin.api.gateway.model.response.ResponseRegister;
 import tech.orbfin.api.gateway.model.response.ResponseLogin;
-import tech.orbfin.api.gateway.model.response.ResponseLogout;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,15 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.google.firebase.auth.UserRecord;
 
-import jakarta.transaction.Transactional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import org.jetbrains.annotations.NotNull;
@@ -47,66 +36,11 @@ public class ServiceAuth {
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUser serviceUser;
     private final ServiceTokenJW serviceTokenJW;
-    private final RepositorySession repositorySession;
+    private final IRepositoryUser iRepositoryUser;
+    private final IRepositorySession iRepositorySession;
+    private final PasswordEncoder passwordEncoder;
+    private final KafkaTemplate<String,Object> kafkaTemplate;
 
-    @Autowired
-    private KafkaTemplate<String,Object> kafkaTemplate;
-
-    public final PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public ResponseRegister register(@NotNull RequestRegister request) {
-        try {
-            String email = request.getEmail();
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String firstname = request.getFirstname();
-            String lastname = request.getLastname();
-            String phone = request.getPhone();
-            Object location = request.getLocation();
-
-            log.info("Registering user with the email {} .....", email);
-//            Check the location
-
-            UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
-
-            User user = serviceUser.signupUser(
-                    email, username, passwordEncoder.encode(password), firstname, lastname, phone);
-
-            log.info("Username {} has been signed up successfully", username);
-            log.info("Creating a session for {} ....", username);
-
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("location", location);
-
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
-            String refreshToken = serviceTokenJW.refreshToken(user);
-
-            Session<String, Object> session = new Session<>(accessToken, "JWT", refreshToken, user.getId());
-
-            repositorySession.save(session).subscribe();
-
-            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, passwordEncoder.encode(password));
-            SecurityContextHolder.getContext().setAuthentication(token);
-
-            log.info("Session created successfully for {}", username);
-
-            kafkaTemplate.send(ConfigTopics.USER_SIGN_UP, email);
-
-            return new ResponseRegister(user.getUsername(), user.getEmail());
-        } catch (Exception e){
-            System.err.println("Error while signing up user : " + e.getMessage());
-
-            return ResponseRegister.builder()
-                    .success(null)
-                    .accessToken(null)
-                    .refreshToken(null)
-                    .error(e.getMessage())
-                    .build();
-        }
-    }
-
-    @Transactional
     public ResponseLogin login(@NotNull RequestLogin request){
         try {
             log.info("Login function has been called.");
@@ -114,12 +48,31 @@ public class ServiceAuth {
             var username = request.getUsername();
             var password = request.getPassword();
             Object location = request.getLocation();
+            log.info(location.toString());
 
-            User userEntity = serviceUser.loginUser(username, password);
+            log.info("User {} is attempting to login", username);
+            boolean usernameExists = iRepositoryUser.existsByUsername(username);
 
-            var email = userEntity.getEmail();
-            username = userEntity.getUsername();
-            var role = userEntity.getRoles();
+            if (!usernameExists) {
+                throw new Exception("The username " + username + " can not be found.");
+            }
+
+            User user = serviceUser.findUserByUsername(username);
+            String savedPassword = user.getPassword();
+            String email = user.getEmail();
+
+            if(savedPassword.startsWith("$P")){
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, email);
+                return ResponseLogin.builder()
+                        .errorMessage("Password needs to be updated check your email inbox.").build();
+            }
+
+            if(!passwordEncoder.matches(password, savedPassword)){
+                throw new Exception("The username " + username + " and the password provided do not match.");
+            }
+
+            username = user.getUsername();
+            var role = user.getRoles();
 
             log.info("{} {} is attempting to login.", role, username);
 
@@ -137,65 +90,20 @@ public class ServiceAuth {
 
             log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, userEntity);
-            String refreshToken = serviceTokenJW.refreshToken(userEntity);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
+            String refreshToken = serviceTokenJW.refreshToken(user);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            repositorySession.save(new Session<>(accessToken, "Firebase Token", refreshToken, userEntity.getId()))
-                    .doOnError(e -> {
-                        throw new RuntimeException(e);
-                    })
-                    .subscribe();
+            iRepositorySession.save(new Session(accessToken, serviceTokenJW.ALGORITHM, refreshToken, user.getId(), true, false, false));
 
             log.info("Session created successfully for {}", username);
 
             return new ResponseLogin(username, accessToken, refreshToken);
         } catch(Exception e) {
             return ResponseLogin.builder()
-                    .success(null)
-                    .accessToken(null)
-                    .refreshToken(null)
-                    .error("Internal server error: " + e.getMessage())
-                    .build();
-        }
-    }
-
-    @Transactional
-    public ResponseLogout logout(@NotNull RequestLogout request) {
-        try {
-            String username = serviceTokenJW.extractUsername(request.getToken());
-            User user = serviceUser.findUserByUsername(username);
-
-            log.info("service auth logout");
-
-            if (user == null) {
-                return ResponseLogout.builder()
-                        .error("The username " + username + " can not be found.")
-                        .build();
-            }
-
-            var userid = user.getId();
-            var sessions = repositorySession.findAllValidSessionsByUserId(userid);
-
-            sessions.collectList().subscribe(sessionsList -> {
-                if (sessionsList.isEmpty()) {
-                    SecurityContextHolder.clearContext();
-                }
-
-                for (Session session : sessionsList) {
-                    session.setExpired(true);
-                    session.setRevoked(true);
-                    repositorySession.save(session).subscribe();
-                }
-            });
-
-            return new ResponseLogout(username);
-        } catch (Exception e){
-            return ResponseLogout.builder()
-                    .success(null)
-                    .error("Internal server error: " + e.getMessage())
+                    .errorMessage("Internal server error: " + e.getMessage())
                     .build();
         }
     }

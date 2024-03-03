@@ -1,29 +1,27 @@
 package tech.orbfin.api.gateway.model.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+
 import org.springframework.stereotype.Component;
 
-@Component
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
+@Data
 @Setter
 @Getter
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Component
 public class ResponseRegister {
-    private String success;
+    private String successMessage;
     private String username;
-    @JsonProperty("access_token")
     private String accessToken;
-    @JsonProperty("refresh_token")
     private String refreshToken;
-    private String error;
+    private String errorMessage;
 
     public ResponseRegister(String username, String email){
-        this.success = "You have been successfully signed up and logged in as " + username + ". An email has also been sent to "+ email + " check your inbox.";
-//      Send Register Email
+        this.successMessage = "You have been successfully signed up and logged in as " + username + ". An email has also been sent to "+ email + " check your inbox.";
     }
 }

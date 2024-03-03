@@ -7,6 +7,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+#      password: =<password>
+#      username: =<username>
 
   datasource:
     url: ${DATABASE_URL:jdbc:mysql://localhost:3306/wordpress}
@@ -126,7 +128,9 @@ application:
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      expiration: 86400000
+      algorithm: HS256
+      access-token:
+        expiration: 86400000
       refresh-token:
         expiration: 86400000  # a day
       client:

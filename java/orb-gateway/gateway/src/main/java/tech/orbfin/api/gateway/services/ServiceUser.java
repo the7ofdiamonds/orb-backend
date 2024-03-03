@@ -1,17 +1,25 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.configurations.ConfigTopics;
+import com.google.firebase.auth.UserRecord;
+import jakarta.transaction.Transactional;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
 import tech.orbfin.api.gateway.model.request.RequestChange;
 import tech.orbfin.api.gateway.model.request.RequestForgot;
 
+import tech.orbfin.api.gateway.model.request.RequestRegister;
 import tech.orbfin.api.gateway.model.response.ResponseChange;
 import tech.orbfin.api.gateway.model.response.ResponseForgot;
 
+import tech.orbfin.api.gateway.model.response.ResponseRegister;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.AllArgsConstructor;
@@ -20,8 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import org.springframework.stereotype.Service;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -32,71 +38,86 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Service
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
+    private KafkaTemplate<String, Object> kafkaTemplate;
+    private final ServiceUserFirebase serviceUserFirebase;
 
-    @Autowired
-    private KafkaTemplate<String,Object> kafkaTemplate;
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-    @Autowired
-    public final PasswordEncoder passwordEncoder;
-
-    public User signupUser(
-            String email,
-            String username,
-            String password,
-            String firstName,
-            String lastName,
-            String phone
-    ) throws Exception {
+    @Transactional
+    public ResponseRegister register(@NotNull RequestRegister request) {
         try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmPassword = request.getConfirmPassword();
+            String firstname = request.getFirstname();
+            String lastname = request.getLastname();
+            String phone = request.getPhone();
+            Object location = request.getLocation();
+
+            log.info("Registering user with the email {} .....", email);
+//            Check the location
+
             boolean emailUsed = iRepositoryUser.existsByEmail(email);
 
             if (emailUsed) {
-                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
-                throw new Exception("This Email is already in our records. Check your email.");
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+                return ResponseRegister.builder()
+                        .error("This Email is already in our records. Check your email.")
+                        .build();
             }
 
             boolean usernameExist = iRepositoryUser.existsByUsername(username);
 
             if (usernameExist) {
-                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
-                throw new Exception("This Username is already in our records. Check your email.");
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+                return ResponseRegister.builder()
+                        .error("This Username is already in our records. Check your email inbox.")
+                        .build();
+            }
+
+            if (!password.equals(confirmPassword)) {
+                return ResponseRegister.builder()
+                        .error("Passwords do not match.")
+                        .build();
             }
 
             Optional<User> user = iRepositoryUser.signupUser(
                     email,
                     username,
-                    passwordEncoder.encode(password),
-                    firstName,
-                    lastName,
+                    passwordEncoder().encode(password),
+                    firstname,
+                    lastname,
                     phone
             );
 
-            return user.orElseThrow();
-        } catch (Exception e){
-            throw new Exception("There was an error during the login process: " + e);
-        }
-    }
+            if(user.isEmpty()){
+                return ResponseRegister.builder()
+                        .error("There was an error signing up please try again at another time.")
+                        .build();
+            };
+            var savedUser = user.get();
 
-    public User loginUser(
-            String username,
-            String password
-    ) throws Exception {
-        try {
-            boolean usernameExists = iRepositoryUser.existsByUsername(username);
+            UserRecord firebaseUser = serviceUserFirebase.createUser(savedUser.getEmail(), savedUser.getUsername(), savedUser.getPassword(), savedUser.getPhone());
 
-            if (!usernameExists) {
-               throw new Exception("The username " + username + " can not be found.");
-            }
+            log.info("Username {} has been signed up successfully", username);
+            log.info("Creating a session for {} ....", username);
 
-            User user = findUserByUsername(username);
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("location", location);
 
-            if(!passwordEncoder.matches(password, user.getPassword())){
-                throw new Exception("The username " + username + " and the password provided do not match.");
-            }
+            kafkaTemplate.send(ConfigKafkaTopics.USER_REGISTER, email);
 
-            return user;
-        } catch (Exception e){
-            throw new Exception("There was an error logging in user: " + e);
+            return new ResponseRegister(firebaseUser.getDisplayName(), firebaseUser.getEmail());
+        } catch (Exception e) {
+            System.err.println("Error while signing up user : " + e.getMessage());
+
+            return ResponseRegister.builder()
+                    .error(e.getMessage())
+                    .build();
         }
     }
 
@@ -139,7 +160,7 @@ public class ServiceUser {
 
             boolean userExistsByUsername = iRepositoryUser.existsByUsername(username);
 
-            if(!userExistsByUsername){
+            if (!userExistsByUsername) {
                 return ResponseChange.builder()
                         .error("A user could not be found with this Username. Check your inbox.")
                         .build();
@@ -148,7 +169,7 @@ public class ServiceUser {
 //// Password needs to match check for how wordpress does this
             User user = findUserByUsername(username);
 
-            if (!passwordEncoder.matches(password, user.getPassword())) {
+            if (!passwordEncoder().matches(password, user.getPassword())) {
                 return ResponseChange.builder()
                         .error("Wrong password. If you have forgot your password click the FORGOT button.")
                         .build();
@@ -164,15 +185,15 @@ public class ServiceUser {
 
             log.info("User with the email {} is attempting to change their password.", email);
 
-            boolean passwordChanged = iRepositoryUser.changePassword(email, username, passwordEncoder.encode(newPassword));
+            boolean passwordChanged = iRepositoryUser.changePassword(email, username, passwordEncoder().encode(newPassword));
 
-            if(!passwordChanged){
+            if (!passwordChanged) {
                 return ResponseChange.builder()
                         .error("There was na error changing your password.")
                         .build();
             }
 
-            kafkaTemplate.send(ConfigTopics.PASSWORD_CHANGED, email);
+            kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_CHANGED, email);
 
             return new ResponseChange(email);
         } catch (Exception e) {
@@ -183,12 +204,12 @@ public class ServiceUser {
         }
     }
 
-    public ResponseForgot forgotPassword(@NotNull RequestForgot request ){
+    public ResponseForgot forgotPassword(@NotNull RequestForgot request) {
         try {
             String email = request.getEmail();
             String username = request.getUsername();
 
-            if(email == null && username == null){
+            if (email == null && username == null) {
                 return ResponseForgot.builder()
                         .success(null)
                         .error("Either a username or email is required to restore your account.")
@@ -197,10 +218,10 @@ public class ServiceUser {
 
             User user = null;
 
-            if(email != null) {
+            if (email != null) {
                 boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
 
-                if(!userExistByEmail){
+                if (!userExistByEmail) {
                     return ResponseForgot.builder()
                             .success(null)
                             .error("This email is not in use check your inbox.")
@@ -210,10 +231,10 @@ public class ServiceUser {
                 user = findUserByEmail(email);
             }
 
-            if(username != null && user == null){
+            if (username != null && user == null) {
                 boolean userExistByUsername = iRepositoryUser.existsByUsername(username);
 
-                if(!userExistByUsername){
+                if (!userExistByUsername) {
                     return ResponseForgot.builder()
                             .success(null)
                             .error("This username " + username + " is not in use. Please provide your email.")
@@ -225,7 +246,7 @@ public class ServiceUser {
 
             email = user.getEmail();
 
-            kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+            kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
 
             return ResponseForgot.builder()
                     .success("Check your email at " + email + " for further instructions")

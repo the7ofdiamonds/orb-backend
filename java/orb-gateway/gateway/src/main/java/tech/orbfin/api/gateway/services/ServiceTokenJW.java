@@ -4,10 +4,10 @@ import io.jsonwebtoken.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-import tech.orbfin.api.gateway.repositories.RepositorySession;
-import tech.orbfin.api.gateway.model.user.UserEntity;
+//import tech.orbfin.api.gateway.repositories.RepositorySession;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,14 +35,16 @@ import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 public class ServiceTokenJW {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
-    @Value("${application.security.jwt.expiration}")
+    @Value(value = "${application.security.jwt.algorithm}")
+    public SignatureAlgorithm ALGORITHM;
+    @Value("${application.security.jwt.access-token.expiration}")
     private long expiration;
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
     @Autowired
     private IRepositoryUser iRepositoryUser;
-    @Autowired
-    private RepositorySession repositorySession;
+//    @Autowired
+//    private RepositorySession repositorySession;
 
     private String buildToken(
             Map<String, Object> extraClaims,
@@ -55,7 +57,7 @@ public class ServiceTokenJW {
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey(), HS256)
+                .signWith(getSignInKey(), ALGORITHM)
                 .compact();
     }
 

@@ -10,10 +10,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.*;
 import lombok.*;
 
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
 @Data
 @Builder
 @Setter
@@ -26,28 +22,19 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "user_email")
     private String email;
-    @Column(name = "display_name")
     private String username;
-    @Column(name = "user_pass")
     private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserMeta> userMeta;
-    @Transient
     private String firstname;
-    @Transient
     private String lastname;
-    @Transient
     private String phone;
     //    Is verified
 //    Is email verified
-    @Transient
     private boolean isAuthenticated;
-    @Transient
     private Collection<Role> roles;
-    @Transient
     private String providerGivenID;
 
     private Map<String, String> getMetaValues() {

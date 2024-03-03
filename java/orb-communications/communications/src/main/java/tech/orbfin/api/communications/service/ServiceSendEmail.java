@@ -12,6 +12,11 @@ public class ServiceSendEmail {
         System.out.println("Confirmation email sent to " + user);
     }
 
+    @KafkaListener(topics = ConfigTopics.PASSWORD_UPDATE, groupId = "user-group")
+    public void passwordUpdate(String user) {
+        System.out.println("Password update email was sent to " + user);
+    }
+
     @KafkaListener(topics = ConfigTopics.PASSWORD_CHANGED, groupId = "user-group")
     public void passwordChanged(String user) {
         System.out.println("Password changed email was sent to " + user);

@@ -1,7 +1,9 @@
 package tech.orbfin.api.gateway.model.user;
 
-import jakarta.persistence.*;
 import lombok.*;
+
+import jakarta.persistence.*;
+
 
 @Data
 @Builder

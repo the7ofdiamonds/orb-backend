@@ -1,25 +1,23 @@
 package tech.orbfin.api.gateway.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
-@Component
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
+@Data
+@Setter
+@Getter
+@Component
 public class ResponseForgot {
-    private String success;
+    private String successMessage;
     private String email;
-    private String error;
+    private String errorMessage;
 
     public ResponseForgot(String email){
-        this.success = "Check your email at " + email + " for a link to change your password.";
-//        Send Forgot Password email
+        this.successMessage = "Check your email at " + email + " for a link to change your password.";
     }
 }

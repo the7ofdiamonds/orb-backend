@@ -21,6 +21,11 @@ import org.springframework.web.bind.annotation.*;
 public class ControllerUser {
     private ServiceUser serviceUser;
 
+    @PostMapping("/signup")
+    public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
+        return ResponseEntity.ok().body(serviceUser.register(request));
+    }
+
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChange request) {
         return ResponseEntity.ok().body(serviceUser.changePassword(request));

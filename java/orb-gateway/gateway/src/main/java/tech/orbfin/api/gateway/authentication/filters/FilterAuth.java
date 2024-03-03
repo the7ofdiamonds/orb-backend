@@ -19,7 +19,7 @@ import tech.orbfin.api.gateway.services.ServiceToken;
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
     private final ServiceToken serviceToken;
     private final FilterJWT filterJWT;
-    private final FilterFirebaseToken filterFirebaseToken;
+//    private final FilterFirebaseToken filterFirebaseToken;
 
     @Override
     public GatewayFilter apply(Config config) {
@@ -40,10 +40,10 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
                 filterJWT.filter(exchange, chain);
             }
 
-            if (algo.equals("RS256")) {
-                log.info("Filter Firebase Token is being used");
-                filterFirebaseToken.filter(exchange, chain);
-            }
+//            if (algo.equals("RS256")) {
+//                log.info("Filter Firebase Token is being used");
+//                filterFirebaseToken.filter(exchange, chain);
+//            }
         });
     }
 

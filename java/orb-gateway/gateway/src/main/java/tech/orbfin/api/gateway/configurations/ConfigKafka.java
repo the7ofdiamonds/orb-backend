@@ -12,21 +12,28 @@ public class ConfigKafka {
     @Bean
     public NewTopic signup() {
         return TopicBuilder
-                .name(ConfigTopics.USER_SIGN_UP)
+                .name(ConfigKafkaTopics.USER_REGISTER)
+                .build();
+    }
+
+    @Bean
+    public NewTopic passwordUpdate() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.PASSWORD_UPDATE)
                 .build();
     }
 
     @Bean
     public NewTopic passwordChanged() {
         return TopicBuilder
-                .name(ConfigTopics.PASSWORD_CHANGED)
+                .name(ConfigKafkaTopics.PASSWORD_CHANGED)
                 .build();
     }
 
     @Bean
     public NewTopic passwordForgot() {
         return TopicBuilder
-                .name(ConfigTopics.PASSWORD_RECOVERY)
+                .name(ConfigKafkaTopics.PASSWORD_RECOVERY)
                 .build();
     }
 }

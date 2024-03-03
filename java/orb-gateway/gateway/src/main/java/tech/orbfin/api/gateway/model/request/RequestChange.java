@@ -1,23 +1,19 @@
 package tech.orbfin.api.gateway.model.request;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import org.springframework.stereotype.Component;
 
-@Component
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
 @Getter
 @Setter
+@Component
 public class RequestChange {
     private String username;
     private String password;
     private String newPassword;
     private String confirmationPassword;
-
-    public RequestChange() {
-        this.username = null;
-        this.password = null;
-        this.newPassword = null;
-        this.confirmationPassword = null;
-    }
 }

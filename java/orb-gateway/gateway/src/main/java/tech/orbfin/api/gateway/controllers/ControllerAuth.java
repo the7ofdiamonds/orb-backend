@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tech.orbfin.api.gateway.services.ServiceAuthLogout;
 
 @Slf4j
 @RestController
@@ -21,12 +22,8 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 @Component
 public class ControllerAuth {
-    private ServiceAuth serviceAuth;
-
-    @PostMapping("/signup")
-    public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
-        return ResponseEntity.ok().body(serviceAuth.register(request));
-    }
+    private final ServiceAuth serviceAuth;
+    private final ServiceAuthLogout serviceAuthLogout;
 
     @PostMapping("/")
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
@@ -34,7 +31,7 @@ public class ControllerAuth {
     }
 
     @PostMapping("/logout")
-    public Mono<ResponseEntity<ResponseLogout>> logout(@RequestHeader RequestLogout request) {
-        return Mono.just(ResponseEntity.ok().body(serviceAuth.logout(request)));
+    public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
+        return ResponseEntity.ok().body(serviceAuthLogout.logout(request.getToken()));
     }
 }

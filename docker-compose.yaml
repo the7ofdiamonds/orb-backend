@@ -14,11 +14,10 @@ services:
       - ./pgdata:/var/lib/postgresql/data
     networks:
       - api.orbfin.tech
-      # - the7ofdiamonds.tech_sites
 
   redis:
     container_name: redis-session
-    image: redis
+    image: "redis/redis-stack:edge"
     restart: always
     ports:
       - 6379:6379
@@ -84,7 +83,6 @@ services:
     container_name: orb-accounts
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8081:8081
@@ -103,7 +101,6 @@ services:
     container_name: orb-products-services
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8082:8082
@@ -122,7 +119,6 @@ services:
     container_name: orb-finance
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8083:8083
@@ -141,7 +137,6 @@ services:
     container_name: orb-real-estate
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8084:8084
@@ -160,7 +155,6 @@ services:
     container_name: orb-investments
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8085:8085
@@ -179,7 +173,6 @@ services:
     container_name: orb-insurance
     restart: always
     depends_on:
-      # - gateway
       - pgsql-db
     ports:
       - 8086:8086
@@ -198,8 +191,8 @@ services:
     container_name: api.orbfin.development
     image: nginx:latest
     restart: always
-    # depends_on:
-    #   - gateway
+    depends_on:
+      - gateway
     ports:
       - ${NGINX_PORT_ONE}:8000
       - ${NGINX_PORT_ONE_SECURE}:443
@@ -211,17 +204,12 @@ services:
       - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
       - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
     networks:
-      # - the7ofdiamonds.tech_sites
       - api.orbfin.tech
     env_file: .env
 
 networks:
   api.orbfin.tech:
     name: api.orbfin.tech
-
-  # the7ofdiamonds.tech_sites:
-  #   name: the7ofdiamonds.tech_sites
-  #   external: true
       
 volumes:
   zookeeper_data:

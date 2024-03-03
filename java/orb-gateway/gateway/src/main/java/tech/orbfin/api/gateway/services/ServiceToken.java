@@ -1,8 +1,10 @@
 package tech.orbfin.api.gateway.services;
 
+import lombok.AllArgsConstructor;
 import org.json.JSONException;
 import org.json.JSONObject;
-import tech.orbfin.api.gateway.repositories.RepositorySession;
+import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.repositories.IRepositorySession;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +21,22 @@ import java.util.Base64;
 @Slf4j
 @Service
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class ServiceToken {
-    private final RepositorySession repositorySession;
+//    private final IRepositorySession iRepositorySession;
+    private final ServiceSession serviceSession;
 
-    public static String getToken(ServerWebExchange exchange){
+    public static String getToken(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
 
         return null;
     }
 
-    public static String getTokenHeader(String jwt){
+    public static String getTokenHeader(String jwt) {
         String[] parts = jwt.split("\\.");
 
         if (parts.length == 3) {
@@ -58,20 +61,13 @@ public class ServiceToken {
         return null;
     }
 
-    public String getRefreshToken(ServerWebExchange exchange){
+    public String getRefreshToken(ServerWebExchange exchange) {
         String refreshToken = exchange.getRequest().getHeaders().getFirst("Refresh-Token");
 
-        if(refreshToken != null){
+        if (refreshToken != null) {
             return refreshToken;
         }
 
         return null;
-    }
-
-    public Mono<Object> getRefreshTokenFromSession(Object jwt) {
-        log.info("Get Refresh Token");
-
-        return repositorySession.findByToken(jwt)
-                .flatMap(session -> Mono.justOrEmpty(session.getRefreshToken()));
     }
 }

@@ -5,14 +5,16 @@ import com.google.firebase.auth.UserRecord;
 
 import lombok.AllArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import tech.orbfin.api.gateway.configurations.ConfigTopics;
+import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
+@Slf4j
 @AllArgsConstructor
 @Service
 public class ServiceUserFirebase {
-    private ServiceAuthFirebase auth;
+    private final ServiceAuthFirebase auth;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public boolean userExistByPhone(String phone) throws FirebaseAuthException {
@@ -38,16 +40,16 @@ public class ServiceUserFirebase {
     public UserRecord createUser(String email, String username, String password, String phone) throws Exception {
         try {
             boolean firebaseUserByPhone = userExistByPhone(phone);
-
+log.info(phone);
             if (firebaseUserByPhone) {
-                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, phone);
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, phone);
                 throw new Exception("This Phone Number is already in our records. Check your phone for text messages from ORBFIN.");
             }
 
             boolean firebaseUser = userExistByEmail(email);
 
             if (firebaseUser) {
-                kafkaTemplate.send(ConfigTopics.PASSWORD_RECOVERY, email);
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
                 throw new Exception("This Email is already in our records. Check your email.");
             }
 

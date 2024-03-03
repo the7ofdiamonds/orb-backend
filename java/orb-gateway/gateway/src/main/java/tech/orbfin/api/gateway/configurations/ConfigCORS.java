@@ -19,8 +19,7 @@ public class ConfigCORS {
         corsConfig.addAllowedOrigin("https://the7ofdiamonds.development");
         corsConfig.addAllowedOrigin("http://localhost:8000");
         corsConfig.addAllowedMethod("*");
-        corsConfig.setExposedHeaders(Collections.singletonList("*"));
-        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type")); // Include 'Content-Type' in allowed headers
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
