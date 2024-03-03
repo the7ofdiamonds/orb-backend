@@ -1,36 +1,18 @@
 package tech.orbfin.api.gateway.services;
 
-import java.util.Map;
-
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ServiceTokenFirebase {
-    @Autowired
-    private ServiceAuthFirebase auth;
-
-    public String buildToken(
-            Map<String, Object> extraClaims,
-            String uid
-    ) throws FirebaseAuthException {
-        try{
-            return auth.firebaseAuth
-                    .createCustomToken(uid, extraClaims);
-        } catch (FirebaseAuthException e){
-            throw new FirebaseAuthException(e);
-        }
-
-    }
+    private final ServiceAuthFirebase auth;
 
     public FirebaseToken verifyToken(String idToken) throws FirebaseAuthException {
         try {
@@ -40,7 +22,7 @@ public class ServiceTokenFirebase {
         }
     }
 
-    public FirebaseToken refreshToken(String refreshToken) throws FirebaseAuthException {
+    public FirebaseToken verifyRefreshToken(String refreshToken) throws FirebaseAuthException {
         try {
             return auth.firebaseAuth.verifySessionCookie(refreshToken, true);
         } catch (FirebaseAuthException e){

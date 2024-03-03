@@ -1,30 +1,23 @@
 package tech.orbfin.api.gateway.services;
 
-import lombok.AllArgsConstructor;
-import org.json.JSONException;
-import org.json.JSONObject;
-import tech.orbfin.api.gateway.model.Session;
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
-
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ServerWebExchange;
-
-import reactor.core.publisher.Mono;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import lombok.RequiredArgsConstructor;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Service;
+
+import org.springframework.web.server.ServerWebExchange;
+
 @Slf4j
+@RequiredArgsConstructor
 @Service
-@Getter
-@AllArgsConstructor
 public class ServiceToken {
-//    private final IRepositorySession iRepositorySession;
-    private final ServiceSession serviceSession;
 
     public static String getToken(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
@@ -61,7 +54,7 @@ public class ServiceToken {
         return null;
     }
 
-    public String getRefreshToken(ServerWebExchange exchange) {
+    public static String getRefreshToken(ServerWebExchange exchange) {
         String refreshToken = exchange.getRequest().getHeaders().getFirst("Refresh-Token");
 
         if (refreshToken != null) {

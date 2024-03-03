@@ -2,7 +2,7 @@ package tech.orbfin.api.gateway.services;
 
 import jakarta.transaction.Transactional;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,12 +15,11 @@ import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ServiceAuthLogout {
     private final ServiceUser serviceUser;
     private final ServiceTokenJW serviceTokenJW;
-    //    private final RepositorySession repositorySession;
     private final IRepositorySession iRepositorySession;
 
     @Transactional
@@ -33,7 +32,7 @@ public class ServiceAuthLogout {
 
             if (user == null) {
                 return ResponseLogout.builder()
-                        .error("The username " + username + " can not be found.")
+                        .errorMessage("The username " + username + " can not be found.")
                         .build();
             }
 
@@ -44,16 +43,16 @@ public class ServiceAuthLogout {
             }
 
             for (Session session : sessions) {
+                session.setAuthenticated(false);
                 session.setExpired(true);
                 session.setRevoked(true);
                 iRepositorySession.save(session);
             }
-
+            log.info(username);
             return new ResponseLogout(username);
         } catch (Exception e) {
             return ResponseLogout.builder()
-                    .success(null)
-                    .error("Internal server error: " + e.getMessage())
+                    .errorMessage("Internal server error: " + e.getMessage())
                     .build();
         }
     }

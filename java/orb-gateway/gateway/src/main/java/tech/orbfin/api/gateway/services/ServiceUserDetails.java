@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
@@ -7,20 +8,20 @@ import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Service;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import org.springframework.stereotype.Service;
 
+
+@RequiredArgsConstructor
 @Service
-public class ServiceUserDetails
-        implements UserDetailsService {
+public class ServiceUserDetails implements UserDetailsService {
     private final IRepositoryUser iRepositoryUser;
-
-    public ServiceUserDetails(IRepositoryUser iRepositoryUser){
-        this.iRepositoryUser = iRepositoryUser;
-    }
 
     @Override
     public UserDetails loadUserByUsername(String username) {

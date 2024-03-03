@@ -1,19 +1,13 @@
 package tech.orbfin.api.gateway.services;
 
-import com.google.firebase.auth.UserRecord;
-import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
-import tech.orbfin.api.gateway.model.request.RequestChange;
-import tech.orbfin.api.gateway.model.request.RequestForgot;
+import tech.orbfin.api.gateway.model.request.*;
+import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.model.request.RequestRegister;
-import tech.orbfin.api.gateway.model.response.ResponseChange;
-import tech.orbfin.api.gateway.model.response.ResponseForgot;
-
-import tech.orbfin.api.gateway.model.response.ResponseRegister;
+import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
@@ -22,7 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import lombok.AllArgsConstructor;
+import jakarta.transaction.Transactional;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +29,16 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.google.firebase.auth.UserRecord;
+
+import static java.lang.Boolean.TRUE;
+
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
 
     @Bean
@@ -66,7 +66,7 @@ public class ServiceUser {
             if (emailUsed) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
                 return ResponseRegister.builder()
-                        .error("This Email is already in our records. Check your email.")
+                        .errorMessage("This Email is already in our records. Check your email.")
                         .build();
             }
 
@@ -75,15 +75,17 @@ public class ServiceUser {
             if (usernameExist) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
                 return ResponseRegister.builder()
-                        .error("This Username is already in our records. Check your email inbox.")
+                        .errorMessage("This Username is already in our records. Check your email inbox.")
                         .build();
             }
 
             if (!password.equals(confirmPassword)) {
                 return ResponseRegister.builder()
-                        .error("Passwords do not match.")
+                        .errorMessage("Passwords do not match.")
                         .build();
             }
+
+            UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
 
             Optional<User> user = iRepositoryUser.signupUser(
                     email,
@@ -91,17 +93,25 @@ public class ServiceUser {
                     passwordEncoder().encode(password),
                     firstname,
                     lastname,
-                    phone
+                    phone,
+                    String.valueOf(Role.USER),
+                    firebaseUser.getProviderId(),
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    TRUE,
+                    TRUE
             );
 
-            if(user.isEmpty()){
+            if (user.isEmpty()) {
                 return ResponseRegister.builder()
-                        .error("There was an error signing up please try again at another time.")
+                        .errorMessage("There was an error signing up please try again at another time.")
                         .build();
-            };
-            var savedUser = user.get();
+            }
+            ;
 
-            UserRecord firebaseUser = serviceUserFirebase.createUser(savedUser.getEmail(), savedUser.getUsername(), savedUser.getPassword(), savedUser.getPhone());
+            var savedUser = user.get();
+            log.info(String.valueOf(savedUser.isAccountNonExpired));
 
             log.info("Username {} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
@@ -111,12 +121,12 @@ public class ServiceUser {
 
             kafkaTemplate.send(ConfigKafkaTopics.USER_REGISTER, email);
 
-            return new ResponseRegister(firebaseUser.getDisplayName(), firebaseUser.getEmail());
+            return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
         } catch (Exception e) {
             System.err.println("Error while signing up user : " + e.getMessage());
 
             return ResponseRegister.builder()
-                    .error(e.getMessage())
+                    .errorMessage(e.getMessage())
                     .build();
         }
     }
@@ -142,7 +152,11 @@ public class ServiceUser {
 
             Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
-            log.info("Loaded user details for username {}: {}", username, user);
+            if (user.isEmpty()) {
+                return new User();
+            }
+
+            log.info("Loaded user details for username {}: {}", username, user.get());
 
             return user.orElseThrow();
         } catch (Exception e) {
@@ -162,22 +176,21 @@ public class ServiceUser {
 
             if (!userExistsByUsername) {
                 return ResponseChange.builder()
-                        .error("A user could not be found with this Username. Check your inbox.")
+                        .errorMessage("A user could not be found with this Username. Check your inbox.")
                         .build();
             }
 
-//// Password needs to match check for how wordpress does this
             User user = findUserByUsername(username);
 
             if (!passwordEncoder().matches(password, user.getPassword())) {
                 return ResponseChange.builder()
-                        .error("Wrong password. If you have forgot your password click the FORGOT button.")
+                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
                         .build();
             }
 
             if (!newPassword.equals(confirmationPassword)) {
                 return ResponseChange.builder()
-                        .error("You need to enter the new password twice, ensuring they match exactly.")
+                        .errorMessage("You need to enter the new password twice, ensuring they match exactly.")
                         .build();
             }
 
@@ -189,7 +202,7 @@ public class ServiceUser {
 
             if (!passwordChanged) {
                 return ResponseChange.builder()
-                        .error("There was na error changing your password.")
+                        .errorMessage("There was na error changing your password.")
                         .build();
             }
 
@@ -198,8 +211,7 @@ public class ServiceUser {
             return new ResponseChange(email);
         } catch (Exception e) {
             return ResponseChange.builder()
-                    .success(null)
-                    .error("Internal server error: " + e.getMessage())
+                    .errorMessage("Internal server error: " + e.getMessage())
                     .build();
         }
     }
@@ -211,8 +223,7 @@ public class ServiceUser {
 
             if (email == null && username == null) {
                 return ResponseForgot.builder()
-                        .success(null)
-                        .error("Either a username or email is required to restore your account.")
+                        .errorMessage("Either a username or email is required to restore your account.")
                         .build();
             }
 
@@ -223,8 +234,7 @@ public class ServiceUser {
 
                 if (!userExistByEmail) {
                     return ResponseForgot.builder()
-                            .success(null)
-                            .error("This email is not in use check your inbox.")
+                            .errorMessage("This email is not in use check your inbox.")
                             .build();
                 }
 
@@ -236,8 +246,7 @@ public class ServiceUser {
 
                 if (!userExistByUsername) {
                     return ResponseForgot.builder()
-                            .success(null)
-                            .error("This username " + username + " is not in use. Please provide your email.")
+                            .errorMessage("This username " + username + " is not in use. Please provide your email.")
                             .build();
                 }
 
@@ -249,12 +258,11 @@ public class ServiceUser {
             kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
 
             return ResponseForgot.builder()
-                    .success("Check your email at " + email + " for further instructions")
+                    .successMessage("Check your email at " + email + " for further instructions")
                     .build();
         } catch (Exception e) {
             return ResponseForgot.builder()
-                    .success(null)
-                    .error("Internal server error: " + e)
+                    .errorMessage("Internal server error: " + e)
                     .build();
         }
     }

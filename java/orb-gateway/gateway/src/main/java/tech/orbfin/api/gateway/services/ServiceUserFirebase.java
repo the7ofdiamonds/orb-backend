@@ -40,7 +40,7 @@ public class ServiceUserFirebase {
     public UserRecord createUser(String email, String username, String password, String phone) throws Exception {
         try {
             boolean firebaseUserByPhone = userExistByPhone(phone);
-log.info(phone);
+
             if (firebaseUserByPhone) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, phone);
                 throw new Exception("This Phone Number is already in our records. Check your phone for text messages from ORBFIN.");
@@ -95,7 +95,6 @@ log.info(phone);
                 .setPhoneNumber(phone);
 
         auth.firebaseAuth.updateUser(request);
-        // Send Phone Number Changed Email
     }
 
     public void changeEmailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
@@ -103,11 +102,9 @@ log.info(phone);
                 .setEmailVerified(emailVerified);
 
         auth.firebaseAuth.updateUser(request);
-//        Send Email Verified
     }
 
     public void deleteUser(String uid) throws FirebaseAuthException {
         auth.firebaseAuth.deleteUser(uid);
-        // Send email
     }
 }

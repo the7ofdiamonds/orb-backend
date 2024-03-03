@@ -1,37 +1,30 @@
 package tech.orbfin.api.gateway.services;
 
-import io.jsonwebtoken.*;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-//import tech.orbfin.api.gateway.repositories.RepositorySession;
 
-import lombok.extern.slf4j.Slf4j;
-
-import java.security.Key;
 import java.util.*;
+import java.security.Key;
 import java.util.function.Function;
 
+import lombok.RequiredArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.Jwts;
 
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 
-import static io.jsonwebtoken.SignatureAlgorithm.HS256;
-
 @Slf4j
-@Service
+@RequiredArgsConstructor
 @Setter
 @Getter
-@RequiredArgsConstructor
+@Service
 public class ServiceTokenJW {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
@@ -41,10 +34,6 @@ public class ServiceTokenJW {
     private long expiration;
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
-    @Autowired
-    private IRepositoryUser iRepositoryUser;
-//    @Autowired
-//    private RepositorySession repositorySession;
 
     private String buildToken(
             Map<String, Object> extraClaims,
@@ -74,7 +63,7 @@ public class ServiceTokenJW {
         return buildToken(new HashMap<>(), user, refreshExpiration);
     }
 
-//    Make parameters for secret keys
+    //    Make parameters for secret keys
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -106,7 +95,7 @@ public class ServiceTokenJW {
         long currentTime = (new Date()).getTime();
         long tokenExpiration = (extractExpiration(token)).getTime();
 
-        if(currentTime > tokenExpiration){
+        if (currentTime > tokenExpiration) {
             return false;
         }
 

@@ -5,7 +5,8 @@ public enum Role {
     MANAGER,
     EDITOR,
     CONTRIBUTOR,
-    SUBSCRIBER;
+    SUBSCRIBER,
+    USER;
 
     public static Role mapToRoleEnum(String roleString) {
         if (roleString == null) {

@@ -2,10 +2,10 @@ package tech.orbfin.api.gateway.authentication;
 
 import tech.orbfin.api.gateway.authentication.providers.ProviderJWT;
 
-import reactor.core.publisher.Mono;
-
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import reactor.core.publisher.Mono;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -13,9 +13,9 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 
 import org.springframework.stereotype.Component;
 
-@Component
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
+@Component
 public class AuthManager implements ReactiveAuthenticationManager {
     private final ProviderJWT providerJwt;
 

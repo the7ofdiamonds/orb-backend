@@ -13,7 +13,7 @@ import tech.orbfin.api.gateway.model.response.ResponseLogin;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.google.firebase.auth.UserRecord;
@@ -30,45 +30,49 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
-@AllArgsConstructor
-public class ServiceAuth {
+public class ServiceAuthLogin {
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUser serviceUser;
     private final ServiceTokenJW serviceTokenJW;
     private final IRepositoryUser iRepositoryUser;
     private final IRepositorySession iRepositorySession;
     private final PasswordEncoder passwordEncoder;
-    private final KafkaTemplate<String,Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public ResponseLogin login(@NotNull RequestLogin request){
+    public ResponseLogin login(@NotNull RequestLogin request) {
         try {
             log.info("Login function has been called.");
 
             var username = request.getUsername();
             var password = request.getPassword();
             Object location = request.getLocation();
-            log.info(location.toString());
 
             log.info("User {} is attempting to login", username);
             boolean usernameExists = iRepositoryUser.existsByUsername(username);
 
             if (!usernameExists) {
-                throw new Exception("The username " + username + " can not be found.");
+                return ResponseLogin.builder()
+                        .errorMessage("The username " + username + " can not be found.")
+                        .build();
             }
 
             User user = serviceUser.findUserByUsername(username);
             String savedPassword = user.getPassword();
             String email = user.getEmail();
 
-            if(savedPassword.startsWith("$P")){
+            if (savedPassword.startsWith("$P")) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, email);
                 return ResponseLogin.builder()
-                        .errorMessage("Password needs to be updated check your email inbox.").build();
+                        .errorMessage("Password needs to be updated check your email inbox.")
+                        .build();
             }
 
-            if(!passwordEncoder.matches(password, savedPassword)){
-                throw new Exception("The username " + username + " and the password provided do not match.");
+            if (!passwordEncoder.matches(password, savedPassword)) {
+                return ResponseLogin.builder()
+                        .errorMessage("The username " + username + " and the password provided do not match.")
+                        .build();
             }
 
             username = user.getUsername();
@@ -81,7 +85,7 @@ public class ServiceAuth {
 
             UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
 
-            if(userRecord == null){
+            if (userRecord == null) {
                 log.info("Firebase User with the email {} does not exists.", email);
                 log.info("Adding user with the email {} to firebase", email);
 
@@ -100,8 +104,12 @@ public class ServiceAuth {
 
             log.info("Session created successfully for {}", username);
 
-            return new ResponseLogin(username, accessToken, refreshToken);
-        } catch(Exception e) {
+            return ResponseLogin.builder()
+                    .username(username)
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        } catch (Exception e) {
             return ResponseLogin.builder()
                     .errorMessage("Internal server error: " + e.getMessage())
                     .build();

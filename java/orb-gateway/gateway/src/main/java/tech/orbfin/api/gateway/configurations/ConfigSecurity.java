@@ -1,50 +1,46 @@
 package tech.orbfin.api.gateway.configurations;
 
-import lombok.extern.slf4j.Slf4j;
-import tech.orbfin.api.gateway.services.ServiceAuth;
+//import tech.orbfin.api.gateway.authentication.AuthEntryPoint;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import tech.orbfin.api.gateway.services.ServiceAuthLogout;
+import tech.orbfin.api.gateway.services.ServiceToken;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.server.authentication.logout.HttpStatusReturningServerLogoutSuccessHandler;
-import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import tech.orbfin.api.gateway.authentication.AuthEntryPoint;
-import lombok.AllArgsConstructor;
+
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.security.web.server.SecurityWebFilterChain;
-
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import tech.orbfin.api.gateway.services.ServiceAuthLogout;
-import tech.orbfin.api.gateway.services.ServiceToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 @Configuration
 public class ConfigSecurity {
-    private final AuthEntryPoint authEntryPoint;
-    @Autowired
+//    private final AuthEntryPoint authEntryPoint;
     private final ConfigCORS configCORS;
-
     private final ServiceAuthLogout serviceAuthLogot;
 
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
-//    }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
