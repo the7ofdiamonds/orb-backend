@@ -61,15 +61,15 @@ public class ControllerUser {
         return ResponseEntity.ok().body(serviceUser.forgotPassword(request));
     }
 
-//    @PostMapping("/change-name")
-//    public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) {
-//        return ResponseEntity.ok().body(serviceUser.changeName(request));
-//    }
+    @PostMapping("/change-name")
+    public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) {
+        return ResponseEntity.ok().body(serviceUser.changeName(request));
+    }
 
-//    @PostMapping("/change-phone")
-//    public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) {
-//        return ResponseEntity.ok().body(serviceUser.changePhone(request));
-//    }
+    @PostMapping("/change-phone")
+    public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) {
+        return ResponseEntity.ok().body(serviceUser.changePhone(request));
+    }
 
 //    @PostMapping("/remove-email")
 //    public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {

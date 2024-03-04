@@ -13,12 +13,15 @@ import tech.orbfin.api.gateway.model.response.ResponseLogout;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
+import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ServiceAuthLogout {
-    private final ServiceUser serviceUser;
+    private final IRepositoryUser iRepositoryUser;
     private final ServiceTokenJW serviceTokenJW;
     private final IRepositorySession iRepositorySession;
 
@@ -28,9 +31,9 @@ public class ServiceAuthLogout {
             log.info("Service Auth Logout");
 
             String username = serviceTokenJW.extractUsername(token);
-            User user = serviceUser.findUserByUsername(username);
+            Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
-            if (user == null) {
+            if (user.isEmpty()) {
                 return ResponseLogout.builder()
                         .errorMessage("The username " + username + " can not be found.")
                         .build();

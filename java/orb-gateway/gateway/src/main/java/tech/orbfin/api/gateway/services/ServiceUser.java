@@ -39,6 +39,7 @@ import static java.lang.Boolean.TRUE;
 
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 @Service
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
@@ -56,9 +57,13 @@ public class ServiceUser {
 
             Optional<User> user = iRepositoryUser.findUserByEmail(email);
 
+            if(user.isEmpty()){
+                return null;
+            }
+
             log.info("Loaded user details: " + user);
 
-            return user.orElseThrow();
+            return user.get();
         } catch (Exception e) {
             System.err.println("Error while loading user by username: " + e.getMessage());
             throw new Exception("Error while loading user by username", e);
@@ -72,12 +77,13 @@ public class ServiceUser {
             Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
             if (user.isEmpty()) {
+                log.info("User could not be found");
                 return new User();
             }
 
             log.info("Loaded user details for username {}: {}", username, user.get());
 
-            return user.orElseThrow();
+            return user.get();
         } catch (Exception e) {
             System.err.println("Error while loading user by username: " + e.getMessage());
             throw new Exception("Error while loading user by username", e);
@@ -149,7 +155,6 @@ public class ServiceUser {
             ;
 
             var savedUser = user.get();
-            log.info(String.valueOf(savedUser.isAccountNonExpired));
 
             log.info("Username {} has been signed up successfully", username);
             log.info("Creating a session for {} ....", username);
@@ -200,7 +205,7 @@ public class ServiceUser {
 
             boolean usernameChanged = iRepositoryUser.changeUsername(email, username, encryptedPassword, newUsername);
 
-            if (usernameChanged) {
+            if (!usernameChanged) {
                 return ResponseChange.builder()
                         .errorMessage("There was an error changing your username please try again at another time.")
                         .build();
@@ -223,7 +228,6 @@ public class ServiceUser {
                     .errorMessage("There was an error trying to change your username: " + e.getLocalizedMessage())
                     .build();
         }
-
     }
 
     public ResponseChange changePassword(@NotNull RequestChangePassword request) {
@@ -241,9 +245,9 @@ public class ServiceUser {
                         .build();
             }
 
-            User user = findUserByUsername(username);
+            Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
-            if (!passwordEncoder().matches(password, user.getPassword())) {
+            if (!passwordEncoder().matches(password, user.get().getPassword())) {
                 return ResponseChange.builder()
                         .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
                         .build();
@@ -255,7 +259,7 @@ public class ServiceUser {
                         .build();
             }
 
-            String email = user.getEmail();
+            String email = user.get().getEmail();
 
             log.info("User with the email {} is attempting to change their password.", email);
 
@@ -289,27 +293,15 @@ public class ServiceUser {
             String email = request.getEmail();
             String username = request.getUsername();
 
+            Optional<User> user;
+
             if (email == null && username == null) {
                 return ResponseForgot.builder()
                         .errorMessage("Either a username or email is required to restore your account.")
                         .build();
             }
 
-            User user = null;
-
-            if (email != null) {
-                boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
-
-                if (!userExistByEmail) {
-                    return ResponseForgot.builder()
-                            .errorMessage("This email is not in use check your inbox.")
-                            .build();
-                }
-
-                user = findUserByEmail(email);
-            }
-
-            if (username != null && user == null) {
+            if (email == null) {
                 boolean userExistByUsername = iRepositoryUser.existsByUsername(username);
 
                 if (!userExistByUsername) {
@@ -318,10 +310,34 @@ public class ServiceUser {
                             .build();
                 }
 
-                user = findUserByUsername(username);
+                user = iRepositoryUser.findUserByUsername(username);
+
+                email = user.get().getEmail();
             }
 
-            email = user.getEmail();
+            boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
+
+            if (!userExistByEmail) {
+                return ResponseForgot.builder()
+                        .errorMessage("This email is not in use check your inbox.")
+                        .build();
+            }
+
+            user = iRepositoryUser.findUserByEmail(email);
+
+            if (username != null && user.isEmpty()) {
+                boolean userExistByUsername = iRepositoryUser.existsByUsername(username);
+
+                if (!userExistByUsername) {
+                    return ResponseForgot.builder()
+                            .errorMessage("This username " + username + " is not in use. Please provide your email.")
+                            .build();
+                }
+
+                user = iRepositoryUser.findUserByUsername(username);
+            }
+
+            email = user.get().getEmail();
 
             kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
 
@@ -335,20 +351,144 @@ public class ServiceUser {
         }
     }
 
-//    public ResponseChange changeName(RequestChangeName request) {
-//        return ResponseChange.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
-//
-//    public ResponseChange changePhone(RequestChangePhone request) {
-//        return ResponseChange.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
-//
+    public ResponseChange changeName(RequestChangeName request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newFirstName = request.getNewFirstName();
+            String newLastName = request.getNewLastName();
+
+            if (newFirstName == null && newLastName == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Enter the first and/or last name you would like to change.")
+                        .build();
+            }
+
+            if (email == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Your email is required to change your name please check your inbox.")
+                        .build();
+            }
+
+            if (username == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Your username is required to change your name please check your inbox.")
+                        .build();
+            }
+
+            User user = findUserByEmail(email);
+log.info(user.getFirstname());
+            if (user == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Could not find user with the username " + username + ".")
+                        .build();
+            }
+
+            if (password == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Please enter your password to change your name.")
+                        .build();
+            }
+
+            log.info(user.getUsername());
+            if (!passwordEncoder().matches(password, user.getPassword())) {
+                return ResponseChange.builder()
+                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
+                        .build();
+            }
+
+            if (newFirstName != null) {
+                boolean firstNameChanged = iRepositoryUser.changeFirstName(email, username, newFirstName);
+
+                if (!firstNameChanged) {
+                    return ResponseChange.builder()
+                            .errorMessage("There was an error changing your first name please try again at another time.")
+                            .build();
+                }
+            }
+
+            if (newLastName != null) {
+                boolean lastNameChanged = iRepositoryUser.changeLastName(email, username, newLastName);
+                log.info(String.valueOf(lastNameChanged));
+
+                if (!lastNameChanged) {
+                    return ResponseChange.builder()
+                            .errorMessage("There was an error changing your last name please try again at another time.")
+                            .build();
+                }
+            }
+
+            kafkaTemplate.send(ConfigKafkaTopics.NAME_CHANGED, email);
+
+            return ResponseChange.builder()
+                    .item("name")
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseChange.builder()
+                    .errorMessage("There was an error trying to change your name: " + e)
+                    .build();
+        }
+    }
+
+    public ResponseChange changePhone(RequestChangePhone request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newPhone = request.getNewPhone();
+
+            if (newPhone == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Enter the new phone number to make the change.")
+                        .build();
+            }
+
+            if (email == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Your email is required to change your name please check your inbox.")
+                        .build();
+            }
+
+            if (username == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Your username is required to change your name please check your inbox.")
+                        .build();
+            }
+
+            if (password == null) {
+                return ResponseChange.builder()
+                        .errorMessage("Please enter your password to change your name.")
+                        .build();
+            }
+
+            boolean phoneChanged = iRepositoryUser.changePhoneNumber(email, username, newPhone);
+
+            if (!phoneChanged) {
+                return ResponseChange.builder()
+                        .errorMessage("There was an error changing your phone number please try again at another time.")
+                        .build();
+            }
+
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+            String uid = firebaseUser.getUid();
+
+            serviceUserFirebase.changePhone(uid, newPhone);
+
+            kafkaTemplate.send(ConfigKafkaTopics.PHONE_CHANGED, email);
+
+            return ResponseChange.builder()
+                    .item("phone")
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseChange.builder()
+                    .errorMessage("There was an error trying to change your username: " + e)
+                    .build();
+        }
+    }
+
 //    public ResponseRemove removeEmail(RequestRemoveEmail request) {
 //        return ResponseRemove.builder()
 //                .item("username")

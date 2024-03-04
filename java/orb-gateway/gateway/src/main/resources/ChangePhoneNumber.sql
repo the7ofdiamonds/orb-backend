@@ -1,8 +1,7 @@
-CREATE DEFINER=`root`@`%` PROCEDURE `changeUsername`(
+CREATE DEFINER=`root`@`%` PROCEDURE `changePhoneNumber`(
     IN p_user_email VARCHAR(255), 
     IN p_display_name VARCHAR(255), 
-    IN p_user_pass VARCHAR(255),
-	IN p_display_name_new VARCHAR(255)
+	IN p_phone_new VARCHAR(255)
 )
 BEGIN
     DECLARE user_id INT;
@@ -13,13 +12,10 @@ INTO user_id FROM
     wordpress.wp_users u
 WHERE
     u.user_email COLLATE utf8mb4_unicode_520_ci = p_user_email
-        AND u.display_name COLLATE utf8mb4_unicode_520_ci = p_display_name
-        AND u.user_pass COLLATE utf8mb4_unicode_520_ci = p_user_pass;
+        AND u.display_name COLLATE utf8mb4_unicode_520_ci = p_display_name;
 
     IF user_id IS NOT NULL THEN
-        UPDATE wordpress.wp_users
-        SET display_name = p_display_name_new
-        WHERE ID = user_id;
+        CALL addUserMeta(user_id, 'phone_number', p_phone_new);
     END IF;
     
 	SELECT 

@@ -12,6 +12,7 @@ import tech.orbfin.api.gateway.model.response.ResponseLogin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +59,9 @@ public class ServiceAuthLogin {
                         .build();
             }
 
-            User user = serviceUser.findUserByUsername(username);
-            String savedPassword = user.getPassword();
-            String email = user.getEmail();
+            Optional<User> user = iRepositoryUser.findUserByUsername(username);
+            String savedPassword = user.get().getPassword();
+            String email = user.get().getEmail();
 
             if (savedPassword.startsWith("$P")) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, email);
@@ -75,8 +76,8 @@ public class ServiceAuthLogin {
                         .build();
             }
 
-            username = user.getUsername();
-            var role = user.getRoles();
+            username = user.get().getUsername();
+            var role = user.get().getRoles();
 
             log.info("{} {} is attempting to login.", role, username);
 
@@ -94,13 +95,14 @@ public class ServiceAuthLogin {
 
             log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
-            String refreshToken = serviceTokenJW.refreshToken(user);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, user.get());
+            String refreshToken = serviceTokenJW.refreshToken(user.get());
+
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            iRepositorySession.save(new Session(accessToken, serviceTokenJW.ALGORITHM, refreshToken, user.getId(), true, false, false));
+            iRepositorySession.save(new Session(accessToken, serviceTokenJW.ALGORITHM, refreshToken, user.get().getId(), true, false, false));
 
             log.info("Session created successfully for {}", username);
 

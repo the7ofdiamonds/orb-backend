@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.repositories;
 
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.query.Procedure;
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
 
@@ -53,7 +55,7 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_is_enabled") boolean isEnabled
     );
 
-//    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
+    //    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
 //    public Optional<User> loginUser(
 //            @Param("p_display_name") String username,
 //            @Param("p_user_pass") String password);
@@ -62,14 +64,15 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
 //    Boolean usernamePasswordMatches(
 //            @Param("p_display_name") String username,
 //            @Param("p_user_pass") String password);
-
-    @Query(nativeQuery = true, value = "CALL findUserByEmail(:p_user_email)")
+    @Transactional
+    @Procedure(name = "findUserByEmail")
     public Optional<User> findUserByEmail(
-            @Param("p_user_email") String email);
+            @Param("p_email") String email);
 
-    @Query(nativeQuery = true, value = "CALL findUserByUsername(:p_display_name)")
+    @Transactional
+    @Procedure(name = "findUserByUsername")
     public Optional<User> findUserByUsername(
-            @Param("p_display_name") String p_display_name);
+            @Param("p_username") String username);
 
     @Query(nativeQuery = true, value = "CALL changeUsername(:p_user_email, :p_display_name, :p_user_pass, :p_new_display_name)")
     public boolean changeUsername(
@@ -84,25 +87,24 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_display_name") String username,
             @Param("p_user_pass_new") String newPassword);
 
-    @Query(nativeQuery = true, value = "CALL changeFirstName(:p_user_email, :p_display_name, :p_user_pass, :p_new_first_name)")
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL changeFirstName(:p_user_email, :p_display_name, :p_first_name_new)")
     public boolean changeFirstName(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
-            @Param("p_new_first_name") String newFirstName);
+            @Param("p_first_name_new") String newFirstName);
 
-    @Query(nativeQuery = true, value = "CALL changeLastName(:p_user_email, :p_display_name, :p_user_pass, :p_new_last_name)")
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL changeLastName(:p_user_email, :p_display_name, :p_last_name_new)")
     public boolean changeLastName(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
-            @Param("p_new_last_name") String newLastName);
+            @Param("p_last_name_new") String newLastName);
 
-    @Query(nativeQuery = true, value = "CALL changePhoneNumber(:p_user_email, :p_display_name, :p_user_pass, :p_new_phone_number)")
+    @Query(nativeQuery = true, value = "CALL changePhoneNumber(:p_user_email, :p_display_name, :p_new_phone_number)")
     public boolean changePhoneNumber(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
             @Param("p_new_phone_number") String newPhoneNumber);
 
     @Query(nativeQuery = true, value = "CALL changeRoles(:p_user_email, :p_display_name, :p_user_pass, :p_wp_capabilities)")

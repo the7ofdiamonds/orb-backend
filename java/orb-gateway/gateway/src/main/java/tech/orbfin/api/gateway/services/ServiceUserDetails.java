@@ -27,9 +27,7 @@ public class ServiceUserDetails implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) {
         Optional<User> user = iRepositoryUser.findUserByUsername(username);
 
-        User u = user.orElseThrow(() -> new UsernameNotFoundException("Error!"));
-
-        return new UserEntity(u);
+        return new UserEntity(user.get());
     }
 
     public UserDetails loadUserByEmail(String email) {

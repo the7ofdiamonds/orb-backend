@@ -29,4 +29,14 @@ public class ServiceSendEmail {
     public void passwordForgot(String user) {
         System.out.println("Password recovery email sent to " + user);
     }
+
+    @KafkaListener(topics = ConfigTopics.NAME_CHANGED, groupId = "user-group")
+    public void nameChanged(String user) {
+        System.out.println("Name changed email was sent to " + user);
+    }
+
+    @KafkaListener(topics = ConfigTopics.PHONE_CHANGED, groupId = "user-group")
+    public void phoneChanged(String user) {
+        System.out.println("Phone changed email was sent to " + user);
+    }
 }

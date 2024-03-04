@@ -43,4 +43,18 @@ public class ConfigKafka {
                 .name(ConfigKafkaTopics.PASSWORD_RECOVERY)
                 .build();
     }
+
+    @Bean
+    public NewTopic nameChanged() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.NAME_CHANGED)
+                .build();
+    }
+
+    @Bean
+    public NewTopic phoneChanged() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.PHONE_CHANGED)
+                .build();
+    }
 }
