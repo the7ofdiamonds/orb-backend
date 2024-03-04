@@ -53,15 +53,15 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_is_enabled") boolean isEnabled
     );
 
-    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
-    public Optional<User> loginUser(
-            @Param("p_display_name") String username,
-            @Param("p_user_pass") String password);
-
-    @Query(nativeQuery = true, value = "CALL usernamePasswordMatches(:p_display_name, :p_user_pass)")
-    Boolean usernamePasswordMatches(
-            @Param("p_display_name") String username,
-            @Param("p_user_pass") String password);
+//    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
+//    public Optional<User> loginUser(
+//            @Param("p_display_name") String username,
+//            @Param("p_user_pass") String password);
+//
+//    @Query(nativeQuery = true, value = "CALL usernamePasswordMatches(:p_display_name, :p_user_pass)")
+//    Boolean usernamePasswordMatches(
+//            @Param("p_display_name") String username,
+//            @Param("p_user_pass") String password);
 
     @Query(nativeQuery = true, value = "CALL findUserByEmail(:p_user_email)")
     public Optional<User> findUserByEmail(

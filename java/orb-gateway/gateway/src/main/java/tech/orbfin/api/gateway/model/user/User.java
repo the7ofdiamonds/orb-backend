@@ -26,11 +26,11 @@ public class User {
     @Column(name = "last_name")
     private String lastname;
     private String phone;
-    private Collection<Role> roles;
     @Column(name = "provider_given_id")
     private String providerGivenID;
+    private Collection<Role> roles;
     @Column(name = "is_authenticated")
-    public Boolean isAuthenticated = true;
+    public Boolean isAuthenticated;
     @Column(name = "is_account_non_expired")
     public Boolean isAccountNonExpired;
     @Column(name = "is_account_non_locked")

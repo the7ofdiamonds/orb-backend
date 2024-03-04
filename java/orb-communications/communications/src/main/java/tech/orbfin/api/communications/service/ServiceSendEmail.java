@@ -8,8 +8,11 @@ import tech.orbfin.api.communications.configurations.ConfigTopics;
 public class ServiceSendEmail {
 
     @KafkaListener(topics = ConfigTopics.USER_SIGN_UP, groupId = "user-group")
-    public void signUp(String user) {
-        System.out.println("Confirmation email sent to " + user);
+    public void signUp(String user) { System.out.println("Confirmation email sent to " + user); }
+
+    @KafkaListener(topics = ConfigTopics.USERNAME_CHANGED, groupId = "user-group")
+    public void usernameChanged(String user) {
+        System.out.println("Username changed email was sent to " + user);
     }
 
     @KafkaListener(topics = ConfigTopics.PASSWORD_UPDATE, groupId = "user-group")

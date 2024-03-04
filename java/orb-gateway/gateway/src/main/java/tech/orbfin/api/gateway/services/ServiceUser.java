@@ -1,7 +1,11 @@
 package tech.orbfin.api.gateway.services;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
 import tech.orbfin.api.gateway.model.request.*;
@@ -44,6 +48,40 @@ public class ServiceUser {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    public User findUserByEmail(String email) throws Exception {
+        try {
+            log.info("Loading user by email: " + email);
+
+            Optional<User> user = iRepositoryUser.findUserByEmail(email);
+
+            log.info("Loaded user details: " + user);
+
+            return user.orElseThrow();
+        } catch (Exception e) {
+            System.err.println("Error while loading user by username: " + e.getMessage());
+            throw new Exception("Error while loading user by username", e);
+        }
+    }
+
+    public User findUserByUsername(String username) throws Exception {
+        try {
+            log.info("Loading user by username: " + username);
+
+            Optional<User> user = iRepositoryUser.findUserByUsername(username);
+
+            if (user.isEmpty()) {
+                return new User();
+            }
+
+            log.info("Loaded user details for username {}: {}", username, user.get());
+
+            return user.orElseThrow();
+        } catch (Exception e) {
+            System.err.println("Error while loading user by username: " + e.getMessage());
+            throw new Exception("Error while loading user by username", e);
+        }
     }
 
     @Transactional
@@ -131,41 +169,64 @@ public class ServiceUser {
         }
     }
 
-    public User findUserByEmail(String email) throws Exception {
+//    public ResponseVerify verifyEmail(RequestVerify request) {
+//        return ResponseVerify.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+
+//    public ResponseRemove unlockAccount(RequestUnlockAccount request) {
+//        return ResponseRemove.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+
+//    public ResponseAdd addEmail(RequestAddEmail request) {
+//        return ResponseAdd.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+
+    public ResponseChange changeUsername(RequestChangeUsername request) {
         try {
-            log.info("Loading user by email: " + email);
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newUsername = request.getNewUsername();
+            String encryptedPassword = passwordEncoder().encode(password);
 
-            Optional<User> user = iRepositoryUser.findUserByEmail(email);
+            boolean usernameChanged = iRepositoryUser.changeUsername(email, username, encryptedPassword, newUsername);
 
-            log.info("Loaded user details: " + user);
-
-            return user.orElseThrow();
-        } catch (Exception e) {
-            System.err.println("Error while loading user by username: " + e.getMessage());
-            throw new Exception("Error while loading user by username", e);
-        }
-    }
-
-    public User findUserByUsername(String username) throws Exception {
-        try {
-            log.info("Loading user by username: " + username);
-
-            Optional<User> user = iRepositoryUser.findUserByUsername(username);
-
-            if (user.isEmpty()) {
-                return new User();
+            if (usernameChanged) {
+                return ResponseChange.builder()
+                        .errorMessage("There was an error changing your username please try again at another time.")
+                        .build();
             }
 
-            log.info("Loaded user details for username {}: {}", username, user.get());
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
 
-            return user.orElseThrow();
+            String uid = firebaseUser.getUid();
+
+            serviceUserFirebase.changeUsername(uid, newUsername);
+
+            kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
+
+            return ResponseChange.builder()
+                    .item("username")
+                    .email(email)
+                    .build();
         } catch (Exception e) {
-            System.err.println("Error while loading user by username: " + e.getMessage());
-            throw new Exception("Error while loading user by username", e);
+            return ResponseChange.builder()
+                    .errorMessage("There was an error trying to change your username: " + e.getLocalizedMessage())
+                    .build();
         }
+
     }
 
-    public ResponseChange changePassword(@NotNull RequestChange request) {
+    public ResponseChange changePassword(@NotNull RequestChangePassword request) {
         try {
             String username = request.getUsername();
             String password = request.getPassword();
@@ -208,13 +269,20 @@ public class ServiceUser {
 
             kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_CHANGED, email);
 
-            return new ResponseChange(email);
+            return new ResponseChange("password", email);
         } catch (Exception e) {
             return ResponseChange.builder()
                     .errorMessage("Internal server error: " + e.getMessage())
                     .build();
         }
     }
+
+//    public ResponseUpdate updatePassword(RequestUpdatePassword request) {
+//        return ResponseUpdate.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
 
     public ResponseForgot forgotPassword(@NotNull RequestForgot request) {
         try {
@@ -266,4 +334,32 @@ public class ServiceUser {
                     .build();
         }
     }
+
+//    public ResponseChange changeName(RequestChangeName request) {
+//        return ResponseChange.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+//
+//    public ResponseChange changePhone(RequestChangePhone request) {
+//        return ResponseChange.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+//
+//    public ResponseRemove removeEmail(RequestRemoveEmail request) {
+//        return ResponseRemove.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
+//
+//    public ResponseDelete deleteAccount(RequestDeleteAccount request) {
+//        return ResponseDelete.builder()
+//                .item("username")
+//                .email(email)
+//                .build();
+//    }
 }

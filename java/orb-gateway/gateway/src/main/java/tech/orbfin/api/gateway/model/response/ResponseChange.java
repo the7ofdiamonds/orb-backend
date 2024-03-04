@@ -15,11 +15,12 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public class ResponseChange {
-    private String successMessage;
+    private String item;
     private String email;
+    private String successMessage;
     private String errorMessage;
 
-    public ResponseChange(String email){
-        this.successMessage = "Your password has been changed an email to confirm this was sent to " + email + ".";
+    public ResponseChange(String item, String email){
+        this.successMessage = "Your " + item + " has been changed an email to confirm this was sent to " + email + ".";
     }
 }

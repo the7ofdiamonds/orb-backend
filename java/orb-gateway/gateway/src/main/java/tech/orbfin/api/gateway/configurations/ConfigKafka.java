@@ -17,6 +17,13 @@ public class ConfigKafka {
     }
 
     @Bean
+    public NewTopic usernameChanged() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.USERNAME_CHANGED)
+                .build();
+    }
+
+    @Bean
     public NewTopic passwordUpdate() {
         return TopicBuilder
                 .name(ConfigKafkaTopics.PASSWORD_UPDATE)

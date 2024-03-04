@@ -24,7 +24,7 @@ BEGIN
         CALL addUserMeta(@user_id, 'first_name', p_first_name);
         CALL addUserMeta(@user_id, 'last_name', p_last_name);
         CALL addUserMeta(@user_id, 'phone_number', p_phone_number);
-        CALL addUserMeta(@user_id, 'roles', p_roles);
+        CALL addUserMeta(@user_id, 'wp_capabilities', p_roles);
         CALL addUserMeta(@user_id, 'provider_given_id', p_provider_given_id);
         CALL addUserMeta(@user_id, 'is_authenticated', p_is_authenticated);
         CALL addUserMeta(@user_id, 'is_account_non_expired', p_is_account_non_expired);

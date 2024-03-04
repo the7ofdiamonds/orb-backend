@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-public class RequestChange {
+public class RequestChangePassword {
     private String username;
     private String password;
     private String newPassword;

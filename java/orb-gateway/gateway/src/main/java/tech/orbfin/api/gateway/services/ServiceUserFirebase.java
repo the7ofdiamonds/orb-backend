@@ -63,13 +63,17 @@ public class ServiceUserFirebase {
             System.out.println("Successfully created new user: " + userRecord.getUid());
 
             return userRecord;
-        } catch (FirebaseAuthException e){
+        } catch (FirebaseAuthException e) {
             throw new FirebaseAuthException(e);
         }
     }
 
     public UserRecord getUser(String uid) throws FirebaseAuthException {
-        return auth.firebaseAuth.getUser(uid);
+        try {
+            return auth.firebaseAuth.getUser(uid);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 
     public UserRecord getUserByEmail(String email) throws FirebaseAuthException {
@@ -77,34 +81,55 @@ public class ServiceUserFirebase {
     }
 
     public void changePassword(String uid, String newPassword) throws FirebaseAuthException {
-        UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
-                .setPassword(newPassword);
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setPassword(newPassword);
 
-        auth.firebaseAuth.updateUser(request);
+            auth.firebaseAuth.updateUser(request);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 
     public void changeUsername(String uid, String displayName) throws FirebaseAuthException {
-        UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
-                .setDisplayName(displayName);
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setDisplayName(displayName);
 
-        auth.firebaseAuth.updateUser(request);
+            auth.firebaseAuth.updateUser(request);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 
     public void changePhone(String uid, String phone) throws FirebaseAuthException {
-        UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
-                .setPhoneNumber(phone);
 
-        auth.firebaseAuth.updateUser(request);
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setPhoneNumber(phone);
+
+            auth.firebaseAuth.updateUser(request);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 
     public void changeEmailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
-        UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
-                .setEmailVerified(emailVerified);
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setEmailVerified(emailVerified);
 
-        auth.firebaseAuth.updateUser(request);
+            auth.firebaseAuth.updateUser(request);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 
     public void deleteUser(String uid) throws FirebaseAuthException {
-        auth.firebaseAuth.deleteUser(uid);
+        try {
+            auth.firebaseAuth.deleteUser(uid);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
     }
 }
