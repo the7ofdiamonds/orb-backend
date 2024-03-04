@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -57,7 +58,7 @@ public class ServiceUser {
 
             Optional<User> user = iRepositoryUser.findUserByEmail(email);
 
-            if(user.isEmpty()){
+            if (user.isEmpty()) {
                 return null;
             }
 
@@ -174,6 +175,37 @@ public class ServiceUser {
         }
     }
 
+    public User validateCredentials(String email, String username, String password) throws Exception {
+        try {
+            if (email == null) {
+                return null;
+            }
+
+            if (username == null) {
+                return null;
+            }
+
+            User user = findUserByEmail(email);
+
+            if (user == null) {
+                return null;
+            }
+
+            if (password == null) {
+                return null;
+            }
+
+            log.info(user.getUsername());
+            if (!passwordEncoder().matches(password, user.getPassword())) {
+                return null;
+            }
+
+            return user;
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
+
 //    public ResponseVerify verifyEmail(RequestVerify request) {
 //        return ResponseVerify.builder()
 //                .item("username")
@@ -188,12 +220,53 @@ public class ServiceUser {
 //                .build();
 //    }
 
-//    public ResponseAdd addEmail(RequestAddEmail request) {
-//        return ResponseAdd.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
+    public ResponseAdd addEmail(RequestAddEmail request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newEmail = request.getNewEmail();
+
+            User userCredentials = validateCredentials(email, username, password);
+
+            if (!(userCredentials instanceof User)) {
+                return ResponseAdd.builder()
+                        .errorMessage(String.valueOf(userCredentials))
+                        .build();
+            }
+
+            boolean emailAdded = iRepositoryUser.addNewEmail(email, username, newEmail);
+
+            if (!emailAdded) {
+                return ResponseAdd.builder()
+                        .errorMessage("There was an error changing your username please try again at another time.")
+                        .build();
+            }
+// Get provider id based on the new way to login
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+
+            String uid = firebaseUser.getUid();
+            var providerId = firebaseUser.getProviderId();
+            var provider = UserProvider.builder()
+                    .setUid(uid)
+                    .setEmail(newEmail)
+                    .setProviderId(providerId)
+                    .build();
+
+            serviceUserFirebase.addNewEmail(uid, provider);
+
+            kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
+
+            return ResponseAdd.builder()
+                    .item("username")
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseAdd.builder()
+                    .errorMessage("There was an error trying to add an additional email to your account: " + e.getLocalizedMessage())
+                    .build();
+        }
+    }
 
     public ResponseChange changeUsername(RequestChangeUsername request) {
         try {
@@ -378,7 +451,7 @@ public class ServiceUser {
             }
 
             User user = findUserByEmail(email);
-log.info(user.getFirstname());
+
             if (user == null) {
                 return ResponseChange.builder()
                         .errorMessage("Could not find user with the username " + username + ".")

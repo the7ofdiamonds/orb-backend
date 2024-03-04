@@ -36,10 +36,10 @@ public class ControllerUser {
 //        return ResponseEntity.ok().body(serviceUser.unlockAccount(request));
 //    }
 //
-//    @PostMapping("/add-email")
-//    public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) {
-//        return ResponseEntity.ok().body(serviceUser.addEmail(request));
-//    }
+    @PostMapping("/add-email")
+    public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) {
+        return ResponseEntity.ok().body(serviceUser.addEmail(request));
+    }
 
     @PostMapping("/change-username")
     public ResponseEntity<ResponseChange> changeUsername(@RequestBody RequestChangeUsername request) {

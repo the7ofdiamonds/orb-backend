@@ -74,6 +74,13 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
     public Optional<User> findUserByUsername(
             @Param("p_username") String username);
 
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL addNewEmail(:p_user_email, :p_display_name, :p_user_email_new)")
+    public boolean addNewEmail(
+            @Param("p_user_email") String email,
+            @Param("p_display_name") String username,
+            @Param("p_user_email_new") String newEmail);
+
     @Query(nativeQuery = true, value = "CALL changeUsername(:p_user_email, :p_display_name, :p_user_pass, :p_new_display_name)")
     public boolean changeUsername(
             @Param("p_user_email") String email,

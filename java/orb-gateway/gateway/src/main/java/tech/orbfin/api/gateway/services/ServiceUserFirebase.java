@@ -2,6 +2,7 @@ package tech.orbfin.api.gateway.services;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.UserProvider;
 
 import lombok.AllArgsConstructor;
 
@@ -88,6 +89,17 @@ public class ServiceUserFirebase {
             auth.firebaseAuth.updateUser(request);
         } catch (FirebaseAuthException e) {
             throw new FirebaseAuthException(e);
+        }
+    }
+
+    public UserRecord.UpdateRequest addNewEmail(String uid, UserProvider provider) throws Exception {
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setProviderToLink(provider);
+
+            return request;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
     }
 

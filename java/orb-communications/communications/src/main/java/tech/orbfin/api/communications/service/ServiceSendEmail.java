@@ -39,4 +39,9 @@ public class ServiceSendEmail {
     public void phoneChanged(String user) {
         System.out.println("Phone changed email was sent to " + user);
     }
+
+    @KafkaListener(topics = ConfigTopics.EMAIL_ADDED, groupId = "user-group")
+    public void emailAdded(String user) {
+        System.out.println("A new Email hass been added to your account email was sent to " + user);
+    }
 }
