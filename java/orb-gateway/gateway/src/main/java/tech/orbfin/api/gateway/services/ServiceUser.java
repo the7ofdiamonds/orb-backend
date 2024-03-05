@@ -2,10 +2,7 @@ package tech.orbfin.api.gateway.services;
 
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
-import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
-import tech.orbfin.api.gateway.exceptions.InvalidPasswordException;
-import tech.orbfin.api.gateway.exceptions.InvalidUsernameException;
-import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
+import tech.orbfin.api.gateway.exceptions.*;
 
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
@@ -61,10 +58,74 @@ public class ServiceUser {
         return new BCryptPasswordEncoder();
     }
 
-    public User findUserByEmail(String email) throws Exception {
+    public boolean validEmail(String email) throws Exception {
         try {
             if (email == null) {
-                throw new Exception(ExceptionMessages.EMAIL_NULL);
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NULL);
+            }
+
+            boolean emailValid = Validator.validate(email, Patterns.EMAIL_PATTERN);
+
+            if (!emailValid) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        }
+    }
+
+    public boolean validUsername(String username) throws Exception {
+        try {
+            if (username == null) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NULL);
+            }
+
+            if (username.length() > Patterns.USERNAME_MAX_LENGTH) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_TOO_LONG);
+            }
+
+            boolean usernameValid = Validator.validate(username, Patterns.USERNAME_PATTERN);
+
+            if (!usernameValid) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        }
+    }
+
+    public boolean validPassword(String password) throws Exception {
+        try {
+            if (password == null) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NULL);
+            }
+
+            if (password.length() > Patterns.PASSWORD_MAX_LENGTH) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_TOO_LONG);
+            }
+
+            boolean passwordValid = Validator.validate(password, Patterns.PASSWORD_PATTERN);
+
+            if (!passwordValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        }
+    }
+
+    public User findUserByEmail(String email) throws Exception {
+        try {
+            boolean emailIsValid = validEmail(email);
+
+            if(!emailIsValid){
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
             }
 
             log.info("Loading user by email: " + email);
@@ -86,8 +147,10 @@ public class ServiceUser {
 
     public User findUserByUsername(String username) throws Exception {
         try {
-            if (username == null) {
-                throw new Exception(ExceptionMessages.USERNAME_NULL);
+            boolean usernameIsValid = validEmail(username);
+
+            if(!usernameIsValid){
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
             log.info("Loading user by username: " + username);
@@ -119,44 +182,60 @@ public class ServiceUser {
             String phone = request.getPhone();
             Object location = request.getLocation();
 
-            if (email == null) {
-                throw new Exception(ExceptionMessages.EMAIL_NULL);
+            boolean emailIsValid = validEmail(email);
+
+            if (!emailIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
             }
 
-            if (username == null) {
-                throw new Exception(ExceptionMessages.USERNAME_NULL);
+            boolean usernameIsValid = validUsername(username);
+
+            if (!usernameIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
-            if (password == null) {
-                throw new Exception(ExceptionMessages.PASSWORD_NULL);
+            boolean passwordIsValid = validPassword(password);
+
+            if (!passwordIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
             }
 
             if (confirmPassword == null) {
-                throw new Exception(ExceptionMessages.PASSWORD_CONFIRM_NULL);
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_CONFIRM_NULL);
+            }
+
+            if(!password.equals(confirmPassword)){
+                throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
             }
 
             log.info("Registering user with the email {} .....", email);
 //            Check the location
 
             boolean emailUsed = iRepositoryUser.existsByEmail(email);
+            boolean emailExist = serviceUserFirebase.userExistByEmail(email);
 
-            if (emailUsed) {
+            if (emailUsed || emailExist) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
-                throw new Exception(ExceptionMessages.EMAIL_USED);
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_USED);
             }
 
             boolean usernameExist = iRepositoryUser.existsByUsername(username);
 
             if (usernameExist) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
-                throw new Exception(ExceptionMessages.USERNAME_USED);
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_USED);
             }
 
-            if (!password.equals(confirmPassword)) {
-                throw new Exception(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
+            boolean phoneExist = serviceUserFirebase.userExistByPhone(phone);
+
+            if (phoneExist) {
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_USED);
             }
 
             UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
+
+            String providerGivenID = (firebaseUser.getUid() != null) ? firebaseUser.getUid() : null;
 
             Optional<User> user = iRepositoryUser.signupUser(
                     email,
@@ -166,7 +245,7 @@ public class ServiceUser {
                     lastname,
                     phone,
                     String.valueOf(Role.USER),
-                    firebaseUser.getProviderId(),
+                    providerGivenID,
                     TRUE,
                     TRUE,
                     TRUE,
@@ -187,7 +266,7 @@ public class ServiceUser {
             extraClaims.put("location", location);
 
             kafkaTemplate.send(ConfigKafkaTopics.USER_REGISTER, email);
-
+// 201 status code
             return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
         } catch (Exception e) {
             System.err.println("Error while signing up user : " + e.getMessage());
@@ -200,18 +279,16 @@ public class ServiceUser {
 
     public User validateCredentials(String username, String password) throws Exception {
         try {
-            if (username == null) {
-                throw new InvalidUsernameException();
+            boolean usernameIsValid = validUsername(username);
+
+            if (!usernameIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
-            boolean usernameValid = Validator.validate(username, Patterns.USERNAME_PATTERN, Patterns.USERNAME_MAX_LENGTH);
+            boolean passwordIsValid = validPassword(password);
 
-            if (!usernameValid) {
-                throw new InvalidUsernameException();
-            }
-
-            if (password == null) {
-                throw new InvalidPasswordException();
+            if (!passwordIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
             }
 
             User user = findUserByUsername(username);
@@ -220,8 +297,8 @@ public class ServiceUser {
                 throw new UserNotFoundException();
             }
 
-            if (passwordEncoder() == null || !passwordEncoder().matches(password, user.getPassword())) {
-                throw new InvalidPasswordException();
+            if (!passwordEncoder().matches(password, user.getPassword())) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
             }
 
             return user;
@@ -232,12 +309,14 @@ public class ServiceUser {
 
     public User validateConfirmationCode(String username, String confirmationCode) throws Exception {
         try {
-            if (username == null) {
-                throw new InvalidUsernameException();
+            boolean usernameIsValid = validUsername(username);
+
+            if (!usernameIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
             if (confirmationCode == null) {
-                throw new Exception("Confirmation code is required.");
+                throw new BadCredentialsException(ExceptionMessages.CONFIRMATION_CODE_NULL);
             }
 
             User user = findUserByUsername(username);
@@ -249,7 +328,7 @@ public class ServiceUser {
             String savedConfirmationCode = user.getConfirmationCode();
 
             if (!confirmationCode.equals(savedConfirmationCode)) {
-                throw new Exception("Incorrect confirmation code.");
+                throw new BadCredentialsException(ExceptionMessages.CONFIRMATION_CODE_WRONG);
             }
 
             return user;
@@ -265,6 +344,12 @@ public class ServiceUser {
             String confirmationCode = request.getConfirmationCode();
 
             User userCredentials = validateConfirmationCode(username, confirmationCode);
+
+            boolean passwordIsValid = validPassword(password);
+
+            if (!passwordIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
+            }
 
             if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
                 return ResponseVerify.builder()
@@ -319,6 +404,13 @@ public class ServiceUser {
             User userCredentials = validateCredentials(username, password);
 
             String email = userCredentials.getEmail();
+
+            boolean emailIsValid = validEmail(newEmail);
+
+            if (!emailIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
+            }
+
             boolean emailAdded = iRepositoryUser.addNewEmail(email, username, newEmail);
 
             if (!emailAdded) {
