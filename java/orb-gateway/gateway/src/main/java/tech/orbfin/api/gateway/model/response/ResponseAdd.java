@@ -17,8 +17,9 @@ public class ResponseAdd {
     private String email;
     private String successMessage;
     private String errorMessage;
+    private Integer status;
 
-    public ResponseAdd(String item, String email){
+    public ResponseAdd(String item, String email) {
         this.successMessage = "Your " + item + " has been added an email to confirm this was sent to " + email + ".";
     }
 }

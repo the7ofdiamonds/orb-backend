@@ -66,7 +66,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
             if (algo.equals("RS256")) {
                 var firebaseToken = serviceTokenFirebase.verifyToken(token);
 
-                if (firebaseToken == null) {
+                if (!firebaseToken) {
                     log.info("IDToken is not valid.");
                 }
 
