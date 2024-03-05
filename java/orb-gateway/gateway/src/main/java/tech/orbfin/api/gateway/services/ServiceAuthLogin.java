@@ -29,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.jetbrains.annotations.NotNull;
 
 import org.springframework.kafka.core.KafkaTemplate;
+import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 @Slf4j
 @RequiredArgsConstructor

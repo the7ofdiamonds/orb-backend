@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.firebase;
 
 import tech.orbfin.api.gateway.configurations.ConfigFirebase;
 

@@ -1,18 +1,18 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.firebase;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserProvider;
 
-import lombok.AllArgsConstructor;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
+import tech.orbfin.api.gateway.services.firebase.ServiceAuthFirebase;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ServiceUserFirebase {
     private final ServiceAuthFirebase auth;
@@ -92,14 +92,14 @@ public class ServiceUserFirebase {
         }
     }
 
-    public UserRecord.UpdateRequest addNewEmail(String uid, UserProvider provider) throws Exception {
+    public UserRecord addNewEmail(String uid, UserProvider provider) throws FirebaseAuthException {
         try {
             UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
                     .setProviderToLink(provider);
 
-            return request;
-        } catch (Exception e) {
-            throw new Exception(e);
+            return auth.firebaseAuth.updateUser(request);
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
         }
     }
 
@@ -115,7 +115,6 @@ public class ServiceUserFirebase {
     }
 
     public void changePhone(String uid, String phone) throws FirebaseAuthException {
-
         try {
             UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
                     .setPhoneNumber(phone);
@@ -126,12 +125,29 @@ public class ServiceUserFirebase {
         }
     }
 
-    public void changeEmailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
+    public boolean emailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
         try {
             UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
                     .setEmailVerified(emailVerified);
 
-            auth.firebaseAuth.updateUser(request);
+            var verified = auth.firebaseAuth.updateUser(request);
+
+            if (!(verified instanceof UserRecord)) {
+                return false;
+            }
+
+            return true;
+        } catch (FirebaseAuthException e) {
+            throw new FirebaseAuthException(e);
+        }
+    }
+
+    public UserRecord removeEmail(String uid, Iterable<String> providerIds) throws FirebaseAuthException {
+        try {
+            UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
+                    .setProvidersToUnlink(providerIds);
+
+            return auth.firebaseAuth.updateUser(request);
         } catch (FirebaseAuthException e) {
             throw new FirebaseAuthException(e);
         }

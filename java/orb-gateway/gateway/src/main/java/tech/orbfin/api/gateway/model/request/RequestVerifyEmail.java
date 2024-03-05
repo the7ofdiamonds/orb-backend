@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-public class RequestRemoveEmail {
+public class RequestVerifyEmail {
     private String username;
     private String password;
     private String email;
-    private String removeEmail;
+    private String confirmationCode;
 }

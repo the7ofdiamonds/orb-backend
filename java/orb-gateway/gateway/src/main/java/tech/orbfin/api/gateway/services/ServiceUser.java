@@ -1,12 +1,5 @@
 package tech.orbfin.api.gateway.services;
 
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserProvider;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
 import tech.orbfin.api.gateway.model.request.*;
@@ -17,9 +10,11 @@ import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 
@@ -33,8 +28,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.UserProvider;
+import com.google.firebase.auth.UserInfo;
+import tech.orbfin.api.gateway.repositories.RepositoryUser;
+import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 import static java.lang.Boolean.TRUE;
 
@@ -44,6 +45,7 @@ import static java.lang.Boolean.TRUE;
 @Service
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
+    private final RepositoryUser repositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
 
@@ -195,7 +197,6 @@ public class ServiceUser {
                 return null;
             }
 
-            log.info(user.getUsername());
             if (!passwordEncoder().matches(password, user.getPassword())) {
                 return null;
             }
@@ -206,12 +207,88 @@ public class ServiceUser {
         }
     }
 
-//    public ResponseVerify verifyEmail(RequestVerify request) {
-//        return ResponseVerify.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
+    public User validateConfirmationCode(String email, String username, String confirmationCode) throws Exception {
+        try {
+            if (email == null) {
+                return null;
+            }
+
+            if (username == null) {
+                return null;
+            }
+
+            User user = findUserByEmail(email);
+
+            if (user == null) {
+                return null;
+            }
+
+            if (confirmationCode == null) {
+                return null;
+            }
+
+            String savedConfirmationCode = user.getConfirmationCode();
+
+            if (!confirmationCode.equals(savedConfirmationCode)) {
+                return null;
+            }
+
+            return user;
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
+
+    public ResponseVerify verifyEmail(RequestVerifyEmail request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmationCode = request.getConfirmationCode();
+
+            User userCredentials = validateConfirmationCode(email, username, confirmationCode);
+
+            if (!(userCredentials instanceof User)) {
+                return ResponseVerify.builder()
+                        .errorMessage(String.valueOf(userCredentials))
+                        .build();
+            }
+
+            if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
+                return ResponseVerify.builder()
+                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
+                        .build();
+            }
+
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+            String uid = firebaseUser.getUid();
+
+            log.info(String.valueOf(firebaseUser.isEmailVerified()));
+
+            if (firebaseUser.isEmailVerified()) {
+                return ResponseVerify.builder()
+                        .errorMessage("This email has already been verified.")
+                        .build();
+            }
+
+            boolean emailVerified = serviceUserFirebase.emailVerified(uid, true);
+
+            if (!emailVerified) {
+                return ResponseVerify.builder()
+                        .errorMessage("There was an error verifying your email with Google Firebase try again at another time.")
+                        .build();
+            }
+
+            return ResponseVerify.builder()
+                    .item("username")
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseVerify.builder()
+                    .errorMessage("There was an error trying to add an additional email to your account: " + e.getLocalizedMessage())
+                    .build();
+        }
+    }
 
 //    public ResponseRemove unlockAccount(RequestUnlockAccount request) {
 //        return ResponseRemove.builder()
@@ -255,10 +332,10 @@ public class ServiceUser {
 
             serviceUserFirebase.addNewEmail(uid, provider);
 
-            kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
+            kafkaTemplate.send(ConfigKafkaTopics.EMAIL_ADDED, email);
 
             return ResponseAdd.builder()
-                    .item("username")
+                    .item("email")
                     .email(email)
                     .build();
         } catch (Exception e) {
@@ -354,12 +431,47 @@ public class ServiceUser {
         }
     }
 
-//    public ResponseUpdate updatePassword(RequestUpdatePassword request) {
-//        return ResponseUpdate.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
+    public ResponseUpdate updatePassword(RequestUpdatePassword request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String confirmationCode = request.getConfirmationCode();
+            String newPassword = request.getNewPassword();
+
+            User userCredentials = validateConfirmationCode(email, username, confirmationCode);
+
+            if (!(userCredentials instanceof User)) {
+                return ResponseUpdate.builder()
+                        .errorMessage(String.valueOf(userCredentials))
+                        .build();
+            }
+
+            boolean passwordUpdated = iRepositoryUser.changePassword(email, username, newPassword);
+
+            if (!passwordUpdated) {
+                return ResponseUpdate.builder()
+                        .errorMessage("There was an error updating your password please try again at another time.")
+                        .build();
+            }
+
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+
+            String uid = firebaseUser.getUid();
+
+            serviceUserFirebase.changePassword(uid, newPassword);
+
+            kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
+
+            return ResponseUpdate.builder()
+                    .item("username")
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseUpdate.builder()
+                    .errorMessage("There was an error trying to add an additional email to your account: " + e.getLocalizedMessage())
+                    .build();
+        }
+    }
 
     public ResponseForgot forgotPassword(@NotNull RequestForgot request) {
         try {
@@ -562,13 +674,48 @@ public class ServiceUser {
         }
     }
 
-//    public ResponseRemove removeEmail(RequestRemoveEmail request) {
-//        return ResponseRemove.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
-//
+    public ResponseRemove removeEmail(RequestRemoveEmail request) {
+        try {
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String removeEmail = request.getRemoveEmail();
+
+            User userCredentials = validateCredentials(email, username, password);
+
+            if (!(userCredentials instanceof User)) {
+                return ResponseRemove.builder()
+                        .errorMessage(String.valueOf(userCredentials))
+                        .build();
+            }
+
+            boolean emailRemoved = repositoryUser.removeEmail(email, username, removeEmail);
+
+            if (!emailRemoved) {
+                return ResponseRemove.builder()
+                        .errorMessage("There was an error removing your username please try again at another time.")
+                        .build();
+            }
+
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+
+            String uid = firebaseUser.getUid();
+            Iterable<String> providerIds = Arrays.asList(firebaseUser.getProviderData()).stream().map(UserInfo::getProviderId).collect(Collectors.toList());
+            serviceUserFirebase.removeEmail(uid, providerIds);
+
+            kafkaTemplate.send(ConfigKafkaTopics.EMAIL_REMOVED, email);
+
+            return ResponseRemove.builder()
+                    .removeEmail(removeEmail)
+                    .email(email)
+                    .build();
+        } catch (Exception e) {
+            return ResponseRemove.builder()
+                    .errorMessage("There was an error trying to remove an email to your account: " + e.getLocalizedMessage())
+                    .build();
+        }
+    }
+
 //    public ResponseDelete deleteAccount(RequestDeleteAccount request) {
 //        return ResponseDelete.builder()
 //                .item("username")

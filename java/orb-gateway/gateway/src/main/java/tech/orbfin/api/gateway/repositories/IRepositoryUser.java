@@ -121,7 +121,6 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_user_pass") String password,
             @Param("p_wp_capabilities") Collection<Role> roles);
 
-//
 //    public void update();
 //
 //    public void delete();

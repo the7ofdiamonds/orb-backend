@@ -26,10 +26,11 @@ public class ControllerUser {
         return ResponseEntity.ok().body(serviceUser.register(request));
     }
 // isEnabled
-//    @PostMapping("/verify-email")
-//    public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
-//        return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
-//    }
+    @PostMapping("/verify-email")
+    public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerifyEmail request) {
+        return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
+    }
+
 // isAccountNonLocked
 //    @PostMapping("/unlock-account")
 //    public ResponseEntity<ResponseRemove> unlockAccount(@RequestBody RequestUnlockAccount request) {
@@ -51,10 +52,10 @@ public class ControllerUser {
         return ResponseEntity.ok().body(serviceUser.changePassword(request));
     }
 // isCredentialsNonExpired
-//    @PostMapping("/update-password")
-//    public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) {
-//        return ResponseEntity.ok().body(serviceUser.updatePassword(request));
-//    }
+    @PostMapping("/update-password")
+    public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) {
+        return ResponseEntity.ok().body(serviceUser.updatePassword(request));
+    }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) {
@@ -71,11 +72,11 @@ public class ControllerUser {
         return ResponseEntity.ok().body(serviceUser.changePhone(request));
     }
 
-//    @PostMapping("/remove-email")
-//    public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {
-//        return ResponseEntity.ok().body(serviceUser.removeEmail(request));
-//    }
-//
+    @PostMapping("/remove-email")
+    public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {
+        return ResponseEntity.ok().body(serviceUser.removeEmail(request));
+    }
+
 //    @PostMapping("/delete-account")
 //    public ResponseEntity<ResponseDelete> deleteAccount(@RequestBody RequestDeleteAccount request) {
 //        return ResponseEntity.ok().body(serviceUser.deleteAccount(request));

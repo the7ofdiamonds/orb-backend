@@ -49,8 +49,10 @@ public class ServiceAuthLogout {
                 session.setAuthenticated(false);
                 session.setExpired(true);
                 session.setRevoked(true);
+
                 iRepositorySession.save(session);
             }
+
             log.info(username);
             return new ResponseLogout(username);
         } catch (Exception e) {

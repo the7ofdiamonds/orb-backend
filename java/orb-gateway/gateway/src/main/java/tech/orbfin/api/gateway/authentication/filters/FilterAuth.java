@@ -1,6 +1,8 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
-import lombok.AllArgsConstructor;
+import tech.orbfin.api.gateway.services.ServiceToken;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -10,16 +12,15 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import reactor.core.publisher.Mono;
-import tech.orbfin.api.gateway.services.ServiceToken;
 
 @Slf4j
 @Order(-1)
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Component
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
     private final ServiceToken serviceToken;
-    private final FilterJWT filterJWT;
-//    private final FilterFirebaseToken filterFirebaseToken;
+    private final FilterToken filterToken;
+    private final FilterTokenFirebase filterTokenFirebase;
 
     @Override
     public GatewayFilter apply(Config config) {
@@ -37,13 +38,13 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
 
             if (algo.equals("HS256")){
                 log.info("Filter JWT is being used");
-                filterJWT.filter(exchange, chain);
+                filterToken.filter(exchange, chain);
             }
 
-//            if (algo.equals("RS256")) {
-//                log.info("Filter Firebase Token is being used");
-//                filterFirebaseToken.filter(exchange, chain);
-//            }
+            if (algo.equals("RS256")) {
+                log.info("Filter Firebase Token is being used");
+                filterTokenFirebase.filter(exchange, chain);
+            }
         });
     }
 
