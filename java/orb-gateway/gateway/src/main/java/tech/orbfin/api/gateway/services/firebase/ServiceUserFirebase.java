@@ -81,12 +81,18 @@ public class ServiceUserFirebase {
         return auth.firebaseAuth.getUserByEmail(email);
     }
 
-    public void changePassword(String uid, String newPassword) throws FirebaseAuthException {
+    public boolean passwordChanged(String uid, String newPassword) throws FirebaseAuthException {
         try {
             UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
                     .setPassword(newPassword);
 
-            auth.firebaseAuth.updateUser(request);
+            UserRecord userUpdated = auth.firebaseAuth.updateUser(request);
+
+            if(!(userUpdated instanceof UserRecord)){
+                return false;
+            }
+
+            return true;
         } catch (FirebaseAuthException e) {
             throw new FirebaseAuthException(e);
         }
@@ -125,7 +131,7 @@ public class ServiceUserFirebase {
         }
     }
 
-    public boolean emailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
+    public boolean setEmailVerified(String uid, Boolean emailVerified) throws FirebaseAuthException {
         try {
             UserRecord.UpdateRequest request = new UserRecord.UpdateRequest(uid)
                     .setEmailVerified(emailVerified);

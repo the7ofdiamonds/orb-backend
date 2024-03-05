@@ -52,6 +52,7 @@ public class ServiceUser {
     private final RepositoryUser repositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
+    private final ServiceUserDetails serviceUserDetails;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -120,11 +121,55 @@ public class ServiceUser {
         }
     }
 
+    public boolean validPhone(String phone) throws Exception {
+        try {
+            if (phone == null) {
+                throw new BadCredentialsException(ExceptionMessages.PHONE_NULL);
+            }
+
+            if (phone.length() > Patterns.PHONE_MAX_LENGTH) {
+                throw new BadCredentialsException(ExceptionMessages.PHONE_TOO_LONG);
+            }
+
+            boolean phoneValid = Validator.validate(phone, Patterns.PHONE_PATTERN);
+
+            if (!phoneValid) {
+                throw new BadCredentialsException(ExceptionMessages.PHONE_NOT_VALID);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        }
+    }
+
+    public boolean validName(String name) throws Exception {
+        try {
+            if (name == null) {
+                throw new BadCredentialsException(ExceptionMessages.NAME_NULL);
+            }
+
+            if (name.length() > Patterns.NAME_MAX_LENGTH) {
+                throw new BadCredentialsException(ExceptionMessages.NAME_TOO_LONG);
+            }
+
+            boolean nameValid = Validator.validate(name, Patterns.NAME_PATTERN);
+
+            if (!nameValid) {
+                throw new BadCredentialsException(ExceptionMessages.NAME_NOT_VALID);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        }
+    }
+
     public User findUserByEmail(String email) throws Exception {
         try {
             boolean emailIsValid = validEmail(email);
 
-            if(!emailIsValid){
+            if (!emailIsValid) {
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
             }
 
@@ -149,7 +194,7 @@ public class ServiceUser {
         try {
             boolean usernameIsValid = validEmail(username);
 
-            if(!usernameIsValid){
+            if (!usernameIsValid) {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
@@ -168,6 +213,24 @@ public class ServiceUser {
             System.err.println("Error while loading user by username: " + e.getMessage());
             throw new Exception("Error while loading user by username", e);
         }
+    }
+
+    public boolean passwordsMatch(String password, String confirmPassword) throws Exception {
+        boolean passwordIsValid = validPassword(password);
+
+        if (!passwordIsValid) {
+            throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
+        }
+
+        if (confirmPassword == null) {
+            throw new BadCredentialsException(ExceptionMessages.PASSWORD_CONFIRM_NULL);
+        }
+
+        if (!password.equals(confirmPassword)) {
+            throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
+        }
+
+        return true;
     }
 
     @Transactional
@@ -194,20 +257,6 @@ public class ServiceUser {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
-            boolean passwordIsValid = validPassword(password);
-
-            if (!passwordIsValid) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
-            }
-
-            if (confirmPassword == null) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_CONFIRM_NULL);
-            }
-
-            if(!password.equals(confirmPassword)){
-                throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
-            }
-
             log.info("Registering user with the email {} .....", email);
 //            Check the location
 
@@ -231,6 +280,28 @@ public class ServiceUser {
             if (phoneExist) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_USED);
+            }
+
+            boolean passwordsMatch = passwordsMatch(password, confirmPassword);
+
+            if (!passwordsMatch) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
+            }
+
+            if (firstname != null) {
+                boolean validFirstName = validName(firstname);
+
+                if (!validFirstName) {
+                    throw new BadCredentialsException(ExceptionMessages.NAME_NOT_VALID);
+                }
+            }
+
+            if (lastname != null) {
+                boolean validLastName = validName(lastname);
+
+                if (!validLastName) {
+                    throw new BadCredentialsException(ExceptionMessages.NAME_NOT_VALID);
+                }
             }
 
             UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
@@ -337,13 +408,13 @@ public class ServiceUser {
         }
     }
 
-    public ResponseVerify verifyEmail(RequestVerifyEmail request) {
+    public boolean verifyAccount(String username, String password, String confirmationCode) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmationCode = request.getConfirmationCode();
-
             User userCredentials = validateConfirmationCode(username, confirmationCode);
+
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.CREDENTTIALS_BAD);
+            }
 
             boolean passwordIsValid = validPassword(password);
 
@@ -352,64 +423,95 @@ public class ServiceUser {
             }
 
             if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
-                return ResponseVerify.builder()
-                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
-                        .build();
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
             }
 
             String email = userCredentials.getEmail();
             UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
             String uid = firebaseUser.getUid();
 
-            log.info(String.valueOf(firebaseUser.isEmailVerified()));
+            boolean emailVerified = serviceUserDetails.checkEmailverified(email);
+            boolean emailVerifiedFirebase = firebaseUser.isEmailVerified();
 
-            if (firebaseUser.isEmailVerified()) {
-                return ResponseVerify.builder()
-                        .errorMessage("This email has already been verified.")
-                        .build();
+            if (emailVerified && emailVerifiedFirebase) {
+                throw new Exception(ExceptionMessages.EMAIL_VERIFIED);
             }
 
-            boolean emailVerified = serviceUserFirebase.emailVerified(uid, true);
+            boolean setEmailVerified = serviceUserDetails.setEmailVerified(email, confirmationCode);
 
-            if (!emailVerified) {
-                return ResponseVerify.builder()
-                        .errorMessage("There was an error verifying your email with Google Firebase try again at another time.")
-                        .build();
+            if (!setEmailVerified) {
+                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
             }
 
-            return ResponseVerify.builder()
-                    .item("username")
-                    .email(email)
-                    .build();
+            boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
+
+            if (!setEmailVerifiedFirebase) {
+                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+            }
+
+            return true;
         } catch (Exception e) {
-            return ResponseVerify.builder()
-                    .errorMessage("There was an error trying to add an additional email to your account: " + e.getLocalizedMessage())
-                    .build();
+            throw new Exception("There was an error verifying your account: " + e.getLocalizedMessage());
         }
     }
 
-//    public ResponseRemove unlockAccount(RequestUnlockAccount request) {
-//        return ResponseRemove.builder()
-//                .item("username")
-//                .email(email)
-//                .build();
-//    }
+    public ResponseVerify verifyEmail(RequestVerify request) throws Exception {
+        try {
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmationCode = request.getConfirmationCode();
+
+            verifyAccount(username, password, confirmationCode);
+
+            User user = findUserByUsername(username);
+
+            return ResponseVerify.builder()
+                    .item("email")
+                    .email(user.getEmail())
+                    .build();
+        } catch (Exception e) {
+            throw new Exception(e);
+//            return ResponseVerify.builder()
+//                    .errorMessage(e.getLocalizedMessage())
+//                    .build();
+        }
+    }
+
+    public ResponseUnlocked unlockAccount(RequestVerify request) throws Exception {
+        String username = request.getUsername();
+        String password = request.getPassword();
+        String confirmationCode = request.getConfirmationCode();
+
+        verifyAccount(username, password, confirmationCode);
+
+        User user = findUserByUsername(username);
+
+        return ResponseUnlocked.builder()
+                .username(username)
+                .email(user.getEmail())
+                .build();
+    }
 
     public ResponseAdd addEmail(RequestAddEmail request) {
         try {
             String username = request.getUsername();
             String password = request.getPassword();
             String newEmail = request.getNewEmail();
-
-            User userCredentials = validateCredentials(username, password);
-
-            String email = userCredentials.getEmail();
+            String token = request.getToken();
 
             boolean emailIsValid = validEmail(newEmail);
 
             if (!emailIsValid) {
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
             }
+
+            User userCredentials = validateCredentials(username, password);
+
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.CREDENTTIALS_BAD);
+            }
+
+            String email = userCredentials.getEmail();
 
             boolean emailAdded = iRepositoryUser.addNewEmail(email, username, newEmail);
 
@@ -444,13 +546,19 @@ public class ServiceUser {
 
     public ResponseChange changeUsername(RequestChangeUsername request) {
         try {
-            String email = request.getEmail();
             String username = request.getUsername();
             String password = request.getPassword();
             String newUsername = request.getNewUsername();
-            String encryptedPassword = passwordEncoder().encode(password);
 
-            boolean usernameChanged = iRepositoryUser.changeUsername(email, username, encryptedPassword, newUsername);
+            User userCredentials = validateCredentials(username, password);
+
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.CREDENTTIALS_BAD);
+            }
+
+            String email = userCredentials.getEmail();
+
+            boolean usernameChanged = iRepositoryUser.changeUsername(email, username, newUsername);
 
             if (!usernameChanged) {
                 return ResponseChange.builder()
@@ -492,30 +600,26 @@ public class ServiceUser {
                         .build();
             }
 
-            Optional<User> user = iRepositoryUser.findUserByUsername(username);
+            User userCredentials = validateCredentials(username, password);
 
-            if (!passwordEncoder().matches(password, user.get().getPassword())) {
-                return ResponseChange.builder()
-                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
-                        .build();
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.CREDENTTIALS_BAD);
             }
 
-            if (!newPassword.equals(confirmationPassword)) {
-                return ResponseChange.builder()
-                        .errorMessage("You need to enter the new password twice, ensuring they match exactly.")
-                        .build();
-            }
+            String email = userCredentials.getEmail();
 
-            String email = user.get().getEmail();
+            boolean passwordsMatch = passwordsMatch(username, password);
+
+            if (!passwordsMatch) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
+            }
 
             log.info("User with the email {} is attempting to change their password.", email);
 
             boolean passwordChanged = iRepositoryUser.changePassword(email, username, passwordEncoder().encode(newPassword));
 
             if (!passwordChanged) {
-                return ResponseChange.builder()
-                        .errorMessage("There was na error changing your password.")
-                        .build();
+                throw new Exception(ExceptionMessages.PASSWORD_CHANGE_ERROR);
             }
 
             kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_CHANGED, email);
@@ -530,7 +634,6 @@ public class ServiceUser {
 
     public ResponseUpdate updatePassword(RequestUpdatePassword request) {
         try {
-            String email = request.getEmail();
             String username = request.getUsername();
             String confirmationCode = request.getConfirmationCode();
             String newPassword = request.getNewPassword();
@@ -543,19 +646,29 @@ public class ServiceUser {
                         .build();
             }
 
+            boolean passwordValid = validPassword(newPassword);
+
+            if (!passwordValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
+            }
+
+            String email = userCredentials.getEmail();
+
             boolean passwordUpdated = iRepositoryUser.changePassword(email, username, newPassword);
 
             if (!passwordUpdated) {
-                return ResponseUpdate.builder()
-                        .errorMessage("There was an error updating your password please try again at another time.")
-                        .build();
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_CHANGE_ERROR);
             }
 
             UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
 
             String uid = firebaseUser.getUid();
 
-            serviceUserFirebase.changePassword(uid, newPassword);
+            boolean passwordUpdatedFirebase = serviceUserFirebase.passwordChanged(uid, newPassword);
+
+            if (!passwordUpdatedFirebase) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_CHANGE_ERROR);
+            }
 
             kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
 
@@ -635,7 +748,6 @@ public class ServiceUser {
 
     public ResponseChange changeName(RequestChangeName request) {
         try {
-            String email = request.getEmail();
             String username = request.getUsername();
             String password = request.getPassword();
             String newFirstName = request.getNewFirstName();
@@ -647,38 +759,27 @@ public class ServiceUser {
                         .build();
             }
 
-            if (email == null) {
+            User userCredentials = validateCredentials(username, password);
+
+            if (!(userCredentials instanceof User)) {
                 return ResponseChange.builder()
-                        .errorMessage("Your email is required to change your name please check your inbox.")
+                        .errorMessage(String.valueOf(userCredentials))
                         .build();
             }
 
-            if (username == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Your username is required to change your name please check your inbox.")
-                        .build();
+            boolean validFirstName = validName(newFirstName);
+
+            if (!validFirstName) {
+                throw new BadCredentialsException(ExceptionMessages.NAME_NOT_VALID);
             }
 
-            User user = findUserByEmail(email);
+            boolean validLastName = validName(newLastName);
 
-            if (user == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Could not find user with the username " + username + ".")
-                        .build();
+            if (!validLastName) {
+                throw new BadCredentialsException(ExceptionMessages.NAME_NOT_VALID);
             }
 
-            if (password == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Please enter your password to change your name.")
-                        .build();
-            }
-
-            log.info(user.getUsername());
-            if (!passwordEncoder().matches(password, user.getPassword())) {
-                return ResponseChange.builder()
-                        .errorMessage("Wrong password. If you have forgot your password click the FORGOT button.")
-                        .build();
-            }
+            String email = userCredentials.getEmail();
 
             if (newFirstName != null) {
                 boolean firstNameChanged = iRepositoryUser.changeFirstName(email, username, newFirstName);
@@ -716,34 +817,25 @@ public class ServiceUser {
 
     public ResponseChange changePhone(RequestChangePhone request) {
         try {
-            String email = request.getEmail();
             String username = request.getUsername();
             String password = request.getPassword();
             String newPhone = request.getNewPhone();
 
+            boolean phoneIsValid = validPhone(newPhone);
+
             if (newPhone == null) {
+                throw new BadCredentialsException("Enter the new phone number to make the change.");
+            }
+
+            User userCredentials = validateCredentials(username, password);
+
+            if (!(userCredentials instanceof User)) {
                 return ResponseChange.builder()
-                        .errorMessage("Enter the new phone number to make the change.")
+                        .errorMessage(String.valueOf(userCredentials))
                         .build();
             }
 
-            if (email == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Your email is required to change your name please check your inbox.")
-                        .build();
-            }
-
-            if (username == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Your username is required to change your name please check your inbox.")
-                        .build();
-            }
-
-            if (password == null) {
-                return ResponseChange.builder()
-                        .errorMessage("Please enter your password to change your name.")
-                        .build();
-            }
+            String email = userCredentials.getEmail();
 
             boolean phoneChanged = iRepositoryUser.changePhoneNumber(email, username, newPhone);
 
@@ -777,6 +869,12 @@ public class ServiceUser {
             String password = request.getPassword();
             String removeEmail = request.getRemoveEmail();
 
+            boolean emailIsValid = validEmail(removeEmail);
+
+            if (!emailIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
+            }
+
             User userCredentials = validateCredentials(username, password);
 
             if (userCredentials == null) {
@@ -791,7 +889,7 @@ public class ServiceUser {
 
             if (!emailRemoved) {
                 return ResponseRemove.builder()
-                        .errorMessage("There was an error removing your username please try again at another time.")
+                        .errorMessage("There was an error removing the email please try again at another time.")
                         .build();
             }
 

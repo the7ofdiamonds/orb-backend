@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public class RequestAddEmail {
+    private String token;
     private String username;
     private String password;
     private String email;

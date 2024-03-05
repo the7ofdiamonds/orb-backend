@@ -27,8 +27,12 @@ public class ControllerUser {
     }
 // isEnabled
     @PostMapping("/verify-email")
-    public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerifyEmail request) {
-        return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
+    public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
+        try {
+            return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 // isAccountNonLocked

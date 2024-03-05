@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-public class RequestVerifyEmail {
+public class RequestVerify {
     private String username;
     private String password;
     private String email;

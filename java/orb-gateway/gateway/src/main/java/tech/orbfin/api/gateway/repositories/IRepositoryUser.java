@@ -55,6 +55,13 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_is_enabled") boolean isEnabled
     );
 
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL setEmailVerified(:p_user_email, :p_display_name, :p_confirmation_code)")
+    public boolean setEmailVerified(
+            @Param("p_user_email") String email,
+            @Param("p_display_name") String username,
+            @Param("p_confirmation_code") String confirmationCode);
+
     //    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
 //    public Optional<User> loginUser(
 //            @Param("p_display_name") String username,
@@ -81,11 +88,10 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_display_name") String username,
             @Param("p_user_email_new") String newEmail);
 
-    @Query(nativeQuery = true, value = "CALL changeUsername(:p_user_email, :p_display_name, :p_user_pass, :p_new_display_name)")
+    @Query(nativeQuery = true, value = "CALL changeUsername(:p_user_email, :p_display_name, :p_new_display_name)")
     public boolean changeUsername(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
             @Param("p_new_display_name") String newUsername);
 
     @Query(nativeQuery = true, value = "CALL changePassword(:p_user_email, :p_display_name, :p_user_pass_new)")

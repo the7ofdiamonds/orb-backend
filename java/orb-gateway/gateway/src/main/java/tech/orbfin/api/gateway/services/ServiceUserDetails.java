@@ -37,4 +37,20 @@ public class ServiceUserDetails implements UserDetailsService {
 
         return new UserEntity(u);
     }
+
+    public boolean checkEmailverified(String email){
+        UserDetails user = loadUserByEmail(email);
+
+        return user.isEnabled();
+    }
+
+    public boolean setEmailVerified(String email, String confirmationCode){
+        UserDetails user = loadUserByEmail(email);
+
+        if(user.isEnabled()){
+            return true;
+        }
+
+        return iRepositoryUser.setEmailVerified(email, user.getUsername(), confirmationCode);
+    }
 }
