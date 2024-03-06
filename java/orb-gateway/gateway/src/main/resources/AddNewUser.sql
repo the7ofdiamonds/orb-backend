@@ -11,7 +11,8 @@ CREATE DEFINER=`root`@`%` PROCEDURE `addNewUser`(
     IN p_is_account_non_expired BOOLEAN,
     IN p_is_account_non_locked BOOLEAN,
     IN p_is_credentials_non_expired BOOLEAN,
-    IN p_is_enabled BOOLEAN
+    IN p_is_enabled BOOLEAN,
+    IN p_confirmation_code VARCHAR(255)
 )
 BEGIN
 	START TRANSACTION;
@@ -31,6 +32,7 @@ BEGIN
         CALL addUserMeta(@user_id, 'is_account_non_locked', p_is_account_non_locked);
         CALL addUserMeta(@user_id, 'is_credentials_non_expired', p_is_credentials_non_expired);
 		CALL addUserMeta(@user_id, 'is_enabled', p_is_enabled);
+		CALL addUserMeta(@user_id, 'confirmation_code', p_confirmation_code);
 
     CALL findUserByID(@user_id);
     

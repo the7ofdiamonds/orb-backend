@@ -1,5 +1,8 @@
 package tech.orbfin.api.gateway.controllers;
 
+import org.springframework.http.HttpStatus;
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
+import tech.orbfin.api.gateway.exceptions.UserCreationException;
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
@@ -23,9 +26,27 @@ public class ControllerUser {
 
     @PostMapping("/signup")
     public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
-        return ResponseEntity.ok().body(serviceUser.register(request));
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUser.register(request));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseRegister.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        } catch (UserCreationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseRegister.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseRegister.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        }
     }
-// isEnabled
+
+    // isEnabled
     @PostMapping("/verify-email")
     public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
         try {
@@ -35,7 +56,7 @@ public class ControllerUser {
         }
     }
 
-// isAccountNonLocked
+    // isAccountNonLocked
 //    @PostMapping("/unlock-account")
 //    public ResponseEntity<ResponseRemove> unlockAccount(@RequestBody RequestUnlockAccount request) {
 //        return ResponseEntity.ok().body(serviceUser.unlockAccount(request));
@@ -53,9 +74,14 @@ public class ControllerUser {
 
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
-        return ResponseEntity.ok().body(serviceUser.changePassword(request));
+        try {
+            return ResponseEntity.ok().body(serviceUser.changePassword(request));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-// isCredentialsNonExpired
+
+    // isCredentialsNonExpired
     @PostMapping("/update-password")
     public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) {
         return ResponseEntity.ok().body(serviceUser.updatePassword(request));

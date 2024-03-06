@@ -38,7 +38,8 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             ":p_is_account_non_expired, " +
             ":p_is_account_non_locked, " +
             ":p_is_credentials_non_expired, " +
-            ":p_is_enabled)", nativeQuery = true)
+            ":p_is_enabled, " +
+            ":p_confirmation_code)", nativeQuery = true)
     public Optional<User> signupUser(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
@@ -52,8 +53,9 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_is_account_non_expired") boolean isAccountNonExpired,
             @Param("p_is_account_non_locked") boolean isAccountNonLocked,
             @Param("p_is_credentials_non_expired") boolean isCredentialsNonExpired,
-            @Param("p_is_enabled") boolean isEnabled
-    );
+            @Param("p_is_enabled") boolean isEnabled,
+            @Param("p_confirmation_code") String confirmationCode);
+
 
     @Transactional
     @Query(nativeQuery = true, value = "CALL setEmailVerified(:p_user_email, :p_display_name, :p_confirmation_code)")

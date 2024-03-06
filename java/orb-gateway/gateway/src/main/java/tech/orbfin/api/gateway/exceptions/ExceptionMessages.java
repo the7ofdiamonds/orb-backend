@@ -3,7 +3,8 @@ package tech.orbfin.api.gateway.exceptions;
 public class ExceptionMessages {
     public static String CONFIRMATION_CODE_NULL = "Confirmation code is required.";
     public static String CONFIRMATION_CODE_WRONG = "Incorrect confirmation code.";
-    public static String CREDENTTIALS_BAD = "Credentials submitted are not valid.";
+    public static String CREDENTIALS_BAD = "Credentials submitted are not valid.";
+    public static String EMAIL_ADDED = "There was an error adding an email.";
     public static String EMAIL_NULL = "Email is required.";
     public static String EMAIL_USED = "This Email is already in our records. Check your email.";
     public static String EMAIL_NOT_VALID = "Email is not valid.";
@@ -22,7 +23,11 @@ public class ExceptionMessages {
     public static String PHONE_NULL = "Phone number is required.";
     public static String PHONE_TOO_LONG = "Phone number is too long.";
     public static String PHONE_NOT_VALID = "Phone number is not valid.";
+    public static String PHONE_ERROR = "There was an error adding phone number please try again at another time.";
     public static String USER_NULL = "User could not be found.";
+    public static String USER_CREATION_ERROR = "There was an error signing up new user please try again at another time.";
+    public static String USER_NOT_FOUND = "User could not be found with this Username.";
+    public static String USERNAME_CHANGED = "There was an error changing your username please try again at another time.";
     public static String USERNAME_NULL = "Username is required.";
     public static String USERNAME_USED = "This Username is already in our records. Check your email inbox.";
     public static String USERNAME_TOO_LONG = "Username provided is too long there is a max length of 15 characters.";
