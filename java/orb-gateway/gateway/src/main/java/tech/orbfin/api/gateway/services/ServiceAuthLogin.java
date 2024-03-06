@@ -107,11 +107,7 @@ public class ServiceAuthLogin {
 
             log.info("Session created successfully for {}", username);
 
-            return ResponseLogin.builder()
-                    .username(username)
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
+            return new ResponseLogin(username, accessToken, refreshToken);
         } catch (Exception e) {
             return ResponseLogin.builder()
                     .errorMessage("Internal server error: " + e.getMessage())

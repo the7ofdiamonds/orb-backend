@@ -1,6 +1,5 @@
 package tech.orbfin.api.gateway.services;
 
-
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @RequiredArgsConstructor
 @Service

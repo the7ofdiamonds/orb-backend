@@ -70,16 +70,6 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_display_name") String username,
             @Param("p_confirmation_code") String confirmationCode);
 
-    //    @Query(value = "CALL loginUser(:p_display_name, :p_user_pass)", nativeQuery = true)
-//    public Optional<User> loginUser(
-//            @Param("p_display_name") String username,
-//            @Param("p_user_pass") String password);
-//
-//    @Query(nativeQuery = true, value = "CALL usernamePasswordMatches(:p_display_name, :p_user_pass)")
-//    Boolean usernamePasswordMatches(
-//            @Param("p_display_name") String username,
-//            @Param("p_user_pass") String password);
-
     @Transactional
     @Procedure(name = "findUserByEmail")
     public Optional<User> findUserByEmail(
@@ -136,7 +126,11 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_user_pass") String password,
             @Param("p_wp_capabilities") Collection<Role> roles);
 
-//    public void update();
-//
-//    public void delete();
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL deleteAccount(:p_user_email, :p_display_name, :p_confirmation_code)")
+    public boolean deleteAccount(
+            @Param("p_user_email") String email,
+            @Param("p_display_name") String username,
+            @Param("p_confirmation_code") String confirmationCode);
+
 }
