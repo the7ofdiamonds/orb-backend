@@ -16,8 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-
-
 @RequiredArgsConstructor
 @Service
 public class ServiceUserDetails implements UserDetailsService {
@@ -38,12 +36,6 @@ public class ServiceUserDetails implements UserDetailsService {
         return new UserEntity(u);
     }
 
-    public boolean checkEmailverified(String email){
-        UserDetails user = loadUserByEmail(email);
-
-        return user.isEnabled();
-    }
-
     public boolean setEmailVerified(String email, String confirmationCode){
         UserDetails user = loadUserByEmail(email);
 
@@ -52,5 +44,15 @@ public class ServiceUserDetails implements UserDetailsService {
         }
 
         return iRepositoryUser.setEmailVerified(email, user.getUsername(), confirmationCode);
+    }
+
+    public boolean setAccountUnlocked(String email, String confirmationCode){
+        UserDetails user = loadUserByEmail(email);
+
+        if(user.isEnabled() && user.isAccountNonLocked()){
+            return true;
+        }
+
+        return iRepositoryUser.setAccountUnlocked(email, user.getUsername(), confirmationCode);
     }
 }

@@ -57,4 +57,11 @@ public class ConfigKafka {
                 .name(ConfigKafkaTopics.PHONE_CHANGED)
                 .build();
     }
+
+    @Bean
+    public NewTopic phoneRecovery() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.PHONE_RECOVERY)
+                .build();
+    }
 }

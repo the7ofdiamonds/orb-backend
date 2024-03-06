@@ -56,10 +56,16 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_is_enabled") boolean isEnabled,
             @Param("p_confirmation_code") String confirmationCode);
 
-
     @Transactional
     @Query(nativeQuery = true, value = "CALL setEmailVerified(:p_user_email, :p_display_name, :p_confirmation_code)")
     public boolean setEmailVerified(
+            @Param("p_user_email") String email,
+            @Param("p_display_name") String username,
+            @Param("p_confirmation_code") String confirmationCode);
+
+    @Transactional
+    @Query(nativeQuery = true, value = "CALL setAccountUnlocked(:p_user_email, :p_display_name, :p_confirmation_code)")
+    public boolean setAccountUnlocked(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
             @Param("p_confirmation_code") String confirmationCode);
@@ -73,6 +79,7 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
 //    Boolean usernamePasswordMatches(
 //            @Param("p_display_name") String username,
 //            @Param("p_user_pass") String password);
+
     @Transactional
     @Procedure(name = "findUserByEmail")
     public Optional<User> findUserByEmail(

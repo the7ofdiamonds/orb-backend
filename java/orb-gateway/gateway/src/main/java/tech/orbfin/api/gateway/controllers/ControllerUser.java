@@ -63,12 +63,12 @@ public class ControllerUser {
 //    }
 //
     @PostMapping("/add-email")
-    public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) {
+    public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.addEmail(request));
     }
 
     @PostMapping("/change-username")
-    public ResponseEntity<ResponseChange> changeUsername(@RequestBody RequestChangeUsername request) {
+    public ResponseEntity<ResponseChange> changeUsername(@RequestBody RequestChangeUsername request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.changeUsername(request));
     }
 
@@ -83,27 +83,27 @@ public class ControllerUser {
 
     // isCredentialsNonExpired
     @PostMapping("/update-password")
-    public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) {
+    public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.updatePassword(request));
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) {
+    public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.forgotPassword(request));
     }
 
     @PostMapping("/change-name")
-    public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) {
+    public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.changeName(request));
     }
 
     @PostMapping("/change-phone")
-    public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) {
+    public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.changePhone(request));
     }
 
     @PostMapping("/remove-email")
-    public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {
+    public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) throws Exception {
         return ResponseEntity.ok().body(serviceUser.removeEmail(request));
     }
 
