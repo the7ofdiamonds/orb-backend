@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.controllers;
 
+
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.services.ServiceAuthLogin;
 import tech.orbfin.api.gateway.services.ServiceAuthLogout;
 
@@ -11,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Component;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -27,13 +31,50 @@ public class ControllerAuth {
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
         try {
             return ResponseEntity.ok().body(serviceAuthLogin.login(request));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseLogin.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseLogin.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
-        return ResponseEntity.ok().body(serviceAuthLogout.logout(request.getToken()));
+        try {
+            return ResponseEntity.ok().body(serviceAuthLogout.logout(request));
+        }catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseLogout.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseLogout.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/logout-all")
+    public ResponseEntity<ResponseLogout> logoutAll(@RequestBody RequestLogoutAll request) {
+        try {
+            return ResponseEntity.ok().body(serviceAuthLogout.logoutAll(request.getUsername()));
+        }catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseLogout.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseLogout.builder()
+                            .errorMessage(e.getMessage())
+                            .build());
+        }
     }
 }

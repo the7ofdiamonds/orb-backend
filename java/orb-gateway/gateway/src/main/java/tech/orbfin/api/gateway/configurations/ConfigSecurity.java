@@ -2,6 +2,7 @@ package tech.orbfin.api.gateway.configurations;
 
 //import tech.orbfin.api.gateway.authentication.AuthEntryPoint;
 
+import tech.orbfin.api.gateway.model.request.RequestLogout;
 import tech.orbfin.api.gateway.services.ServiceAuthLogout;
 import tech.orbfin.api.gateway.services.ServiceToken;
 
@@ -70,9 +71,12 @@ public class ConfigSecurity {
     public ServerLogoutSuccessHandler logoutSuccessHandler() {
         return (exchange, authentication) -> {
             SecurityContextHolder.clearContext();
-            String token = ServiceToken.getToken(exchange.getExchange());
 
-            serviceAuthLogot.logout(token);
+            try {
+                serviceAuthLogot.logout((RequestLogout) exchange.getExchange().getRequest());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             return Mono.empty();
         };
     }

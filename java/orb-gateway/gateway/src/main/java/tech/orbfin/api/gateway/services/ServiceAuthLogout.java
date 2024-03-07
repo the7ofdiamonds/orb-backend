@@ -1,64 +1,61 @@
 package tech.orbfin.api.gateway.services;
 
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
+import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
+
+import tech.orbfin.api.gateway.model.request.RequestLogout;
+import tech.orbfin.api.gateway.model.response.ResponseLogout;
+
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import tech.orbfin.api.gateway.model.Session;
-import tech.orbfin.api.gateway.model.response.ResponseLogout;
-import tech.orbfin.api.gateway.model.user.User;
-
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-
-import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ServiceAuthLogout {
-    private final IRepositoryUser iRepositoryUser;
-    private final ServiceTokenJW serviceTokenJW;
-    private final IRepositorySession iRepositorySession;
+    private final ServiceSession serviceSession;
 
     @Transactional
-    public ResponseLogout logout(String token) {
+    public ResponseLogout logout(RequestLogout request) throws Exception {
+        try {
+            var accessToken = request.getAccessToken();
+            var refreshToken = request.getRefreshToken();
+
+            log.info("Service Auth Logout");
+
+            String username = serviceSession.removeSession(accessToken);
+
+            if (username == null) {
+                throw new Exception(ExceptionMessages.SESSION_REMOVE_ERROR);
+            }
+
+            return new ResponseLogout(username);
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        } catch (Exception e) {
+            throw new Exception(ExceptionMessages.LOGOUT_ATTEMPT_ERROR + e.getMessage());
+        }
+    }
+
+    public ResponseLogout logoutAll(String username) throws Exception {
         try {
             log.info("Service Auth Logout");
 
-            String username = serviceTokenJW.extractUsername(token);
-            Optional<User> user = iRepositoryUser.findUserByUsername(username);
+            boolean sessionsRemoved = serviceSession.removeAllSessions(username);
 
-            if (user.isEmpty()) {
-                return ResponseLogout.builder()
-                        .errorMessage("The username " + username + " can not be found.")
-                        .build();
+            if (!sessionsRemoved) {
+                throw new Exception(ExceptionMessages.SESSION_REMOVE_ERROR);
             }
 
-            Iterable<Session> sessions = iRepositorySession.findByToken(token);
-
-            if (sessions == null) {
-                SecurityContextHolder.clearContext();
-            }
-
-            for (Session session : sessions) {
-                session.setAuthenticated(false);
-                session.setExpired(true);
-                session.setRevoked(true);
-
-                iRepositorySession.save(session);
-            }
-
-            log.info(username);
             return new ResponseLogout(username);
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
-            return ResponseLogout.builder()
-                    .errorMessage("Internal server error: " + e.getMessage())
-                    .build();
+            throw new Exception(ExceptionMessages.LOGOUT_ATTEMPT_ERROR + e.getMessage());
         }
     }
 }

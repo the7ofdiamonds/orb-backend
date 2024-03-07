@@ -6,7 +6,6 @@ import tech.orbfin.api.gateway.model.response.*;
 import tech.orbfin.api.gateway.services.ServiceUserChange;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
-import tech.orbfin.api.gateway.exceptions.UserCreationException;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,14 +30,9 @@ public class ControllerUserChange {
     @PostMapping("/add-email")
     public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) throws Exception {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.addEmail(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.addEmail(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseAdd.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseAdd.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -53,14 +47,9 @@ public class ControllerUserChange {
     @PostMapping("/change-username")
     public ResponseEntity<ResponseChange> changeUsername(@RequestBody RequestChangeUsername request) throws Exception {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.changeUsername(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeUsername(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseChange.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseChange.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -75,14 +64,9 @@ public class ControllerUserChange {
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.changePassword(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePassword(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseChange.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseChange.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -94,18 +78,12 @@ public class ControllerUserChange {
         }
     }
 
-    // isCredentialsNonExpired
     @PostMapping("/update-password")
     public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) throws Exception {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.updatePassword(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.updatePassword(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseUpdate.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseUpdate.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -120,14 +98,9 @@ public class ControllerUserChange {
     @PostMapping("/change-name")
     public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.changeName(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeName(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseChange.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseChange.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -142,14 +115,9 @@ public class ControllerUserChange {
     @PostMapping("/change-phone")
     public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.changePhone(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePhone(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseChange.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseChange.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -164,14 +132,9 @@ public class ControllerUserChange {
     @PostMapping("/remove-email")
     public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {
         try {
-            return ResponseEntity.ok().body(serviceUserChange.removeEmail(request));
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.removeEmail(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseRemove.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseRemove.builder()
                             .errorMessage(e.getMessage())
                             .build());

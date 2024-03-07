@@ -13,8 +13,6 @@ import org.springframework.data.redis.core.RedisHash;
 import com.redis.om.spring.annotations.Document;
 import com.redis.om.spring.annotations.Indexed;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.security.core.GrantedAuthority;
 
 @Builder

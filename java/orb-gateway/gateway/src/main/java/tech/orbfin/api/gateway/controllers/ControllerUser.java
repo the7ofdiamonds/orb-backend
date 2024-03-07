@@ -3,7 +3,6 @@ package tech.orbfin.api.gateway.controllers;
 import tech.orbfin.api.gateway.services.ServiceUser;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
-import tech.orbfin.api.gateway.exceptions.UserCreationException;
 
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
@@ -26,18 +25,12 @@ import org.springframework.web.bind.annotation.*;
 public class ControllerUser {
     private ServiceUser serviceUser;
 
-    // isEnabled
     @PostMapping("/verify-email")
     public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
         try {
             return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseVerify.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseVerify.builder()
                             .errorMessage(e.getMessage())
                             .build());
@@ -55,11 +48,6 @@ public class ControllerUser {
             return ResponseEntity.ok().body(serviceUser.forgotPassword(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseForgot.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseForgot.builder()
                             .errorMessage(e.getMessage())
                             .build());

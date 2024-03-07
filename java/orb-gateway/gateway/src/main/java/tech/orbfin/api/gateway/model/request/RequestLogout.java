@@ -13,6 +13,6 @@ import tech.orbfin.api.gateway.exceptions.LogoutException;
 @Setter
 @Component
 public class RequestLogout {
-    private String token;
-
+    private String accessToken;
+    private String refreshToken;
 }

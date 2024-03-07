@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Component
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
-    private final ServiceToken serviceToken;
     private final FilterToken filterToken;
     private final FilterTokenFirebase filterTokenFirebase;
 
@@ -27,7 +26,7 @@ public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
         log.info("Gateway Filter Apply");
         return (exchange, chain) -> Mono.fromRunnable(() -> {
             System.out.println("FilterAuth is being applied.");
-            String token = serviceToken.getToken(exchange);
+            String token = ServiceToken.getToken(exchange);
 
             if (token == null) {
                 Mono.empty();

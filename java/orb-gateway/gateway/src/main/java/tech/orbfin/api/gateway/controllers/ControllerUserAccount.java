@@ -1,15 +1,17 @@
 package tech.orbfin.api.gateway.controllers;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
-import tech.orbfin.api.gateway.exceptions.UserCreationException;
+
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.services.ServiceUserAccount;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,11 +37,6 @@ public class ControllerUserAccount {
                     .body(ResponseRegister.builder()
                             .errorMessage(e.getMessage())
                             .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseRegister.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseRegister.builder()
@@ -57,11 +54,6 @@ public class ControllerUserAccount {
                     .body(ResponseUnlocked.builder()
                             .errorMessage(e.getMessage())
                             .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseUnlocked.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseUnlocked.builder()
@@ -76,11 +68,6 @@ public class ControllerUserAccount {
             return ResponseEntity.ok().body(serviceUserAccount.removeAccount(request));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseRemoveAccount.builder()
-                            .errorMessage(e.getMessage())
-                            .build());
-        } catch (UserCreationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseRemoveAccount.builder()
                             .errorMessage(e.getMessage())
                             .build());

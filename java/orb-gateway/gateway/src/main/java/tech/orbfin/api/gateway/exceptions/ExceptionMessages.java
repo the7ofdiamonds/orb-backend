@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.exceptions;
 
 public class ExceptionMessages {
+    public static final String SESSION_REMOVE_ERROR = "There was an error removing your session.";
     public static String ACCOUNT_NOT_VALID = "There was an error verifying your account.";
     public static String ACCOUNT_VERIFY_ERROR = "There was an error verifying your account.";
     public static String ACCOUNT_ENABLED_ERROR = "There was an error enabling your account.";
@@ -18,7 +19,8 @@ public class ExceptionMessages {
     public static String EMAIL_USED = "This Email is already in our records. Check your email.";
     public static String EMAIL_VERIFIED = "This email has been verified.";
     public static String EMAIL_VERIFIED_ERROR = "Could not verify email please try again at another time.";
-    public static String LOGIN_ATTEMPT_ERROR = "Could not verify email please try again at another time.";
+    public static String LOGIN_ATTEMPT_ERROR = "There was an error trying to login please try again at another time.";
+    public static String LOGOUT_ATTEMPT_ERROR = "There was an error trying to login please try again at another time.";
     public static String NAME_CHANGE_ERROR = "There was an error trying to change your name. ";
     public static String NAME_NULL = "First and last names are required.";
     public static String NAME_TOO_LONG = "Name is too long.";
@@ -48,6 +50,8 @@ public class ExceptionMessages {
     public static String USERNAME_USED = "This Username is already in our records. Check your email inbox.";
     public static String USERNAME_TOO_LONG = "Username provided is too long there is a max length of 15 characters.";
     public static String USERNAME_NOT_VALID = "Username can not contain any special characters or spaces.";
+    public static String USERNAME_NOT_FOUND = "Username could not be found.";
+
 
 
 }

@@ -8,4 +8,6 @@ public interface IRepositorySession extends RedisDocumentRepository<Session,Stri
     Iterable<Session> findByToken(String token);
 //    Iterable<Session> findByUserId(String token);
     Iterable<Session> findByRefreshToken(String refreshToken);
+    Iterable<Session> findByUsername(String username);
+
 }

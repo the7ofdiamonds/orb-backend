@@ -1,7 +1,10 @@
 package tech.orbfin.api.gateway.services;
 
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
+import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.Session;
 
+import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
 
@@ -58,5 +61,65 @@ public class ServiceSession {
         }
 
         return null;
+    }
+
+    public Iterable<Session> getAllTokens(String username) throws Exception {
+        User user = serviceUserUtils.findUserByUsername(username);
+
+        if (user == null) {
+            throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
+        }
+
+        Iterable<Session> sessions = iRepositorySession.findByUsername(username);
+
+        if (sessions == null) {
+            return null;
+        }
+
+        return sessions;
+    }
+
+    public String removeSession(String token) throws Exception {
+        String username = serviceTokenJW.extractUsername(token);
+
+        if (username == null) {
+            throw new BadCredentialsException(ExceptionMessages.USERNAME_NULL);
+        }
+
+        User user = serviceUserUtils.findUserByUsername(username);
+
+        if (user == null) {
+            throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
+        }
+
+        Iterable<Session> sessions = iRepositorySession.findByToken(token);
+
+        if (sessions == null) {
+            return username;
+        }
+
+        for (Session session : sessions) {
+            session.setRevoked(true);
+
+            iRepositorySession.save(session);
+        }
+
+        return username;
+    }
+
+    public boolean removeAllSessions(String username) throws Exception {
+        Iterable<Session> sessions = getAllTokens(username);
+
+        if (sessions == null) {
+            return true;
+        }
+
+        for (Session session : sessions) {
+            session.setRevoked(true);
+
+            iRepositorySession.save(session);
+        }
+
+        return true;
     }
 }
