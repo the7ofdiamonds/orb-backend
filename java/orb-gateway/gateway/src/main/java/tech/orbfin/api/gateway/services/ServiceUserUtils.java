@@ -1,16 +1,16 @@
 package tech.orbfin.api.gateway.services;
 
+import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
-import tech.orbfin.api.gateway.model.request.*;
-import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.user.User;
 
+import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-import tech.orbfin.api.gateway.repositories.RepositoryUser;
+
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 import tech.orbfin.api.gateway.utils.Patterns;
 import tech.orbfin.api.gateway.utils.Validator;
@@ -26,10 +26,10 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.context.annotation.Bean;
 
-import org.springframework.kafka.core.KafkaTemplate;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.kafka.core.KafkaTemplate;
 
 import com.google.firebase.auth.UserRecord;
 
@@ -39,10 +39,9 @@ import com.google.firebase.auth.UserRecord;
 @Service
 public class ServiceUserUtils {
     private final IRepositoryUser iRepositoryUser;
-    private final RepositoryUser repositoryUser;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUserDetails serviceUserDetails;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -245,6 +244,34 @@ public class ServiceUserUtils {
         }
     }
 
+    public boolean validateAccount(UserEntity user) {
+        boolean enabled = user.isEnabled();
+
+        if (!enabled) {
+            return false;
+        }
+
+        boolean accountLocked = user.isAccountNonLocked();
+
+        if (!accountLocked) {
+            return false;
+        }
+
+        boolean expired = user.isAccountNonExpired();
+
+        if (!expired) {
+            return false;
+        }
+
+        boolean authenticated = user.isCredentialsNonExpired();
+
+        if (!authenticated) {
+            return false;
+        }
+
+        return true;
+    }
+
     public User validateCredentials(String username, String password) throws Exception {
         try {
             boolean usernameIsValid = validUsername(username);
@@ -265,8 +292,33 @@ public class ServiceUserUtils {
                 throw new UserNotFoundException();
             }
 
-            if (!passwordEncoder().matches(password, user.getPassword())) {
+            String savedPassword = user.getPassword();
+            String email = user.getEmail();
+
+            if (savedPassword.startsWith("$P")) {
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, user.getEmail());
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_UPDATE_ERROR);
+            }
+
+            if (!passwordEncoder().matches(password, savedPassword)) {
                 throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
+            }
+
+            UserEntity userEntity = new UserEntity(user);
+
+            boolean accountValid = validateAccount(userEntity);
+
+            if (!accountValid) {
+                throw new Exception(ExceptionMessages.ACCOUNT_NOT_VALID);
+            }
+
+            UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
+
+            if (userRecord == null) {
+                log.info("Firebase User with the email {} does not exists.", email);
+                log.info("Adding user with the email {} to firebase", email);
+
+                serviceUserFirebase.createUser(email, username, password, null);
             }
 
             return user;
@@ -353,32 +405,6 @@ public class ServiceUserUtils {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
             throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
-        }
-    }
-
-    public ResponseVerify verifyEmail(RequestVerify request) throws Exception {
-        try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmationCode = request.getConfirmationCode();
-
-            User verifiedAccount = verifyAccount(username, password, confirmationCode);
-
-            if (verifiedAccount == null) {
-                throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
-            }
-
-            boolean accountEnabled = verifiedAccount.getIsEnabled();
-
-            if (!accountEnabled) {
-                throw new BadCredentialsException(ExceptionMessages.ACCOUNT_ENABLED_ERROR);
-            }
-
-            return new ResponseVerify("email", verifiedAccount.getEmail());
-        } catch (BadCredentialsException e) {
-            throw new BadCredentialsException(e.getMessage());
-        } catch (Exception e) {
-            throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR + e.getMessage());
         }
     }
 }

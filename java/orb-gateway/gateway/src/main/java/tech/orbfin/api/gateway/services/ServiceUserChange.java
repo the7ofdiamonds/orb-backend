@@ -26,13 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 import org.springframework.context.annotation.Bean;
 
+import org.springframework.stereotype.Service;
+
 import org.springframework.kafka.core.KafkaTemplate;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import org.springframework.stereotype.Service;
-
 
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProvider;
@@ -47,9 +46,8 @@ public class ServiceUserChange {
     private final RepositoryUser repositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
-    private final ServiceUserDetails serviceUserDetails;
-    private final ServiceUserAccount serviceUserAccount;
     private final ServiceUserUtils serviceUserUtils;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

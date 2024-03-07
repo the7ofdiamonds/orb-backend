@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-public class ResponseDeleteAccount {
+public class ResponseRemoveAccount {
     private String email;
     private String successMessage;
     private String errorMessage;
 
-    public ResponseDeleteAccount(String email) {
+    public ResponseRemoveAccount(String email) {
         this.successMessage = "Your account with the email " + email + " was removed.";
     }
 }

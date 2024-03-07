@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.model;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.persistence.*;
@@ -14,6 +15,7 @@ import com.redis.om.spring.annotations.Indexed;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.security.core.GrantedAuthority;
 
 @Builder
 @Getter
@@ -28,36 +30,41 @@ public class Session implements Serializable {
     private String id;
     @Id
     @Indexed
-    private String token;
-    @Indexed
-    private SignatureAlgorithm algorithm;
+    private String accessToken;
     @Indexed
     private String refreshToken;
     @Indexed
-    private Long userid;
+    private SignatureAlgorithm algorithm;
     @Indexed
-    private boolean isAuthenticated;
+    private String username;
     @Indexed
-    private boolean expired;
+    private Collection<? extends GrantedAuthority> authorities;
+    @Indexed
+    private long issued;
+    @Indexed
+    private long expiration;
     @Indexed
     private boolean revoked;
 
     public Session(
-            String token,
             SignatureAlgorithm algorithm,
+            String accessToken,
             String refreshToken,
-            Long userid,
-            Boolean isAuthenticated,
-            Boolean expired,
+            String username,
+            Collection<? extends GrantedAuthority> authorities,
+            long issued,
+            long expiration,
             Boolean revoked) {
-        this.token = token;
         this.algorithm = algorithm;
+        this.accessToken = accessToken;
         this.refreshToken = refreshToken;
-        this.userid = userid;
-        this.isAuthenticated = isAuthenticated;
-        this.expired = expired;
+        this.username = username;
+        this.authorities = authorities;
+        this.issued = issued;
+        this.expiration = expiration;
         this.revoked = revoked;
     }
 
-    public Session(){}
+    public Session() {
+    }
 }

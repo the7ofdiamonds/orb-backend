@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-public class RequestDeleteAccount {
+public class RequestRemoveAccount {
     private String username;
     private String password;
     private String confirmationCode;

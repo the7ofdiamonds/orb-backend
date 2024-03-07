@@ -1,49 +1,37 @@
 package tech.orbfin.api.gateway.services;
 
-import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
+import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
-
-import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.model.user.User;
+
 import tech.orbfin.api.gateway.model.request.RequestLogin;
 import tech.orbfin.api.gateway.model.response.ResponseLogin;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import com.google.firebase.auth.UserRecord;
-
 import org.springframework.stereotype.Service;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.springframework.kafka.core.KafkaTemplate;
-import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ServiceAuthLogin {
-    private final ServiceUserFirebase serviceUserFirebase;
-    private final ServiceUser serviceUser;
     private final ServiceTokenJW serviceTokenJW;
-    private final IRepositoryUser iRepositoryUser;
-    private final IRepositorySession iRepositorySession;
-    private final PasswordEncoder passwordEncoder;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ServiceSession serviceSession;
+    private final ServiceUserUtils serviceUserUtils;
 
-    public ResponseLogin login(@NotNull RequestLogin request) {
+    public ResponseLogin login(@NotNull RequestLogin request) throws Exception {
         try {
             log.info("Login function has been called.");
 
@@ -52,66 +40,45 @@ public class ServiceAuthLogin {
             Object location = request.getLocation();
 
             log.info("User {} is attempting to login", username);
-            boolean usernameExists = iRepositoryUser.existsByUsername(username);
 
-            if (!usernameExists) {
-                return ResponseLogin.builder()
-                        .errorMessage("The username " + username + " can not be found.")
-                        .build();
+            User validAccount = serviceUserUtils.validateCredentials(username, password);
+
+            if(validAccount == null){
+               throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
             }
 
-            Optional<User> user = iRepositoryUser.findUserByUsername(username);
-            String savedPassword = user.get().getPassword();
-            String email = user.get().getEmail();
+            String email = validAccount.getEmail();
+            UserEntity userEntity = new UserEntity(validAccount);
 
-            if (savedPassword.startsWith("$P")) {
-                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, email);
-                return ResponseLogin.builder()
-                        .errorMessage("Password needs to be updated check your email inbox.")
-                        .build();
-            }
-
-            if (!passwordEncoder.matches(password, savedPassword)) {
-                return ResponseLogin.builder()
-                        .errorMessage("The username " + username + " and the password provided do not match.")
-                        .build();
-            }
-
-            username = user.get().getUsername();
-            var role = user.get().getRoles();
+            username = validAccount.getUsername();
+            var role = validAccount.getRoles();
 
             log.info("{} {} is attempting to login.", role, username);
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
 
-            UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
-
-            if (userRecord == null) {
-                log.info("Firebase User with the email {} does not exists.", email);
-                log.info("Adding user with the email {} to firebase", email);
-
-                serviceUserFirebase.createUser(email, username, password, null);
-            }
-
             log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user.get());
-            String refreshToken = serviceTokenJW.refreshToken(user.get());
-
+            String accessToken = serviceTokenJW.generateToken(extraClaims, userEntity);
+            String refreshToken = serviceTokenJW.refreshToken(userEntity);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            iRepositorySession.save(new Session(accessToken, serviceTokenJW.ALGORITHM, refreshToken, user.get().getId(), true, false, false));
+            boolean sessionCreated = serviceSession.createSession(userEntity, accessToken, refreshToken);
+
+            if(!sessionCreated){
+                throw new Exception(ExceptionMessages.SESSION_CREATE_ERROR);
+            }
 
             log.info("Session created successfully for {}", username);
 
             return new ResponseLogin(username, accessToken, refreshToken);
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
-            return ResponseLogin.builder()
-                    .errorMessage("Internal server error: " + e.getMessage())
-                    .build();
+            throw new Exception(ExceptionMessages.LOGIN_ATTEMPT_ERROR + e.getMessage());
         }
     }
 }

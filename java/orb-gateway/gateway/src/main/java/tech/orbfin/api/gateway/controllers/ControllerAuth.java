@@ -25,7 +25,11 @@ public class ControllerAuth {
 
     @PostMapping("/")
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
-        return ResponseEntity.ok().body(serviceAuthLogin.login(request));
+        try {
+            return ResponseEntity.ok().body(serviceAuthLogin.login(request));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PostMapping("/logout")

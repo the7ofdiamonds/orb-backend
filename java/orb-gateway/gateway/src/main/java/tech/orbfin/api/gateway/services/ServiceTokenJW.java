@@ -19,6 +19,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.stereotype.Service;
+import tech.orbfin.api.gateway.model.user.UserEntity;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -37,7 +38,7 @@ public class ServiceTokenJW {
 
     private String buildToken(
             Map<String, Object> extraClaims,
-            User user,
+            UserEntity user,
             long expiration
     ) {
         return Jwts
@@ -52,13 +53,13 @@ public class ServiceTokenJW {
 
     public String generateToken(
             Map<String, Object> extraClaims,
-            User user
+            UserEntity user
     ) {
         return buildToken(extraClaims, user, expiration);
     }
 
     public String refreshToken(
-            User user
+            UserEntity user
     ) {
         return buildToken(new HashMap<>(), user, refreshExpiration);
     }
@@ -95,10 +96,6 @@ public class ServiceTokenJW {
         long currentTime = (new Date()).getTime();
         long tokenExpiration = (extractExpiration(token)).getTime();
 
-        if (currentTime > tokenExpiration) {
-            return false;
-        }
-
-        return true;
+        return currentTime <= tokenExpiration;
     }
 }

@@ -11,9 +11,6 @@ import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -25,10 +22,6 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -36,13 +29,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final ServiceUserAccount serviceUserAccount;
     private final ServiceUserUtils serviceUserUtils;
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     public ResponseVerify verifyEmail(RequestVerify request) throws Exception {
         try {
@@ -50,7 +37,7 @@ public class ServiceUser {
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = serviceUserAccount.verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);

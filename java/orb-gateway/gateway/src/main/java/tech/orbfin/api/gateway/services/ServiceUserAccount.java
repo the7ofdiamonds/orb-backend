@@ -29,12 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import org.springframework.context.annotation.Bean;
+
+import org.springframework.stereotype.Service;
+
 import org.springframework.kafka.core.KafkaTemplate;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import org.springframework.stereotype.Service;
 
 import com.google.firebase.auth.UserRecord;
 
@@ -171,62 +172,13 @@ public class ServiceUserAccount {
         }
     }
 
-    public User verifyAccount(String username, String password, String confirmationCode) throws Exception {
-        try {
-            User userCredentials = serviceUserUtils.validateConfirmationCode(username, confirmationCode);
-
-            if (userCredentials == null) {
-                throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
-            }
-
-            boolean passwordIsValid = serviceUserUtils.validPassword(password);
-
-            if (!passwordIsValid) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
-            }
-
-            if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
-            }
-
-            String email = userCredentials.getEmail();
-            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
-            String uid = firebaseUser.getUid();
-
-            boolean emailVerified = userCredentials.getIsEnabled();
-            boolean emailVerifiedFirebase = firebaseUser.isEmailVerified();
-
-            if (emailVerified && emailVerifiedFirebase) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED);
-            }
-
-            boolean setEmailVerified = serviceUserDetails.setEmailVerified(email, confirmationCode);
-
-            if (!setEmailVerified) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
-            }
-
-            boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
-
-            if (!setEmailVerifiedFirebase) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
-            }
-
-            return userCredentials;
-        } catch (BadCredentialsException e) {
-            throw new BadCredentialsException(e.getMessage());
-        } catch (Exception e) {
-            throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
-        }
-    }
-
     public ResponseUnlocked unlockAccount(RequestVerify request) throws Exception {
         try {
             String username = request.getUsername();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
@@ -260,13 +212,13 @@ public class ServiceUserAccount {
         }
     }
 
-    public ResponseDeleteAccount removeAccount(RequestDeleteAccount request) throws Exception {
+    public ResponseRemoveAccount removeAccount(RequestRemoveAccount request) throws Exception {
         try {
             String username = request.getUsername();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
@@ -300,7 +252,7 @@ public class ServiceUserAccount {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
-            return new ResponseDeleteAccount(email);
+            return new ResponseRemoveAccount(email);
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -308,12 +260,12 @@ public class ServiceUserAccount {
         }
     }
 
-    public boolean deleteAccount(RequestDeleteAccount request) throws Exception {
+    public boolean deleteAccount(RequestRemoveAccount request) throws Exception {
         String username = request.getUsername();
         String password = request.getPassword();
         String confirmationCode = request.getConfirmationCode();
 
-        User verifiedAccount = verifyAccount(username, password, confirmationCode);
+        User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
 
         var userEntity = new UserEntity(verifiedAccount);
 
