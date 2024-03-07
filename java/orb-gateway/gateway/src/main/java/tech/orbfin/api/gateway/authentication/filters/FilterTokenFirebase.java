@@ -1,6 +1,8 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
+import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
+import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.services.ServiceSession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
@@ -22,9 +24,7 @@ import org.springframework.web.server.ServerWebExchange;
 @RequiredArgsConstructor
 @Component
 public class FilterTokenFirebase implements GlobalFilter {
-    private final ServiceToken serviceToken;
     private final ServiceTokenFirebase serviceTokenFirebase;
-    private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceSession serviceSession;
 
     @Override
@@ -39,16 +39,19 @@ public class FilterTokenFirebase implements GlobalFilter {
 
         log.info("Validating token ...");
 
-        boolean validatedToken;
+        FirebaseToken validatedToken;
 
         try {
             validatedToken = serviceTokenFirebase.verifyToken(jwt);
+
 //  If valid return authenticated
         } catch (FirebaseAuthException e) {
             throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
         }
 
-        if (!validatedToken) {
+        if (!(validatedToken instanceof FirebaseToken)) {
             log.info("Token is not valid");
 
             log.info("Searching for session to use Refresh Token ......");

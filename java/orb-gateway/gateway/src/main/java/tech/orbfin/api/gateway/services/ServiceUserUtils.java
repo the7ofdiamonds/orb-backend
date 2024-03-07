@@ -40,7 +40,6 @@ import com.google.firebase.auth.UserRecord;
 public class ServiceUserUtils {
     private final IRepositoryUser iRepositoryUser;
     private final ServiceUserFirebase serviceUserFirebase;
-    private final ServiceUserDetails serviceUserDetails;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Bean
@@ -378,26 +377,26 @@ public class ServiceUserUtils {
             }
 
             String email = userCredentials.getEmail();
+            boolean emailVerified = userCredentials.getIsEnabled();
+
+            if (!emailVerified) {
+                boolean setEmailVerified = iRepositoryUser.setEmailVerified(email, username, confirmationCode);
+
+                if (!setEmailVerified) {
+                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+                }
+            }
+
             UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
             String uid = firebaseUser.getUid();
-
-            boolean emailVerified = userCredentials.getIsEnabled();
             boolean emailVerifiedFirebase = firebaseUser.isEmailVerified();
 
-            if (emailVerified && emailVerifiedFirebase) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED);
-            }
+            if (!emailVerifiedFirebase) {
+                boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
 
-            boolean setEmailVerified = serviceUserDetails.setEmailVerified(email, confirmationCode);
-
-            if (!setEmailVerified) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
-            }
-
-            boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
-
-            if (!setEmailVerifiedFirebase) {
-                throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+                if (!setEmailVerifiedFirebase) {
+                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+                }
             }
 
             return userCredentials;

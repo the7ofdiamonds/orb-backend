@@ -15,13 +15,13 @@ import tech.orbfin.api.gateway.services.firebase.ServiceAuthFirebase;
 public class ServiceTokenFirebase {
     private final ServiceAuthFirebase auth;
 
-    public boolean verifyToken(String idToken) throws FirebaseAuthException {
+    public FirebaseToken verifyToken(String idToken) throws Exception {
         try {
-            FirebaseToken tokenVerified = auth.firebaseAuth.verifyIdToken(idToken, true);
+            FirebaseToken tokenVerified = auth.firebaseAuth.verifyIdToken(idToken, false);
 
-            return tokenVerified != null;
+            return tokenVerified;
         } catch (FirebaseAuthException e) {
-            throw new FirebaseAuthException(e);
+            throw new Exception("Token not valid");
         }
     }
 

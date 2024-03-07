@@ -64,14 +64,13 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
             }
 
             if (algo.equals("RS256")) {
-                var firebaseToken = serviceTokenFirebase.verifyToken(token);
+                FirebaseToken verifiedToken = serviceTokenFirebase.verifyToken(token);
 
-                if (!firebaseToken) {
+                if (!(verifiedToken instanceof FirebaseToken)) {
                     log.info("IDToken is not valid.");
                 }
 
                 log.info("IDToken is valid");
-                FirebaseToken verifiedToken = FirebaseAuth.getInstance(FirebaseApp.getInstance("ORB")).verifyIdToken(token, true);
 
                 UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.getUid());
                 user = serviceUserDetails.loadUserByEmail(firebaseUser.getEmail());

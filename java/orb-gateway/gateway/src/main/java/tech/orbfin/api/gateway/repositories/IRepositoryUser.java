@@ -64,6 +64,12 @@ public interface IRepositoryUser extends JpaRepository<User, Long> {
             @Param("p_confirmation_code") String confirmationCode);
 
     @Transactional
+    @Query(nativeQuery = true, value = "CALL setCredentialsNonExpired(:p_display_name, :p_user_pass)")
+    public boolean setCredentialsNonExpired(
+            @Param("p_display_name") String username,
+            @Param("p_user_pass") String password);
+
+    @Transactional
     @Query(nativeQuery = true, value = "CALL setAccountUnlocked(:p_user_email, :p_display_name, :p_confirmation_code)")
     public boolean setAccountUnlocked(
             @Param("p_user_email") String email,

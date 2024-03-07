@@ -36,7 +36,7 @@ public class Session implements Serializable {
     @Indexed
     private String username;
     @Indexed
-    private Collection<? extends GrantedAuthority> authorities;
+    private Collection<GrantedAuthority> authorities;
     @Indexed
     private long issued;
     @Indexed
@@ -49,7 +49,7 @@ public class Session implements Serializable {
             String accessToken,
             String refreshToken,
             String username,
-            Collection<? extends GrantedAuthority> authorities,
+            Collection<GrantedAuthority> authorities,
             long issued,
             long expiration,
             Boolean revoked) {
@@ -63,6 +63,5 @@ public class Session implements Serializable {
         this.revoked = revoked;
     }
 
-    public Session() {
-    }
+    public Session() {}
 }
