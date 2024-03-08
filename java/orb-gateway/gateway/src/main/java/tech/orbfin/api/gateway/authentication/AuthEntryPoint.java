@@ -35,6 +35,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
     private final ServiceTokenFirebase serviceTokenFirebase;
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUserDetails serviceUserDetails;
+    private final ServiceUserUtils serviceUserUtils;
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
@@ -74,7 +75,7 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
                 log.info("IDToken is valid");
 
                 UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.get().getUid());
-                user = serviceUserDetails.loadUserByEmail(firebaseUser.getEmail());
+                user = serviceUserUtils.loadUserByEmail(firebaseUser.getEmail());
             }
 
             log.info("Setting authentication in SecurityContextHolder...");

@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
@@ -383,7 +384,7 @@ log.info(String.valueOf(user.get()));
             boolean emailVerified = userCredentials.getIsEnabled();
 
             if (!emailVerified) {
-                boolean setEmailVerified = iRepositoryUser.setEmailVerified(email, username, confirmationCode);
+                boolean setEmailVerified = setEmailVerified(email, confirmationCode);
 
                 if (!setEmailVerified) {
                     throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
@@ -408,5 +409,49 @@ log.info(String.valueOf(user.get()));
         } catch (Exception e) {
             throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
         }
+    }
+
+    public UserDetails loadUserByEmail(String email) {
+        try {
+            User user = findUserByEmail(email);
+
+            if (user == null) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
+            }
+
+            return new UserEntity(user);
+        } catch(Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean setAccountNonExpired(String email, String confirmationCode){
+        UserDetails user = loadUserByEmail(email);
+
+        if(user.isAccountNonExpired()){
+            return true;
+        }
+
+        return iRepositoryUser.unexpireAccount(email, user.getUsername(), confirmationCode);
+    }
+
+    public boolean setAccountNonLocked(String email, String confirmationCode){
+        UserDetails user = loadUserByEmail(email);
+
+        if(user.isAccountNonLocked()){
+            return true;
+        }
+
+        return iRepositoryUser.unlockAccount(email, user.getUsername(), confirmationCode);
+    }
+
+    public boolean setEmailVerified(String email, String confirmationCode){
+        UserDetails user = loadUserByEmail(email);
+
+        if(user.isEnabled()){
+            return true;
+        }
+
+        return iRepositoryUser.enableAccount(email, user.getUsername(), confirmationCode);
     }
 }

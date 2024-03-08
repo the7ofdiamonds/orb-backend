@@ -36,57 +36,13 @@ public class ServiceUserDetails implements UserDetailsService {
         }
     }
 
-    public UserDetails loadUserByEmail(String email) {
-        try {
-            User user = serviceUserUtils.findUserByEmail(email);
-
-            if (user == null) {
-                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
-            }
-
-            return new UserEntity(user);
-        } catch(Exception e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    public boolean setAccountNonExpired(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isEnabled() && user.isCredentialsNonExpired() && user.isAccountNonExpired()){
-            return true;
-        }
-
-        return iRepositoryUser.setAccountUnlocked(email, user.getUsername(), confirmationCode);
-    }
-
-    public boolean setAccountNonLocked(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isEnabled() && user.isAccountNonLocked()){
-            return true;
-        }
-
-        return iRepositoryUser.setAccountUnlocked(email, user.getUsername(), confirmationCode);
-    }
-
-    public boolean setCredentialsNonExpired(String username){
+    public boolean setCredentialsNonExpired(String username, String password, String confirmationCode){
         UserDetails user = loadUserByUsername(username);
 
         if(user.isCredentialsNonExpired()){
             return true;
         }
 
-        return iRepositoryUser.setCredentialsNonExpired(user.getUsername(), user.getPassword());
-    }
-
-    public boolean setEmailVerified(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isEnabled()){
-            return true;
-        }
-
-        return iRepositoryUser.setEmailVerified(email, user.getUsername(), confirmationCode);
+        return iRepositoryUser.unexpireCredentials(username, password, confirmationCode);
     }
 }

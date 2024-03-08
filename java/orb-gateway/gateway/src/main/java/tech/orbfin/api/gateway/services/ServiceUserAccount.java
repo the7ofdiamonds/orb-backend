@@ -186,7 +186,7 @@ public class ServiceUserAccount {
 
             String email = verifiedAccount.getEmail();
 
-            boolean accountUnlocked = serviceUserDetails.setAccountNonLocked(email, confirmationCode);
+            boolean accountUnlocked = serviceUserUtils.setAccountNonLocked(email, confirmationCode);
 
             if (!accountUnlocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);

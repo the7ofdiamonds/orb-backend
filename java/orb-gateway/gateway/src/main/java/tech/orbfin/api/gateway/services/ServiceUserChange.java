@@ -197,7 +197,7 @@ public class ServiceUserChange {
 
             User userCredentials = serviceUserUtils.validateConfirmationCode(username, confirmationCode);
 
-            if (userCredentials != null) {
+            if (userCredentials == null) {
                 throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
             }
 
