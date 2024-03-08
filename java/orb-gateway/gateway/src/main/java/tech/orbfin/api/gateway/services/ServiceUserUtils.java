@@ -198,7 +198,7 @@ public class ServiceUserUtils {
             }
 
             log.info("Loaded user details: " + user);
-
+log.info(String.valueOf(user.get()));
             return user.get();
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
@@ -211,7 +211,7 @@ public class ServiceUserUtils {
 
     public User findUserByUsername(String username) throws Exception {
         try {
-            boolean usernameIsValid = validEmail(username);
+            boolean usernameIsValid = validUsername(username);
 
             if (!usernameIsValid) {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
@@ -247,24 +247,28 @@ public class ServiceUserUtils {
         boolean enabled = user.isEnabled();
 
         if (!enabled) {
+            log.info("Your account is not yet verified.");
             return false;
         }
 
         boolean accountLocked = user.isAccountNonLocked();
 
         if (!accountLocked) {
+            log.info("Your account is locked.");
             return false;
         }
 
         boolean expired = user.isAccountNonExpired();
 
         if (!expired) {
+            log.info("Your account is has been locked for more than 90 days.");
             return false;
         }
 
         boolean authenticated = user.isCredentialsNonExpired();
 
         if (!authenticated) {
+
             return false;
         }
 
@@ -312,7 +316,6 @@ public class ServiceUserUtils {
             }
 
             UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
-
             if (userRecord == null) {
                 log.info("Firebase User with the email {} does not exists.", email);
                 log.info("Adding user with the email {} to firebase", email);

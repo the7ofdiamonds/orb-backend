@@ -26,9 +26,9 @@ public class User {
     private String lastname;
 
     private String phone;
-
+    @Column(name = "provider_given_id")
     private String providerGivenID;
-
+    @Column(name = "confirmation_code")
     private String confirmationCode;
 
 @Transient
@@ -37,14 +37,14 @@ public class User {
 //    @MapKeyColumn(name = "meta_key") // Assuming meta_key is the role
 //    @Column(name = "meta_value")
     private Collection<String> roles;
-
+    @Column(name = "is_authenticated")
     private Boolean isAuthenticated;
-
+    @Column(name = "is_account_non_expired")
     private Boolean isAccountNonExpired;
-
+    @Column(name = "is_account_non_locked")
     private Boolean isAccountNonLocked;
-
+    @Column(name = "is_credentials_non_expired")
     private Boolean isCredentialsNonExpired;
-
+    @Column(name = "is_enabled")
     private Boolean isEnabled;
 }

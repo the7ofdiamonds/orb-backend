@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.authentication;
 
+import com.google.api.core.ApiFuture;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.services.*;
 
@@ -64,15 +65,15 @@ public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
             }
 
             if (algo.equals("RS256")) {
-                FirebaseToken verifiedToken = serviceTokenFirebase.verifyToken(token);
+                ApiFuture<FirebaseToken> verifiedToken = serviceTokenFirebase.verifyToken(token);
 
-                if (!(verifiedToken instanceof FirebaseToken)) {
+                if (verifiedToken == null) {
                     log.info("IDToken is not valid.");
                 }
 
                 log.info("IDToken is valid");
 
-                UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.getUid());
+                UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.get().getUid());
                 user = serviceUserDetails.loadUserByEmail(firebaseUser.getEmail());
             }
 

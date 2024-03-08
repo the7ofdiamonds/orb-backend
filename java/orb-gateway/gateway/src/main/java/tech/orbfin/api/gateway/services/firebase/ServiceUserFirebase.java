@@ -78,6 +78,7 @@ public class ServiceUserFirebase {
     }
 
     public UserRecord getUserByEmail(String email) throws FirebaseAuthException {
+        log.info("User email");
         return auth.firebaseAuth.getUserByEmail(email);
     }
 

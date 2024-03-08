@@ -2,6 +2,8 @@ package tech.orbfin.api.gateway.authentication.filters;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.authentication.AuthJWT;
+import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.repositories.IRepositorySession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.ServiceTokenJW;
 
@@ -33,6 +35,7 @@ public class FilterToken implements GlobalFilter {
     private final ServiceTokenJW serviceTokenJW;
     private final ServiceUser serviceUser;
     private final ServiceUserDetails serviceUserDetails;
+    private final IRepositorySession iRepositorySession;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -61,6 +64,12 @@ public class FilterToken implements GlobalFilter {
                 log.info("Token is expired");
 
                 String refreshToken = ServiceToken.getRefreshToken(exchange);
+
+                Iterable<Session> sessions = iRepositorySession.findByRefreshToken(refreshToken);
+
+                if (sessions == null) {
+                    log.info("Unable to find token by Access Token ......");
+                }
 
                 boolean refreshTokenIsExpired = serviceTokenJW.isTokenExpired(refreshToken);
 

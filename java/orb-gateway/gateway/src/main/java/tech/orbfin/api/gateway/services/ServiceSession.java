@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.services;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
@@ -17,8 +18,10 @@ import org.springframework.security.core.GrantedAuthority;
 import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
+@Slf4j
 @Setter
 @Getter
 @Service
@@ -26,7 +29,7 @@ public class ServiceSession {
     private final IRepositorySession iRepositorySession;
     private final ServiceTokenJW serviceTokenJW;
     private final ServiceUserUtils serviceUserUtils;
-private final IRepositoryUser iRepositoryUser;
+    private final IRepositoryUser iRepositoryUser;
 
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
@@ -59,16 +62,33 @@ private final IRepositoryUser iRepositoryUser;
         return true;
     }
 
-    public String getRefreshToken(String token) {
-        Iterable<Session> sessions = iRepositorySession.findByAccessToken(token);
+    public Session findByAccessToken(String token) throws Exception {
+        log.info("Find by access token called.");
+
+        List<Session> sessions = iRepositorySession.findAll();
 
         for (Session session : sessions) {
-            return session.getRefreshToken();
+            if (token.equals(session.getAccessToken())) {
+                return session;
+            }
         }
 
         return null;
     }
 
+    public Session findByRefreshToken(String token) throws Exception {
+        log.info("Find by refresh token called.");
+
+        List<Session> sessions = iRepositorySession.findAll();
+
+        for (Session session : sessions) {
+            if (token.equals(session.getRefreshToken())) {
+                return session;
+            }
+        }
+
+        return null;
+    }
     public Iterable<Session> getAllTokens(String username) throws Exception {
         boolean user = iRepositoryUser.existsByUsername(username);
 
@@ -98,17 +118,11 @@ private final IRepositoryUser iRepositoryUser;
             throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
         }
 
-        Iterable<Session> sessions = iRepositorySession.findByAccessToken(token);
+        Session session = iRepositorySession.findByAccessToken(token);
 
-        if (sessions == null) {
-            return username;
-        }
+        session.setRevoked(true);
 
-        for (Session session : sessions) {
-            session.setRevoked(true);
-
-            iRepositorySession.save(session);
-        }
+        iRepositorySession.save(session);
 
         return username;
     }

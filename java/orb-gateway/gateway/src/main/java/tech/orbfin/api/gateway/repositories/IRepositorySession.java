@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface IRepositorySession extends RedisDocumentRepository<Session,String> {
     List<Session> findAll();
-    Iterable<Session> findByAccessToken(String token);
+    Session findByAccessToken(String token);
     Iterable<Session> findByRefreshToken(String refreshToken);
     Iterable<Session> findByUsername(String username);
     Iterable<Session> findByRevokedTrue();

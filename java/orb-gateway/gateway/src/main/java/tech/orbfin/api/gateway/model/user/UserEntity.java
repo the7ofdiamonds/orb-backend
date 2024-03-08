@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.model.user;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -26,10 +27,15 @@ public class UserEntity implements UserDetails {
 
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
+        if (user.getRoles() == null) {
+            return Collections.emptyList();
+        }
+
         return user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role))
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public boolean isAccountNonExpired() {
