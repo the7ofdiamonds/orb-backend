@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
@@ -10,8 +11,8 @@ import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.model.user.UserEntity;
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 
+import tech.orbfin.api.gateway.repositories.IRepositoryUserUtils;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 import tech.orbfin.api.gateway.utils.Patterns;
 import tech.orbfin.api.gateway.utils.Validator;
@@ -39,7 +40,7 @@ import com.google.firebase.auth.UserRecord;
 @Transactional
 @Service
 public class ServiceUserUtils {
-    private final IRepositoryUser iRepositoryUser;
+    private final IRepositoryUserUtils iRepositoryUserUtils;
     private final ServiceUserFirebase serviceUserFirebase;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -176,6 +177,32 @@ public class ServiceUserUtils {
         }
     }
 
+    public boolean userExist(String email, String username, String phone) throws FirebaseAuthException {
+        boolean emailUsed = iRepositoryUserUtils.existsByEmail(email);
+        boolean emailExist = serviceUserFirebase.userExistByEmail(email);
+
+        if (emailUsed || emailExist) {
+            kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+            throw new BadCredentialsException(ExceptionMessages.EMAIL_USED);
+        }
+
+        boolean usernameExist = iRepositoryUserUtils.existsByUsername(username);
+
+        if (usernameExist) {
+            kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+            throw new BadCredentialsException(ExceptionMessages.USERNAME_USED);
+        }
+
+        boolean phoneExist = serviceUserFirebase.userExistByPhone(phone);
+
+        if (phoneExist) {
+            kafkaTemplate.send(ConfigKafkaTopics.PHONE_RECOVERY, email);
+            throw new BadCredentialsException(ExceptionMessages.PHONE_USED);
+        }
+
+        return false;
+    }
+
     public User findUserByEmail(String email) throws Exception {
         try {
             boolean emailIsValid = validEmail(email);
@@ -184,7 +211,7 @@ public class ServiceUserUtils {
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
             }
 
-            boolean userExistByEmail = iRepositoryUser.existsByEmail(email);
+            boolean userExistByEmail = iRepositoryUserUtils.existsByEmail(email);
 
             if (!userExistByEmail) {
                 return null;
@@ -192,7 +219,7 @@ public class ServiceUserUtils {
 
             log.info("Loading user by email: " + email);
 
-            Optional<User> user = iRepositoryUser.findUserByEmail(email);
+            Optional<User> user = iRepositoryUserUtils.findUserByEmail(email);
 
             if (user.isEmpty()) {
                 throw new UserNotFoundException();
@@ -218,7 +245,7 @@ log.info(String.valueOf(user.get()));
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
-            boolean usernameExists = iRepositoryUser.existsByUsername(username);
+            boolean usernameExists = iRepositoryUserUtils.existsByUsername(username);
 
             if (!usernameExists) {
                 return null;
@@ -226,7 +253,7 @@ log.info(String.valueOf(user.get()));
 
             log.info("Loading user by username: " + username);
 
-            Optional<User> user = iRepositoryUser.findUserByUsername(username);
+            Optional<User> user = iRepositoryUserUtils.findUserByUsername(username);
 
             if (user.isEmpty()) {
                 throw new UserNotFoundException();
@@ -362,55 +389,6 @@ log.info(String.valueOf(user.get()));
         }
     }
 
-    public User verifyAccount(String username, String password, String confirmationCode) throws Exception {
-        try {
-            User userCredentials = validateConfirmationCode(username, confirmationCode);
-
-            if (userCredentials == null) {
-                throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
-            }
-
-            boolean passwordIsValid = validPassword(password);
-
-            if (!passwordIsValid) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
-            }
-
-            if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
-            }
-
-            String email = userCredentials.getEmail();
-            boolean emailVerified = userCredentials.getIsEnabled();
-
-            if (!emailVerified) {
-                boolean setEmailVerified = setEmailVerified(email, confirmationCode);
-
-                if (!setEmailVerified) {
-                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
-                }
-            }
-
-            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
-            String uid = firebaseUser.getUid();
-            boolean emailVerifiedFirebase = firebaseUser.isEmailVerified();
-
-            if (!emailVerifiedFirebase) {
-                boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
-
-                if (!setEmailVerifiedFirebase) {
-                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
-                }
-            }
-
-            return userCredentials;
-        } catch (BadCredentialsException e) {
-            throw new BadCredentialsException(e.getMessage());
-        } catch (Exception e) {
-            throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
-        }
-    }
-
     public UserDetails loadUserByEmail(String email) {
         try {
             User user = findUserByEmail(email);
@@ -423,35 +401,5 @@ log.info(String.valueOf(user.get()));
         } catch(Exception e){
             throw new RuntimeException(e);
         }
-    }
-
-    public boolean setAccountNonExpired(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isAccountNonExpired()){
-            return true;
-        }
-
-        return iRepositoryUser.unexpireAccount(email, user.getUsername(), confirmationCode);
-    }
-
-    public boolean setAccountNonLocked(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isAccountNonLocked()){
-            return true;
-        }
-
-        return iRepositoryUser.unlockAccount(email, user.getUsername(), confirmationCode);
-    }
-
-    public boolean setEmailVerified(String email, String confirmationCode){
-        UserDetails user = loadUserByEmail(email);
-
-        if(user.isEnabled()){
-            return true;
-        }
-
-        return iRepositoryUser.enableAccount(email, user.getUsername(), confirmationCode);
     }
 }

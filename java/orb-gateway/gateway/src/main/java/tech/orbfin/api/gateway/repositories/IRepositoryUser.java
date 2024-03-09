@@ -20,10 +20,6 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface IRepositoryUser extends JpaRepository<User, Long> {
 
-    @Query(value = "CALL existsByEmail(:p_user_email)", nativeQuery = true)
-    public boolean existsByEmail(
-            @Param("p_user_email") String email);
-
     @Query(value = "CALL existsByUsername(:p_display_name)", nativeQuery = true)
     public boolean existsByUsername(
             @Param("p_display_name") String username);

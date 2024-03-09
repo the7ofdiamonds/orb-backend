@@ -1,24 +1,22 @@
 package tech.orbfin.api.gateway.model.user;
 
-public enum Role {
-    ADMINISTRATOR,
-    MANAGER,
-    EDITOR,
-    CONTRIBUTOR,
-    SUBSCRIBER,
-    USER;
+import jakarta.persistence.Entity;
+import lombok.*;
 
-    public static Role mapToRoleEnum(String roleString) {
-        if (roleString == null) {
-            return null;
-        }
+import java.util.Map;
 
-        String lowercaseRoleString = roleString.toLowerCase();
-        for (Role roleEnum : Role.values()) {
-            if (lowercaseRoleString.contains(roleEnum.name().toLowerCase())) {
-                return roleEnum;
-            }
-        }
-        return null;
-    }
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+public class Role {
+    public static final String SUBSCRIBER = "subscriber";
+    public static final String CONTRIBUTOR = "contributor";
+    public static final String EDITOR = "editor";
+    public static final String ADMIN = "administrator";
+
+    private String name;
+    private Map<String, Boolean> capabilities;
 }

@@ -1,6 +1,7 @@
 package tech.orbfin.api.gateway.services;
 
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
+
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -9,12 +10,13 @@ import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.user.User;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+import tech.orbfin.api.gateway.repositories.IRepositoryUserChange;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 import java.util.Arrays;
+
 import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
@@ -42,7 +44,7 @@ import com.google.firebase.auth.UserRecord;
 @Transactional
 @Service
 public class ServiceUserChange {
-    private final IRepositoryUser iRepositoryUser;
+    private final IRepositoryUserChange iRepositoryUserChange;
     private final RepositoryUser repositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
@@ -74,7 +76,7 @@ public class ServiceUserChange {
 
             String email = userCredentials.getEmail();
 
-            boolean emailAdded = iRepositoryUser.addNewEmail(email, username, newEmail);
+            boolean emailAdded = iRepositoryUserChange.addNewEmail(email, username, newEmail);
 
             if (!emailAdded) {
                 throw new Exception(ExceptionMessages.EMAIL_ADD_ERROR);
@@ -122,7 +124,7 @@ public class ServiceUserChange {
 
             String email = userCredentials.getEmail();
 
-            boolean usernameChanged = iRepositoryUser.changeUsername(email, username, newUsername);
+            boolean usernameChanged = iRepositoryUserChange.changeUsername(email, username, newUsername);
 
             if (!usernameChanged) {
                 throw new Exception(ExceptionMessages.USERNAME_CHANGE_ERROR);
@@ -167,7 +169,7 @@ public class ServiceUserChange {
 
             log.info("User with the email {} is attempting to change their password.", email);
 
-            boolean passwordChanged = iRepositoryUser.changePassword(email, username, passwordEncoder().encode(newPassword));
+            boolean passwordChanged = iRepositoryUserChange.changePassword(email, username, passwordEncoder().encode(newPassword));
 
             if (!passwordChanged) {
                 throw new Exception(ExceptionMessages.PASSWORD_CHANGE_ERROR);
@@ -203,7 +205,7 @@ public class ServiceUserChange {
 
             String email = userCredentials.getEmail();
 
-            boolean passwordUpdated = iRepositoryUser.changePassword(email, username, newPassword);
+            boolean passwordUpdated = iRepositoryUserChange.changePassword(email, username, newPassword);
 
             if (!passwordUpdated) {
                 throw new Exception(ExceptionMessages.PASSWORD_UPDATE_ERROR);
@@ -261,7 +263,7 @@ public class ServiceUserChange {
             String email = userCredentials.getEmail();
 
             if (newFirstName != null) {
-                boolean firstNameChanged = iRepositoryUser.changeFirstName(email, username, newFirstName);
+                boolean firstNameChanged = iRepositoryUserChange.changeFirstName(email, username, newFirstName);
 
                 if (!firstNameChanged) {
                     throw new Exception(ExceptionMessages.NAME_CHANGE_ERROR);
@@ -269,7 +271,7 @@ public class ServiceUserChange {
             }
 
             if (newLastName != null) {
-                boolean lastNameChanged = iRepositoryUser.changeLastName(email, username, newLastName);
+                boolean lastNameChanged = iRepositoryUserChange.changeLastName(email, username, newLastName);
 
                 if (!lastNameChanged) {
                     throw new Exception(ExceptionMessages.NAME_CHANGE_ERROR);
@@ -306,7 +308,7 @@ public class ServiceUserChange {
 
             String email = userCredentials.getEmail();
 
-            boolean phoneChanged = iRepositoryUser.changePhoneNumber(email, username, newPhone);
+            boolean phoneChanged = iRepositoryUserChange.changePhoneNumber(email, username, newPhone);
 
             if (!phoneChanged) {
                 throw new Exception(ExceptionMessages.PHONE_ERROR);

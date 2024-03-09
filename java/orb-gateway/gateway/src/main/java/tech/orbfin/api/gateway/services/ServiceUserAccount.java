@@ -13,7 +13,7 @@ import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+import tech.orbfin.api.gateway.repositories.IRepositoryUserAccount;
 
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
@@ -44,7 +44,7 @@ import com.google.firebase.auth.UserRecord;
 @Transactional
 @Service
 public class ServiceUserAccount {
-    private final IRepositoryUser iRepositoryUser;
+    private final IRepositoryUserAccount iRepositoryUserAccount;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUserDetails serviceUserDetails;
@@ -79,29 +79,10 @@ public class ServiceUserAccount {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
             }
 
-            log.info("Registering user with the email {} .....", email);
-//            Check the location
+            boolean userExist = serviceUserUtils.userExist(email, username, phone);
 
-            boolean emailUsed = iRepositoryUser.existsByEmail(email);
-            boolean emailExist = serviceUserFirebase.userExistByEmail(email);
-
-            if (emailUsed || emailExist) {
-                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
-                throw new BadCredentialsException(ExceptionMessages.EMAIL_USED);
-            }
-
-            boolean usernameExist = iRepositoryUser.existsByUsername(username);
-
-            if (usernameExist) {
-                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
-                throw new BadCredentialsException(ExceptionMessages.USERNAME_USED);
-            }
-
-            boolean phoneExist = serviceUserFirebase.userExistByPhone(phone);
-
-            if (phoneExist) {
-                kafkaTemplate.send(ConfigKafkaTopics.PHONE_RECOVERY, email);
-                throw new BadCredentialsException(ExceptionMessages.PHONE_USED);
+            if (userExist) {
+                throw new BadCredentialsException(ExceptionMessages.USER_EXISTS);
             }
 
             boolean passwordsMatch = serviceUserUtils.passwordsMatch(password, confirmPassword);
@@ -131,14 +112,14 @@ public class ServiceUserAccount {
             String providerGivenID = (firebaseUser.getUid() != null) ? firebaseUser.getUid() : null;
             String confirmationCode = UUID.randomUUID().toString();
 
-            Optional<User> user = iRepositoryUser.signupUser(
+            Optional<User> user = iRepositoryUserAccount.signupUser(
                     email,
                     username,
                     passwordEncoder().encode(password),
                     firstname,
                     lastname,
                     phone,
-                    String.valueOf(Role.USER),
+                    Role.SUBSCRIBER,
                     providerGivenID,
                     TRUE,
                     TRUE,
@@ -172,13 +153,62 @@ public class ServiceUserAccount {
         }
     }
 
+    public User verifyAccount(String username, String password, String confirmationCode) throws Exception {
+        try {
+            User userCredentials = serviceUserUtils.validateConfirmationCode(username, confirmationCode);
+
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
+            }
+
+            boolean passwordIsValid = serviceUserUtils.validPassword(password);
+
+            if (!passwordIsValid) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
+            }
+
+            if (!passwordEncoder().matches(password, userCredentials.getPassword())) {
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
+            }
+
+            String email = userCredentials.getEmail();
+            boolean emailVerified = userCredentials.getIsEnabled();
+
+            if (!emailVerified) {
+                boolean setEmailVerified = serviceUserDetails.setEmailVerified(email, confirmationCode);
+
+                if (!setEmailVerified) {
+                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+                }
+            }
+
+            UserRecord firebaseUser = serviceUserFirebase.getUserByEmail(email);
+            String uid = firebaseUser.getUid();
+            boolean emailVerifiedFirebase = firebaseUser.isEmailVerified();
+
+            if (!emailVerifiedFirebase) {
+                boolean setEmailVerifiedFirebase = serviceUserFirebase.setEmailVerified(uid, true);
+
+                if (!setEmailVerifiedFirebase) {
+                    throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
+                }
+            }
+
+            return userCredentials;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        } catch (Exception e) {
+            throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
+        }
+    }
+    
     public ResponseUnlocked unlockAccount(RequestVerify request) throws Exception {
         try {
             String username = request.getUsername();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
@@ -186,7 +216,7 @@ public class ServiceUserAccount {
 
             String email = verifiedAccount.getEmail();
 
-            boolean accountUnlocked = serviceUserUtils.setAccountNonLocked(email, confirmationCode);
+            boolean accountUnlocked = serviceUserDetails.setAccountNonLocked(email, confirmationCode);
 
             if (!accountUnlocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
@@ -218,7 +248,7 @@ public class ServiceUserAccount {
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
@@ -265,7 +295,7 @@ public class ServiceUserAccount {
         String password = request.getPassword();
         String confirmationCode = request.getConfirmationCode();
 
-        User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
+        User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
         var userEntity = new UserEntity(verifiedAccount);
 
@@ -293,6 +323,6 @@ public class ServiceUserAccount {
             throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
         }
 
-        return iRepositoryUser.deleteAccount(verifiedAccount.getEmail(), username, confirmationCode);
+        return iRepositoryUserAccount.deleteAccount(verifiedAccount.getEmail(), username, confirmationCode);
     }
 }

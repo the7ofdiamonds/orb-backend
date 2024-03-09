@@ -5,6 +5,8 @@ import java.util.Collection;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

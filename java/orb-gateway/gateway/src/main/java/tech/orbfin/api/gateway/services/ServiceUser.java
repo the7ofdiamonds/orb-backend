@@ -30,6 +30,7 @@ public class ServiceUser {
     private final IRepositoryUser iRepositoryUser;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserUtils serviceUserUtils;
+    private final ServiceUserAccount serviceUserAccount;
 
     public ResponseVerify verifyEmail(RequestVerify request) throws Exception {
         try {
@@ -37,7 +38,7 @@ public class ServiceUser {
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            User verifiedAccount = serviceUserUtils.verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = serviceUserAccount.verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
                 throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);

@@ -4,16 +4,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+@RequiredArgsConstructor
 public class UserEntity implements UserDetails {
     private final User user;
-
-    public UserEntity(User user) {
-        this.user = user;
-    }
 
     @Override
     public String getUsername() {
@@ -31,11 +30,13 @@ public class UserEntity implements UserDetails {
             return Collections.emptyList();
         }
 
+        Capabilities capabilities = new Capabilities();
+
         return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role))
+                .flatMap(role -> capabilities.getCapabilitiesForRole(role).keySet().stream())
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     public boolean isAccountNonExpired() {
