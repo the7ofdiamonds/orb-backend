@@ -31,13 +31,9 @@ public class ServiceAuthLogin {
     private final ServiceSession serviceSession;
     private final ServiceUserUtils serviceUserUtils;
 
-    public ResponseLogin login(@NotNull RequestLogin request) throws Exception {
+    public ResponseLogin login(String username, String password, Object location) throws Exception {
         try {
             log.info("Login function has been called.");
-
-            var username = request.getUsername();
-            var password = request.getPassword();
-            Object location = request.getLocation();
 
             log.info("User {} is attempting to login", username);
 

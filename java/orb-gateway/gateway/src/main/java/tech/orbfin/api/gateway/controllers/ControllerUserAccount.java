@@ -31,7 +31,24 @@ public class ControllerUserAccount {
     @PostMapping("/signup")
     public ResponseEntity<ResponseRegister> signup(@RequestBody RequestRegister request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserAccount.registerAccount(request));
+            String email = request.getEmail();
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmPassword = request.getConfirmPassword();
+            String firstname = request.getFirstname();
+            String lastname = request.getLastname();
+            String phone = request.getPhone();
+            Object location = request.getLocation();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserAccount.registerAccount(
+                    email,
+                    username,
+                    password,
+                    confirmPassword,
+                    firstname,
+                    lastname,
+                    phone,
+                    location));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseRegister.builder()
@@ -48,7 +65,11 @@ public class ControllerUserAccount {
     @PostMapping("/unlock-account")
     public ResponseEntity<ResponseUnlocked> unlockAccount(@RequestBody RequestVerify request) throws Exception {
         try {
-            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmationCode = request.getConfirmationCode();
+
+            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(username, password, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseUnlocked.builder()
@@ -65,7 +86,11 @@ public class ControllerUserAccount {
     @PostMapping("/remove-account")
     public ResponseEntity<ResponseRemoveAccount> removeAccount(@RequestBody RequestRemoveAccount request) {
         try {
-            return ResponseEntity.ok().body(serviceUserAccount.removeAccount(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmationCode = request.getConfirmationCode();
+
+            return ResponseEntity.ok().body(serviceUserAccount.removeAccount(username, password, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseRemoveAccount.builder()

@@ -6,12 +6,10 @@ import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.exceptions.UserCreationException;
 
-import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUserAccount;
 
@@ -25,9 +23,8 @@ import static java.lang.Boolean.TRUE;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.annotation.Bean;
 
@@ -58,17 +55,15 @@ public class ServiceUserAccount {
     }
 
     @Transactional
-    public ResponseRegister registerAccount(@NotNull RequestRegister request) throws Exception {
+    public ResponseRegister registerAccount(String email,
+                                            String username,
+                                            String password,
+                                            String confirmPassword,
+                                            String firstname,
+                                            String lastname,
+                                            String phone,
+                                            Object location) throws Exception {
         try {
-            String email = request.getEmail();
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmPassword = request.getConfirmPassword();
-            String firstname = request.getFirstname();
-            String lastname = request.getLastname();
-            String phone = request.getPhone();
-            Object location = request.getLocation();
-
             boolean emailIsValid = serviceUserUtils.validEmail(email);
 
             if (!emailIsValid) {
@@ -203,13 +198,9 @@ public class ServiceUserAccount {
             throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR + e.getMessage());
         }
     }
-    
-    public ResponseUnlocked unlockAccount(RequestVerify request) throws Exception {
-        try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmationCode = request.getConfirmationCode();
 
+    public ResponseUnlocked unlockAccount(String username, String password, String confirmationCode) throws Exception {
+        try {
             User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
             String email = verifiedAccount.getEmail();
@@ -228,12 +219,8 @@ public class ServiceUserAccount {
         }
     }
 
-    public ResponseRemoveAccount removeAccount(RequestRemoveAccount request) throws Exception {
+    public ResponseRemoveAccount removeAccount(String username, String password, String confirmationCode) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmationCode = request.getConfirmationCode();
-
             User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
             boolean accountLocked = iRepositoryUserDetails.lockAccount(verifiedAccount.getEmail(), username);
@@ -242,26 +229,13 @@ public class ServiceUserAccount {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
+            kafkaTemplate.send(ConfigKafkaTopics.ACCOUNT_REMOVED, verifiedAccount.getEmail());
+
             return new ResponseRemoveAccount(verifiedAccount.getEmail());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
             throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR + e.getMessage());
         }
-    }
-
-    public boolean deleteAccount(RequestDeleteAccount request) throws Exception {
-        String email = request.getEmail();
-        String username = request.getUsername();
-
-        var userEntity = serviceUserDetails.loadUserByUsername(username);
-
-        boolean accountEnabled = userEntity.isEnabled();
-
-        if (accountEnabled) {
-            throw new Exception(ExceptionMessages.ACCOUNT_DELETE_ERROR);
-        }
-
-        return iRepositoryUserAccount.deleteAccount(email, username);
     }
 }

@@ -1,6 +1,5 @@
 package tech.orbfin.api.gateway.controllers;
 
-
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.services.ServiceAuthLogin;
 import tech.orbfin.api.gateway.services.ServiceAuthLogout;
@@ -9,6 +8,7 @@ import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
 import lombok.extern.slf4j.Slf4j;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Component;
@@ -30,7 +30,11 @@ public class ControllerAuth {
     @PostMapping("/")
     public ResponseEntity<ResponseLogin> login(@RequestBody RequestLogin request) {
         try {
-            return ResponseEntity.ok().body(serviceAuthLogin.login(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            Object location = request.getLocation();
+
+            return ResponseEntity.ok().body(serviceAuthLogin.login(username, password, location));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseLogin.builder()
@@ -47,7 +51,10 @@ public class ControllerAuth {
     @PostMapping("/logout")
     public ResponseEntity<ResponseLogout> logout(@RequestHeader RequestLogout request) {
         try {
-            return ResponseEntity.ok().body(serviceAuthLogout.logout(request));
+            String accessToken = request.getAccessToken();
+            String refreshToken = request.getRefreshToken();
+
+            return ResponseEntity.ok().body(serviceAuthLogout.logout(accessToken, refreshToken));
         }catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseLogout.builder()

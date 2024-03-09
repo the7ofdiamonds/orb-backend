@@ -4,7 +4,6 @@ import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
 import tech.orbfin.api.gateway.exceptions.*;
 
-import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.user.User;
@@ -14,9 +13,8 @@ import tech.orbfin.api.gateway.repositories.IRepositoryUser;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 
@@ -32,12 +30,8 @@ public class ServiceUser {
     private final ServiceUserUtils serviceUserUtils;
     private final ServiceUserAccount serviceUserAccount;
 
-    public ResponseVerify verifyEmail(RequestVerify request) throws Exception {
+    public ResponseVerify verifyEmail(String username, String password, String confirmationCode) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String confirmationCode = request.getConfirmationCode();
-
             User verifiedAccount = serviceUserAccount.verifyAccount(username, password, confirmationCode);
 
             if (verifiedAccount == null) {
@@ -58,11 +52,8 @@ public class ServiceUser {
         }
     }
 
-    public ResponseForgot forgotPassword(@NotNull RequestForgot request) throws Exception {
+    public ResponseForgot forgotPassword(String email, String username) throws Exception {
         try {
-            String email = request.getEmail();
-            String username = request.getUsername();
-
             User user;
 
             if (email == null && username == null) {

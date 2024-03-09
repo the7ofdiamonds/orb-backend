@@ -28,7 +28,11 @@ public class ControllerUser {
     @PostMapping("/verify-email")
     public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
         try {
-            return ResponseEntity.ok().body(serviceUser.verifyEmail(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String confirmationCode = request.getConfirmationCode();
+
+            return ResponseEntity.ok().body(serviceUser.verifyEmail(username, password, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseVerify.builder()
@@ -45,7 +49,10 @@ public class ControllerUser {
     @PostMapping("/forgot-password")
     public ResponseEntity<ResponseForgot> forgotPassword(@RequestBody RequestForgot request) throws Exception {
         try {
-            return ResponseEntity.ok().body(serviceUser.forgotPassword(request));
+            String email = request.getEmail();
+            String username = request.getUsername();
+
+            return ResponseEntity.ok().body(serviceUser.forgotPassword(email, username));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseForgot.builder()

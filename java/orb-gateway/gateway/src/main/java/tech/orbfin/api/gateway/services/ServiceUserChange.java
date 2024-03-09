@@ -5,7 +5,6 @@ import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.user.User;
@@ -22,9 +21,8 @@ import java.util.stream.Collectors;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.annotation.Bean;
 
@@ -55,13 +53,9 @@ public class ServiceUserChange {
         return new BCryptPasswordEncoder();
     }
 
-    public ResponseAdd addEmail(RequestAddEmail request) throws Exception {
+    //Needs more work
+    public ResponseAdd addEmail(String username, String password, String newEmail, String token) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String newEmail = request.getNewEmail();
-            String token = request.getToken();
-
             boolean emailIsValid = serviceUserUtils.validEmail(newEmail);
 
             if (!emailIsValid) {
@@ -104,12 +98,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseChange changeUsername(RequestChangeUsername request) throws Exception {
+    public ResponseChange changeUsername(String username, String password, String newUsername) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String newUsername = request.getNewUsername();
-
             boolean usernameIsValid = serviceUserUtils.validUsername(newUsername);
 
             if (!usernameIsValid) {
@@ -146,13 +136,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseChange changePassword(@NotNull RequestChangePassword request) throws Exception {
+    public ResponseChange changePassword(String username, String password, String newPassword, String confirmPassword) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String newPassword = request.getNewPassword();
-            String confirmPassword = request.getConfirmationPassword();
-
             boolean passwordsMatch = serviceUserUtils.passwordsMatch(newPassword, confirmPassword);
 
             if (!passwordsMatch) {
@@ -185,12 +170,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseUpdate updatePassword(RequestUpdatePassword request) throws Exception {
+    public ResponseUpdate updatePassword(String username, String confirmationCode, String newPassword) throws Exception {
         try {
-            String username = request.getUsername();
-            String confirmationCode = request.getConfirmationCode();
-            String newPassword = request.getNewPassword();
-
             boolean passwordValid = serviceUserUtils.validPassword(newPassword);
 
             if (!passwordValid) {
@@ -231,13 +212,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseChange changeName(RequestChangeName request) throws Exception {
+    public ResponseChange changeName(String username, String password, String newFirstName, String newLastName) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String newFirstName = request.getNewFirstName();
-            String newLastName = request.getNewLastName();
-
             if (newFirstName == null && newLastName == null) {
                 throw new BadCredentialsException(ExceptionMessages.NAME_NULL);
             }
@@ -288,12 +264,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseChange changePhone(RequestChangePhone request) throws Exception {
+    public ResponseChange changePhone(String username, String password, String newPhone) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String newPhone = request.getNewPhone();
-
             boolean phoneIsValid = serviceUserUtils.validPhone(newPhone);
 
             if (!phoneIsValid) {
@@ -330,12 +302,8 @@ public class ServiceUserChange {
         }
     }
 
-    public ResponseRemove removeEmail(RequestRemoveEmail request) throws Exception {
+    public ResponseRemove removeEmail(String username, String password, String removeEmail) throws Exception {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String removeEmail = request.getRemoveEmail();
-
             boolean emailIsValid = serviceUserUtils.validEmail(removeEmail);
 
             if (!emailIsValid) {

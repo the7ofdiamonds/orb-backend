@@ -27,6 +27,7 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import tech.orbfin.api.gateway.services.ServiceTokenJW;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -73,7 +74,10 @@ public class ConfigSecurity {
             SecurityContextHolder.clearContext();
 
             try {
-                serviceAuthLogot.logout((RequestLogout) exchange.getExchange().getRequest());
+                String accessToken = ServiceToken.getToken(exchange.getExchange());
+                String refreshToken = ServiceToken.getRefreshToken(exchange.getExchange());
+
+                serviceAuthLogot.logout(accessToken, refreshToken);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

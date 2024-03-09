@@ -20,11 +20,8 @@ public class ServiceAuthLogout {
     private final ServiceSession serviceSession;
 
     @Transactional
-    public ResponseLogout logout(RequestLogout request) throws Exception {
+    public ResponseLogout logout(String accessToken, String refreshToken) throws Exception {
         try {
-            var accessToken = request.getAccessToken();
-            var refreshToken = request.getRefreshToken();
-
             log.info("Service Auth Logout");
 
             String username = serviceSession.removeSession(accessToken);

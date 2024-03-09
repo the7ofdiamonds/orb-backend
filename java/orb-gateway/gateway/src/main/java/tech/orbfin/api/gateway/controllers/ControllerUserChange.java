@@ -30,7 +30,12 @@ public class ControllerUserChange {
     @PostMapping("/add-email")
     public ResponseEntity<ResponseAdd> addEmail(@RequestBody RequestAddEmail request) throws Exception {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.addEmail(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newEmail = request.getNewEmail();
+            String token = request.getToken();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.addEmail(username, password, newEmail, token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseAdd.builder()
@@ -47,7 +52,11 @@ public class ControllerUserChange {
     @PostMapping("/change-username")
     public ResponseEntity<ResponseChange> changeUsername(@RequestBody RequestChangeUsername request) throws Exception {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeUsername(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newUsername = request.getNewUsername();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeUsername(username, password, newUsername));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseChange.builder()
@@ -64,7 +73,12 @@ public class ControllerUserChange {
     @PostMapping("/change-password")
     public ResponseEntity<ResponseChange> changePassword(@RequestBody RequestChangePassword request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePassword(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newPassword = request.getNewPassword();
+            String confirmPassword = request.getConfirmationPassword();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePassword(username, password, newPassword, confirmPassword));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseChange.builder()
@@ -81,7 +95,11 @@ public class ControllerUserChange {
     @PostMapping("/update-password")
     public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) throws Exception {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.updatePassword(request));
+            String username = request.getUsername();
+            String confirmationCode = request.getConfirmationCode();
+            String newPassword = request.getNewPassword();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.updatePassword(username, confirmationCode, newPassword));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseUpdate.builder()
@@ -98,7 +116,12 @@ public class ControllerUserChange {
     @PostMapping("/change-name")
     public ResponseEntity<ResponseChange> changeName(@RequestBody RequestChangeName request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeName(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newFirstName = request.getNewFirstName();
+            String newLastName = request.getNewLastName();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changeName(username, password, newFirstName, newLastName));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseChange.builder()
@@ -115,7 +138,11 @@ public class ControllerUserChange {
     @PostMapping("/change-phone")
     public ResponseEntity<ResponseChange> changePhone(@RequestBody RequestChangePhone request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePhone(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String newPhone = request.getNewPhone();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.changePhone(username, password, newPhone));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseChange.builder()
@@ -132,7 +159,11 @@ public class ControllerUserChange {
     @PostMapping("/remove-email")
     public ResponseEntity<ResponseRemove> removeEmail(@RequestBody RequestRemoveEmail request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.removeEmail(request));
+            String username = request.getUsername();
+            String password = request.getPassword();
+            String removeEmail = request.getRemoveEmail();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserChange.removeEmail(username, password, removeEmail));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseRemove.builder()

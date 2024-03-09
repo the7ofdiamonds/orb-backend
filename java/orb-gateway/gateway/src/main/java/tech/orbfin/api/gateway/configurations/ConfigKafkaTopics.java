@@ -1,6 +1,8 @@
 package tech.orbfin.api.gateway.configurations;
 
 public class ConfigKafkaTopics {
+    public static final String ACCOUNT_REMOVED = "Your account has been removed.";
+    public static final String ACCOUNT_DELETED = "Your account has been deleted.";
     public final static String EMAIL_ADDED = "email-added";
     public final static String EMAIL_REMOVED = "email-removed";
     public final static String USER_REGISTER = "user-register";
