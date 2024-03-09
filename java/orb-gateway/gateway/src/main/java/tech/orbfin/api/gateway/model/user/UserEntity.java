@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
 
 @RequiredArgsConstructor
 public class UserEntity implements UserDetails {
     private final User user;
+//private final IRepositoryUserDetails iRepositoryUserDetails;
 
     @Override
     public String getUsername() {
@@ -30,10 +32,10 @@ public class UserEntity implements UserDetails {
             return Collections.emptyList();
         }
 
-        Capabilities capabilities = new Capabilities();
+//        Capabilities capabilities = new Capabilities(iRepositoryUserDetails);
 
         return user.getRoles().stream()
-                .flatMap(role -> capabilities.getCapabilitiesForRole(role).keySet().stream())
+//                .flatMap(role -> capabilities.getCapabilitiesForRole(role).keySet().stream())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

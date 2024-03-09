@@ -6,6 +6,7 @@ public class ExceptionMessages {
     public static final String ACCOUNT_VERIFY_ERROR = "There was an error verifying your account.";
     public static final String ACCOUNT_ENABLED_ERROR = "There was an error enabling your account.";
     public static final String ACCOUNT_LOCKED_ERROR = "There was an error unlocking your account.";
+    public static final String ACCOUNT_DELETE_ERROR = "Account must be disabled before being deleted";
     public static final String CONFIRMATION_CODE_NULL = "Confirmation code is required.";
     public static final String CONFIRMATION_CODE_WRONG = "Incorrect confirmation code. ";
     public static final String CONFIRMATION_CODE_ERROR = "Error validating confirmation code. ";
@@ -51,7 +52,4 @@ public class ExceptionMessages {
     public static final String USERNAME_TOO_LONG = "Username provided is too long there is a max length of 15 characters.";
     public static final String USERNAME_NOT_VALID = "Username can not contain any special characters or spaces.";
     public static final String USERNAME_NOT_FOUND = "Username could not be found.";
-
-
-
 }

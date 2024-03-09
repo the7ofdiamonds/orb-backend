@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.model.user.Capabilities;
+import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
@@ -33,6 +35,7 @@ public class FilterTokenFirebase implements GlobalFilter {
     private final ServiceToken serviceToken;
     private final ServiceSession serviceSession;
     private final ServiceUserUtils serviceUserUtils;
+//private final Capabilities capabilities;
 
     @SneakyThrows
     @Override
@@ -45,7 +48,7 @@ public class FilterTokenFirebase implements GlobalFilter {
                 log.info("Firebase Token could not be found in the header.");
                 return chain.filter(exchange);
             }
-
+//log.info((capabilities.getCapabilitiesForRole(Role.SUBSCRIBER).toString()));
             log.info("Validating token ...");
 
             log.info("Searching for session with Access Token ......");

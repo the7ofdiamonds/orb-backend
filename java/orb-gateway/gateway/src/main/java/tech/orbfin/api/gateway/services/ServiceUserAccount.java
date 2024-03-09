@@ -15,6 +15,7 @@ import tech.orbfin.api.gateway.model.user.UserEntity;
 
 import tech.orbfin.api.gateway.repositories.IRepositoryUserAccount;
 
+import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 import java.util.*;
@@ -45,6 +46,7 @@ import com.google.firebase.auth.UserRecord;
 @Service
 public class ServiceUserAccount {
     private final IRepositoryUserAccount iRepositoryUserAccount;
+    private final IRepositoryUserDetails iRepositoryUserDetails;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUserDetails serviceUserDetails;
@@ -210,27 +212,11 @@ public class ServiceUserAccount {
 
             User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
-            if (verifiedAccount == null) {
-                throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
-            }
-
             String email = verifiedAccount.getEmail();
 
             boolean accountUnlocked = serviceUserDetails.setAccountNonLocked(email, confirmationCode);
 
             if (!accountUnlocked) {
-                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-            }
-
-            boolean accountEnabled = verifiedAccount.getIsEnabled();
-
-            if (!accountEnabled) {
-                throw new Exception(ExceptionMessages.ACCOUNT_ENABLED_ERROR);
-            }
-
-            boolean accountLocked = verifiedAccount.getIsAccountNonLocked();
-
-            if (!accountLocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
@@ -250,39 +236,13 @@ public class ServiceUserAccount {
 
             User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
-            if (verifiedAccount == null) {
-                throw new Exception(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
-            }
+            boolean accountLocked = iRepositoryUserDetails.lockAccount(verifiedAccount.getEmail(), username);
 
-            String email = verifiedAccount.getEmail();
-
-            var userEntity = new UserEntity(verifiedAccount);
-
-            boolean accountExpired = userEntity.isAccountNonLocked();
-
-            if (accountExpired) {
+            if (!accountLocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
-            boolean accountLocked = userEntity.isAccountNonLocked();
-
-            if (accountLocked) {
-                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-            }
-
-            boolean accountCredentialsExpired = userEntity.isCredentialsNonExpired();
-
-            if (accountCredentialsExpired) {
-                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-            }
-
-            boolean accountEnabled = userEntity.isEnabled();
-
-            if (accountEnabled) {
-                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-            }
-
-            return new ResponseRemoveAccount(email);
+            return new ResponseRemoveAccount(verifiedAccount.getEmail());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -290,39 +250,18 @@ public class ServiceUserAccount {
         }
     }
 
-    public boolean deleteAccount(RequestRemoveAccount request) throws Exception {
+    public boolean deleteAccount(RequestDeleteAccount request) throws Exception {
+        String email = request.getEmail();
         String username = request.getUsername();
-        String password = request.getPassword();
-        String confirmationCode = request.getConfirmationCode();
 
-        User verifiedAccount = verifyAccount(username, password, confirmationCode);
-
-        var userEntity = new UserEntity(verifiedAccount);
-
-        boolean accountExpired = userEntity.isAccountNonLocked();
-
-        if (accountExpired) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-        }
-
-        boolean accountLocked = userEntity.isAccountNonLocked();
-
-        if (accountLocked) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-        }
-
-        boolean accountCredentialsExpired = userEntity.isCredentialsNonExpired();
-
-        if (accountCredentialsExpired) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
-        }
+        var userEntity = serviceUserDetails.loadUserByUsername(username);
 
         boolean accountEnabled = userEntity.isEnabled();
 
         if (accountEnabled) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
+            throw new Exception(ExceptionMessages.ACCOUNT_DELETE_ERROR);
         }
 
-        return iRepositoryUserAccount.deleteAccount(verifiedAccount.getEmail(), username, confirmationCode);
+        return iRepositoryUserAccount.deleteAccount(email, username);
     }
 }
