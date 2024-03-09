@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -30,6 +31,7 @@ public class ServiceAuthLogin {
     private final ServiceTokenJW serviceTokenJW;
     private final ServiceSession serviceSession;
     private final ServiceUserUtils serviceUserUtils;
+    private final ServiceUserDetails serviceUserDetails;
 
     public ResponseLogin login(String username, String password, Object location) throws Exception {
         try {
@@ -37,32 +39,23 @@ public class ServiceAuthLogin {
 
             log.info("User {} is attempting to login", username);
 
-            User validAccount = serviceUserUtils.validateCredentials(username, password);
+            UserDetails user = serviceUserDetails.setCredentialsNonExpired(username, password);
 
-            if(validAccount == null){
-               throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
-            }
+            username = user.getUsername();
+            var authorities = user.getAuthorities();
 
-            String email = validAccount.getEmail();
-            UserEntity userEntity = new UserEntity(validAccount);
-
-            username = validAccount.getUsername();
-            var role = validAccount.getRoles();
-
-            log.info("{} {} is attempting to login.", role, username);
+            log.info("{} {} is attempting to login.", authorities, username);
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
 
-            log.info("Username {} is recorded in the Firebase Users Database with the email {}.", username, email);
-
-            String accessToken = serviceTokenJW.generateToken(extraClaims, userEntity);
-            String refreshToken = serviceTokenJW.refreshToken(userEntity);
+            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
+            String refreshToken = serviceTokenJW.refreshToken(user);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            boolean sessionCreated = serviceSession.createSession(userEntity, accessToken, refreshToken);
+            boolean sessionCreated = serviceSession.createSession(user, accessToken, refreshToken);
 
             if(!sessionCreated){
                 throw new Exception(ExceptionMessages.SESSION_CREATE_ERROR);

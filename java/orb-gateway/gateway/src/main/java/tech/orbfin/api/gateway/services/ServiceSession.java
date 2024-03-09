@@ -3,6 +3,7 @@ package tech.orbfin.api.gateway.services;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.Session;
@@ -42,9 +43,10 @@ public class ServiceSession {
         this.iRepositoryUser = iRepositoryUser;
     }
 
-    public boolean createSession(UserEntity user, String accessToken, String refreshToken) {
+//    Needs work
+    public boolean createSession(UserDetails user, String accessToken, String refreshToken) {
         String username = user.getUsername();
-        Collection<GrantedAuthority> authorities = user.getAuthorities();
+        Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) user.getAuthorities();
 
         boolean accountValid = serviceUserUtils.validateAccount(user);
 

@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ServiceAuthLogout {
     private final ServiceSession serviceSession;
+    private final ServiceUserDetails serviceUserDetails;
 
     @Transactional
     public ResponseLogout logout(String accessToken, String refreshToken) throws Exception {
@@ -30,7 +32,9 @@ public class ServiceAuthLogout {
                 throw new Exception(ExceptionMessages.SESSION_REMOVE_ERROR);
             }
 
-            return new ResponseLogout(username);
+             UserDetails user = serviceUserDetails.setCredentialsExpired(username);
+
+            return new ResponseLogout(user.getUsername());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -47,6 +51,8 @@ public class ServiceAuthLogout {
             if (!sessionsRemoved) {
                 throw new Exception(ExceptionMessages.SESSION_REMOVE_ERROR);
             }
+
+            UserDetails user = serviceUserDetails.setCredentialsExpired(username);
 
             return new ResponseLogout(username);
         } catch (BadCredentialsException e) {

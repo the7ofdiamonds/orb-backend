@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.model.user.User;
 
 import java.util.*;
@@ -38,7 +39,7 @@ public class ServiceTokenJW {
 
     private String buildToken(
             Map<String, Object> extraClaims,
-            UserEntity user,
+            UserDetails user,
             long expiration
     ) {
         return Jwts
@@ -53,13 +54,13 @@ public class ServiceTokenJW {
 
     public String generateToken(
             Map<String, Object> extraClaims,
-            UserEntity user
+            UserDetails user
     ) {
         return buildToken(extraClaims, user, expiration);
     }
 
     public String refreshToken(
-            UserEntity user
+            UserDetails user
     ) {
         return buildToken(new HashMap<>(), user, refreshExpiration);
     }

@@ -11,6 +11,7 @@ public class ExceptionMessages {
     public static final String CONFIRMATION_CODE_WRONG = "Incorrect confirmation code. ";
     public static final String CONFIRMATION_CODE_ERROR = "Error validating confirmation code. ";
     public static final String CREDENTIALS_BAD = "Credentials submitted are not valid.";
+    public static final String CREDENTIALS_UNEXPIRED_ERROR = "There was an error unexpiring credentials.";
     public static final String EMAIL_ADD_ERROR = "There was an error adding an email.";
     public static final String EMAIL_LOAD_ERROR = "Error while loading user by email. ";
     public static final String EMAIL_NULL = "Email is required.";

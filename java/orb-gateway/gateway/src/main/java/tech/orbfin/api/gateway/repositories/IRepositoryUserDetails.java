@@ -46,11 +46,10 @@ public interface IRepositoryUserDetails extends JpaRepository<User, Long> {
             @Param("p_display_name") String username);
 
     @Transactional
-    @Query(nativeQuery = true, value = "CALL unexpireCredentials(:p_display_name, :p_user_pass, :p_confirmation_code)")
+    @Query(nativeQuery = true, value = "CALL unexpireCredentials(:p_display_name, :p_user_pass)")
     public boolean unexpireCredentials(
             @Param("p_display_name") String username,
-            @Param("p_user_pass") String password,
-            @Param("p_confirmation_code") String confirmationCode);
+            @Param("p_user_pass") String password);
 
     @Transactional
     @Query(nativeQuery = true, value = "CALL expireCredentials(:p_user_email, :p_display_name)")

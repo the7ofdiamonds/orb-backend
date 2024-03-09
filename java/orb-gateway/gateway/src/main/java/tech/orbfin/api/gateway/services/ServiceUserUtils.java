@@ -155,6 +155,52 @@ public class ServiceUserUtils {
         }
     }
 
+    public boolean validateEmail(String email) {
+        try {
+            boolean emailValid = validateEmail(email);
+
+            if (!emailValid) {
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
+            }
+
+            boolean emailUsed = iRepositoryUserUtils.existsByEmail(email);
+            boolean emailExist = serviceUserFirebase.userExistByEmail(email);
+
+            if (!emailUsed || !emailExist) {
+                kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_RECOVERY, email);
+                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean validateUsername(String username) throws Exception {
+        try {
+            boolean usernameValid = validateUsername(username);
+
+            if (!usernameValid) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
+            }
+
+            boolean usernameExist = iRepositoryUserUtils.existsByUsername(username);
+
+            if (!usernameExist) {
+                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
+            }
+
+            return true;
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException(e.getMessage());
+        } catch (Exception e){
+            throw new Exception(e);
+        }
+    }
+
     public boolean passwordsMatch(String password, String confirmPassword) throws Exception {
         try {
             boolean passwordIsValid = validPassword(password);
@@ -239,15 +285,9 @@ log.info(String.valueOf(user.get()));
 
     public User findUserByUsername(String username) throws Exception {
         try {
-            boolean usernameIsValid = validUsername(username);
+            boolean usernameValid = validateUsername(username);
 
-            if (!usernameIsValid) {
-                throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
-            }
-
-            boolean usernameExists = iRepositoryUserUtils.existsByUsername(username);
-
-            if (!usernameExists) {
+            if (!usernameValid) {
                 return null;
             }
 
@@ -271,7 +311,7 @@ log.info(String.valueOf(user.get()));
         }
     }
 
-    public boolean validateAccount(UserEntity user) {
+    public boolean validateAccount(UserDetails user) {
         boolean enabled = user.isEnabled();
 
         if (!enabled) {
