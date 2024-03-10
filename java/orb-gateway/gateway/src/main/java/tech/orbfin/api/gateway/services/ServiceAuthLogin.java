@@ -4,7 +4,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.model.request.RequestLogin;
@@ -40,6 +39,12 @@ public class ServiceAuthLogin {
             log.info("User {} is attempting to login", username);
 
             UserDetails user = serviceUserDetails.setCredentialsNonExpired(username, password);
+
+            boolean accountValid = serviceUserUtils.validateAccount(user);
+
+            if (!accountValid) {
+                throw new Exception(ExceptionMessages.ACCOUNT_NOT_VALID);
+            }
 
             username = user.getUsername();
             var authorities = user.getAuthorities();

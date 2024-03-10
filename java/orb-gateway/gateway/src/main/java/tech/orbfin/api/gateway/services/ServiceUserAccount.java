@@ -172,7 +172,7 @@ public class ServiceUserAccount {
             boolean emailVerified = userCredentials.getIsEnabled();
 
             if (!emailVerified) {
-                boolean setEmailVerified = serviceUserDetails.setEmailVerified(email, confirmationCode);
+                boolean setEmailVerified = serviceUserDetails.enableAccount(email, confirmationCode);
 
                 if (!setEmailVerified) {
                     throw new Exception(ExceptionMessages.EMAIL_VERIFIED_ERROR);
@@ -223,7 +223,7 @@ public class ServiceUserAccount {
         try {
             User verifiedAccount = verifyAccount(username, password, confirmationCode);
 
-            boolean accountLocked = iRepositoryUserDetails.lockAccount(verifiedAccount.getEmail(), username);
+            boolean accountLocked = serviceUserDetails.setAccountLocked(verifiedAccount.getEmail(), username);
 
             if (!accountLocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);

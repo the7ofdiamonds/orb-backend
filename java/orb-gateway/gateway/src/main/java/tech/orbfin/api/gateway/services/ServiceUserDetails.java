@@ -3,6 +3,7 @@ package tech.orbfin.api.gateway.services;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
+import tech.orbfin.api.gateway.model.user.Capabilities;
 import tech.orbfin.api.gateway.model.user.User;
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
@@ -30,7 +31,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
             }
 
-            return new UserEntity(user);
+            return new UserEntity(user, new Capabilities(iRepositoryUserDetails));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -67,7 +68,7 @@ public class ServiceUserDetails implements UserDetailsService {
             boolean credentialUnexpired = iRepositoryUserDetails.expireCredentials(user.getUsername(), user.getPassword());
 
             if (!credentialUnexpired) {
-                throw new Exception(ExceptionMessages.CREDENTIALS_UNEXPIRED_ERROR);
+                throw new Exception(ExceptionMessages.CREDENTIALS_EXPIRED_ERROR);
             }
 
             return user;
@@ -78,80 +79,142 @@ public class ServiceUserDetails implements UserDetailsService {
         }
     }
 
-    public UserDetails loadUserByEmail(String email) {
+    public UserDetails loadUserByEmail(String email) throws Exception {
         try {
             User user = serviceUserUtils.findUserByEmail(email);
 
             if (user == null) {
-                throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
+                throw new Exception(ExceptionMessages.EMAIL_NOT_FOUND);
             }
 
-            return new UserEntity(user);
+            return new UserEntity(user, new Capabilities(iRepositoryUserDetails));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new Exception(e);
         }
     }
 
-//    Subscription
-    public boolean setAccountNonExpired(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
+    //    Subscription
+    public boolean setAccountNonExpired(String email, String confirmationCode) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
 
-        if (user.isAccountNonExpired()) {
+            if (user.isAccountNonExpired()) {
+                return true;
+            }
+
+            boolean accountUnexpired = iRepositoryUserDetails.unexpireAccount(email, user.getUsername(), confirmationCode);
+
+            if (!accountUnexpired) {
+                throw new Exception(ExceptionMessages.ACCOUNT_UNEXPIRE_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.unexpireAccount(email, user.getUsername(), confirmationCode);
     }
 
-    public boolean setAccountExpired(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
 
-        if (user.isAccountNonExpired()) {
+    //    Subscription
+    public boolean setAccountExpired(String email) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
+
+            if (!user.isAccountNonExpired()) {
+                return true;
+            }
+
+            boolean accountExpired = iRepositoryUserDetails.expireAccount(email, user.getUsername());
+
+            if (!accountExpired) {
+                throw new Exception(ExceptionMessages.ACCOUNT_EXPIRE_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.expireAccount(email, user.getUsername());
     }
 
-//    Suspicious Activity
-    public boolean setAccountNonLocked(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
+    public boolean setAccountNonLocked(String email, String confirmationCode) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
 
-        if (user.isAccountNonLocked()) {
+            if (user.isAccountNonLocked()) {
+                return true;
+            }
+
+            boolean accountUnlocked = iRepositoryUserDetails.unlockAccount(email, user.getUsername(), confirmationCode);
+
+            if (!accountUnlocked) {
+                throw new Exception(ExceptionMessages.ACCOUNT_UNLOCKED_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.unlockAccount(email, user.getUsername(), confirmationCode);
     }
 
-    public boolean setAccountLocked(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
+    //    Suspicious Activity
+    public boolean setAccountLocked(String email, String username) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
 
-        if (user.isAccountNonLocked()) {
+            if (user.isAccountNonLocked()) {
+                return true;
+            }
+
+            boolean accountLocked = iRepositoryUserDetails.lockAccount(email, username);
+
+            if (!accountLocked) {
+                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.lockAccount(email, user.getUsername());
     }
 
-    public boolean setEmailVerified(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
+    public boolean enableAccount(String email, String confirmationCode) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
 
-        if (user.isEnabled()) {
+            if (user.isEnabled()) {
+                return true;
+            }
+
+            boolean accountEnabled = iRepositoryUserDetails.enableAccount(email, user.getUsername(), confirmationCode);
+
+            if (!accountEnabled) {
+                throw new Exception(ExceptionMessages.ACCOUNT_ENABLED_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.enableAccount(email, user.getUsername(), confirmationCode);
     }
 
-//    Account inactivity
-    public boolean disableAccount(String email, String confirmationCode) {
-        UserDetails user = loadUserByEmail(email);
+    //    Account inactivity
+    public boolean disableAccount(String email, String username) throws Exception {
+        try {
+            UserDetails user = loadUserByEmail(email);
 
-        if (user.isEnabled()) {
+            if (!user.isEnabled()) {
+                return true;
+            }
+
+            boolean accountDisabled = iRepositoryUserDetails.disableAccount(email, username);
+
+            if (!accountDisabled) {
+                throw new Exception(ExceptionMessages.ACCOUNT_DISABLE_ERROR);
+            }
+
             return true;
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        return iRepositoryUserDetails.disableAccount(email, user.getUsername());
     }
 }

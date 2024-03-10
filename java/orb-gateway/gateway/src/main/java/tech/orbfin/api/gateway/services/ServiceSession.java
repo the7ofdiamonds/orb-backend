@@ -9,7 +9,7 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.Session;
 
 import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.model.user.UserEntity;
+
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
 
 import org.springframework.stereotype.Service;

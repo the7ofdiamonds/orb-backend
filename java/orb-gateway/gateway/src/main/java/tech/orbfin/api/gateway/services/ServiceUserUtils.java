@@ -8,10 +8,12 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
 
+import tech.orbfin.api.gateway.model.user.Capabilities;
 import tech.orbfin.api.gateway.model.user.User;
 
 import tech.orbfin.api.gateway.model.user.UserEntity;
 
+import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.repositories.IRepositoryUserUtils;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 import tech.orbfin.api.gateway.utils.Patterns;
@@ -41,6 +43,7 @@ import com.google.firebase.auth.UserRecord;
 @Service
 public class ServiceUserUtils {
     private final IRepositoryUserUtils iRepositoryUserUtils;
+    private final IRepositoryUserDetails iRepositoryUserDeails;
     private final ServiceUserFirebase serviceUserFirebase;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -326,20 +329,6 @@ log.info(String.valueOf(user.get()));
             return false;
         }
 
-        boolean expired = user.isAccountNonExpired();
-
-        if (!expired) {
-            log.info("Your account is has been locked for more than 90 days.");
-            return false;
-        }
-
-        boolean authenticated = user.isCredentialsNonExpired();
-
-        if (!authenticated) {
-
-            return false;
-        }
-
         return true;
     }
 
@@ -375,15 +364,8 @@ log.info(String.valueOf(user.get()));
                 throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
             }
 
-            UserEntity userEntity = new UserEntity(user);
-
-            boolean accountValid = validateAccount(userEntity);
-
-            if (!accountValid) {
-                throw new Exception(ExceptionMessages.ACCOUNT_NOT_VALID);
-            }
-
             UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
+
             if (userRecord == null) {
                 log.info("Firebase User with the email {} does not exists.", email);
                 log.info("Adding user with the email {} to firebase", email);
@@ -437,7 +419,7 @@ log.info(String.valueOf(user.get()));
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
             }
 
-            return new UserEntity(user);
+            return new UserEntity(user, new Capabilities(iRepositoryUserDeails));
         } catch(Exception e){
             throw new RuntimeException(e);
         }

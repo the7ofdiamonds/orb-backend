@@ -4,13 +4,14 @@ import com.google.api.core.ApiFuture;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.Session;
 import tech.orbfin.api.gateway.model.user.Capabilities;
 import tech.orbfin.api.gateway.model.user.Role;
 import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.model.user.UserEntity;
 import tech.orbfin.api.gateway.repositories.IRepositorySession;
+import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.services.ServiceSession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 
@@ -27,15 +28,24 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Slf4j
-@RequiredArgsConstructor
 @Component
 public class FilterTokenFirebase implements GlobalFilter {
     private final ServiceTokenFirebase serviceTokenFirebase;
-    private final ServiceToken serviceToken;
     private final ServiceSession serviceSession;
-    private final ServiceUserUtils serviceUserUtils;
-//private final Capabilities capabilities;
+    private final ServiceUserUtils serviceUserDetails;
+    private final IRepositoryUserDetails iRepositoryUserDetails;
+
+    public FilterTokenFirebase(ServiceTokenFirebase serviceTokenFirebase, ServiceSession serviceSession, ServiceUserUtils serviceUserDetails, IRepositoryUserDetails iRepositoryUserDetails) {
+        this.serviceTokenFirebase = serviceTokenFirebase;
+        this.serviceSession = serviceSession;
+        this.serviceUserDetails = serviceUserDetails;
+        this.iRepositoryUserDetails = iRepositoryUserDetails;
+    }
+
 
     @SneakyThrows
     @Override
@@ -48,7 +58,21 @@ public class FilterTokenFirebase implements GlobalFilter {
                 log.info("Firebase Token could not be found in the header.");
                 return chain.filter(exchange);
             }
-//log.info((capabilities.getCapabilitiesForRole(Role.SUBSCRIBER).toString()));
+            Capabilities capabilities = new Capabilities(iRepositoryUserDetails);
+            // Assuming capabilities is an instance of the Capabilities class
+
+// Log the roles using the original getRoles() method
+            log.info("User roles (Original): {}", capabilities.getRoles().values().stream().collect(Collectors.toList()));
+
+// Serialize the roles to a string (assuming getRoles() returns a Map<String, Map<String, Boolean>>)
+            String serializedRoles = capabilities.getRoles().toString();
+
+// Deserialize the roles using the custom deserializeCapabilities method
+            Map<String, Map<String, Boolean>> deserializedRoles = capabilities.deserializeCapabilities(serializedRoles);
+
+// Log the roles after deserialization
+            log.info("User roles (Deserialized): {}", deserializedRoles.values().stream().collect(Collectors.toList()));
+
             log.info("Validating token ...");
 
             log.info("Searching for session with Access Token ......");
@@ -56,7 +80,7 @@ public class FilterTokenFirebase implements GlobalFilter {
             Session session = null;
             String email = null;
 
-            if(refreshToken != null){
+            if (refreshToken != null) {
                 var header = ServiceToken.getTokenHeader(accessToken);
                 String algorithm = ServiceToken.getTokenAlgo(header);
                 log.info(algorithm);
@@ -66,7 +90,7 @@ public class FilterTokenFirebase implements GlobalFilter {
 
             }
 
-            if(accessToken != null && refreshToken == null){
+            if (accessToken != null && refreshToken == null) {
                 var header = ServiceToken.getTokenHeader(accessToken);
                 String algorithm = ServiceToken.getTokenAlgo(header);
                 session = serviceSession.findByAccessToken(accessToken);
@@ -79,19 +103,17 @@ public class FilterTokenFirebase implements GlobalFilter {
                 return chain.filter(exchange);
             }
 
-            User user = serviceUserUtils.findUserByEmail(email);
+            UserDetails user = serviceUserDetails.loadUserByEmail(email);
 
             if (user == null) {
                 return chain.filter(exchange);
             }
 
-            UserEntity userEntity = new UserEntity(user);
-
             if (session == null) {
                 log.info("Creating new session with tokens");
 
                 refreshToken = serviceTokenFirebase.createSessionCookie(accessToken);
-                boolean sessionCreated = serviceSession.createSession(userEntity, accessToken, refreshToken);
+                boolean sessionCreated = serviceSession.createSession(user, accessToken, refreshToken);
 
                 if (!sessionCreated) {
                     log.info("Session error.");
