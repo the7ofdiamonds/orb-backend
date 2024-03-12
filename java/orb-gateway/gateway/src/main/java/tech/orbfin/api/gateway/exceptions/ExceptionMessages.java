@@ -27,7 +27,7 @@ public class ExceptionMessages {
     public static final String EMAIL_VERIFIED = "This email has been verified.";
     public static final String EMAIL_VERIFIED_ERROR = "Could not verify email please try again at another time.";
     public static final String LOGIN_ATTEMPT_ERROR = "There was an error trying to login please try again at another time.";
-    public static final String LOGOUT_ATTEMPT_ERROR = "There was an error trying to login please try again at another time.";
+    public static final String LOGOUT_ATTEMPT_ERROR = "There was an error trying to log out please try again at another time.";
     public static final String NAME_CHANGE_ERROR = "There was an error trying to change your name. ";
     public static final String NAME_NULL = "First and last names are required.";
     public static final String NAME_TOO_LONG = "Name is too long.";

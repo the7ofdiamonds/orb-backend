@@ -1,6 +1,4 @@
-package tech.orbfin.api.gateway.repositories;
-
-import tech.orbfin.api.gateway.model.Session;
+package tech.orbfin.api.gateway.model.session;
 
 import com.redis.om.spring.repository.RedisDocumentRepository;
 

@@ -2,8 +2,8 @@ package tech.orbfin.api.gateway.authentication.filters;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.authentication.AuthJWT;
-import tech.orbfin.api.gateway.model.Session;
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
+import tech.orbfin.api.gateway.model.session.Session;
+import tech.orbfin.api.gateway.model.session.IRepositorySession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 import tech.orbfin.api.gateway.services.ServiceTokenJW;
 

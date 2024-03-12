@@ -8,13 +8,11 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
 
-import tech.orbfin.api.gateway.model.user.Capabilities;
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
-import tech.orbfin.api.gateway.model.user.UserEntity;
+import tech.orbfin.api.gateway.model.UserEntity;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
-import tech.orbfin.api.gateway.repositories.IRepositoryUserUtils;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserUtils;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 import tech.orbfin.api.gateway.utils.Patterns;
 import tech.orbfin.api.gateway.utils.Validator;
@@ -23,8 +21,6 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
@@ -39,11 +35,9 @@ import com.google.firebase.auth.UserRecord;
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 @Service
 public class ServiceUserUtils {
     private final IRepositoryUserUtils iRepositoryUserUtils;
-    private final IRepositoryUserDetails iRepositoryUserDeails;
     private final ServiceUserFirebase serviceUserFirebase;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -184,7 +178,7 @@ public class ServiceUserUtils {
 
     public boolean validateUsername(String username) throws Exception {
         try {
-            boolean usernameValid = validateUsername(username);
+            boolean usernameValid = validUsername(username);
 
             if (!usernameValid) {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_VALID);
@@ -419,7 +413,7 @@ log.info(String.valueOf(user.get()));
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_FOUND);
             }
 
-            return new UserEntity(user, new Capabilities(iRepositoryUserDeails));
+            return new UserEntity(user);
         } catch(Exception e){
             throw new RuntimeException(e);
         }

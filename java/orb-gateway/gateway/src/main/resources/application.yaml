@@ -16,6 +16,13 @@ spring:
     password: ${DATABASE_PASSWORD:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  orb:
+    datasource:
+      url: ${ORB_DATABASE_URL:jdbc:mysql://localhost:3306/orb}
+      username: ${ORB_DATABASE_USERNAME:root}
+      password: ${ORB_DATABASE_PASSWORD:password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:

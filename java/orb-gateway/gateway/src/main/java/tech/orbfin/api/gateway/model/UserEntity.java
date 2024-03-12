@@ -1,30 +1,23 @@
-package tech.orbfin.api.gateway.model.user;
+package tech.orbfin.api.gateway.model;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.Entity;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
 public class UserEntity implements UserDetails {
     private final User user;
-    private final Capabilities capabilities;
 
-    public UserEntity(User user, Capabilities capabilities) {
+    public UserEntity(User user) {
         this.user = user;
-        this.capabilities = capabilities;
     }
-
-//    public UserEntity(User user, IRepositoryUserDetails iRepositoryUserDetails, Capabilities capabilities){
-//        this.user = new User();
-//        this.capabilities = new Capabilities(iRepositoryUserDetails);
-//
-//    }
 
     @Override
     public String getUsername() {
@@ -43,8 +36,7 @@ public class UserEntity implements UserDetails {
         }
 
         return user.getRoles().stream()
-                .flatMap(role -> capabilities.getCapabilitiesForRole(role).keySet().stream())
-                .map(SimpleGrantedAuthority::new)
+                .map(role -> new SimpleGrantedAuthority(role.toString()))
                 .collect(Collectors.toList());
     }
 
@@ -90,5 +82,22 @@ public class UserEntity implements UserDetails {
         }
 
         return true;
+    }
+
+    @Setter
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Data
+    @Entity
+    public static class Role {
+        public static final String SUBSCRIBER = "subscriber";
+        public static final String CONTRIBUTOR = "contributor";
+        public static final String EDITOR = "editor";
+        public static final String ADMIN = "administrator";
+
+        private String name;
+        private Map<String, Boolean> capabilities;
     }
 }

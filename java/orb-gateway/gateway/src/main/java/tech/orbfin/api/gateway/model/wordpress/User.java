@@ -1,9 +1,10 @@
-package tech.orbfin.api.gateway.model.user;
+package tech.orbfin.api.gateway.model.wordpress;
 
 import java.util.Collection;
 
 import jakarta.persistence.*;
 import lombok.*;
+import tech.orbfin.api.gateway.model.orb.Role;
 
 @Setter
 @Getter
@@ -32,13 +33,8 @@ public class User {
     private String providerGivenID;
     @Column(name = "confirmation_code")
     private String confirmationCode;
-
 @Transient
-//    @ElementCollection
-//    @CollectionTable(name = "wp_usermeta", joinColumns = @JoinColumn(name = "user_id"))
-//    @MapKeyColumn(name = "meta_key") // Assuming meta_key is the role
-//    @Column(name = "meta_value")
-    private Collection<String> roles;
+    private Collection<Object> roles;
     @Column(name = "is_authenticated")
     private Boolean isAuthenticated;
     @Column(name = "is_account_non_expired")

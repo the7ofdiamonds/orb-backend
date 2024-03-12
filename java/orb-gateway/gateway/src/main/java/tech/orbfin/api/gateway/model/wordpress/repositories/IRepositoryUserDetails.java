@@ -1,6 +1,6 @@
-package tech.orbfin.api.gateway.repositories;
+package tech.orbfin.api.gateway.model.wordpress.repositories;
 
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
 import jakarta.transaction.Transactional;
 
@@ -10,14 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
-
 @Repository
 public interface IRepositoryUserDetails extends JpaRepository<User, Long> {
-
-    @Transactional
-    @Query(nativeQuery = true, value = "SELECT * FROM wp_user_roles_view")
-    public Map<String, Map<String, Boolean>> getRoles();
 
     @Transactional
     @Query(nativeQuery = true, value = "CALL enableAccount(:p_user_email, :p_display_name, :p_confirmation_code)")
@@ -46,10 +40,10 @@ public interface IRepositoryUserDetails extends JpaRepository<User, Long> {
             @Param("p_display_name") String username);
 
     @Transactional
-    @Query(nativeQuery = true, value = "CALL unexpireCredentials(:p_display_name, :p_user_pass)")
+    @Query(nativeQuery = true, value = "CALL unexpireCredentials(:p_user_email, :p_display_name)")
     public boolean unexpireCredentials(
-            @Param("p_display_name") String username,
-            @Param("p_user_pass") String password);
+            @Param("p_user_email") String email,
+            @Param("p_display_name") String username);
 
     @Transactional
     @Query(nativeQuery = true, value = "CALL expireCredentials(:p_user_email, :p_display_name)")

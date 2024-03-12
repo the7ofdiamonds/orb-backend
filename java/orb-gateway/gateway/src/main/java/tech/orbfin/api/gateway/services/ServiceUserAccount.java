@@ -6,14 +6,14 @@ import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.exceptions.UserCreationException;
 
+import tech.orbfin.api.gateway.model.UserEntity;
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.model.user.Role;
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUserAccount;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserAccount;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 import java.util.*;
@@ -116,7 +116,7 @@ public class ServiceUserAccount {
                     firstname,
                     lastname,
                     phone,
-                    Role.SUBSCRIBER,
+                    UserEntity.Role.SUBSCRIBER,
                     providerGivenID,
                     TRUE,
                     TRUE,

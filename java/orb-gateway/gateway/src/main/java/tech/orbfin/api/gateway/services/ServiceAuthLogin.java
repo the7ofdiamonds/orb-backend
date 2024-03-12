@@ -4,9 +4,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.model.user.User;
-
-import tech.orbfin.api.gateway.model.request.RequestLogin;
 import tech.orbfin.api.gateway.model.response.ResponseLogin;
 
 import java.util.HashMap;
@@ -16,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
-
-import org.jetbrains.annotations.NotNull;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -39,6 +34,10 @@ public class ServiceAuthLogin {
             log.info("User {} is attempting to login", username);
 
             UserDetails user = serviceUserDetails.setCredentialsNonExpired(username, password);
+
+            if(user == null){
+                throw new Exception("Error is right here.");
+            }
 
             boolean accountValid = serviceUserUtils.validateAccount(user);
 

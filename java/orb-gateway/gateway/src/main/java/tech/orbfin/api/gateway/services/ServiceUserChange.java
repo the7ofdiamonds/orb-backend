@@ -7,9 +7,9 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUserChange;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserChange;
 import tech.orbfin.api.gateway.repositories.RepositoryUser;
 
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;

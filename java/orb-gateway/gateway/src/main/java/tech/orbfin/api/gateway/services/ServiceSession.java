@@ -6,20 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
-import tech.orbfin.api.gateway.model.Session;
+import tech.orbfin.api.gateway.model.session.Session;
 
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
+import tech.orbfin.api.gateway.model.session.IRepositorySession;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.security.core.GrantedAuthority;
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUser;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 @Slf4j

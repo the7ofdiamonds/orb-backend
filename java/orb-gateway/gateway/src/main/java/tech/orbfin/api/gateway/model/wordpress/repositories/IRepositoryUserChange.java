@@ -1,16 +1,14 @@
-package tech.orbfin.api.gateway.repositories;
+package tech.orbfin.api.gateway.model.wordpress.repositories;
 
-import tech.orbfin.api.gateway.model.user.Role;
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.UserEntity;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.query.Procedure;
 
 import org.springframework.data.repository.query.Param;
 
@@ -62,7 +60,7 @@ public interface IRepositoryUserChange extends JpaRepository<User, Long> {
     public boolean changeRoles(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_wp_capabilities") Collection<Role> roles);
+            @Param("p_wp_capabilities") Collection<UserEntity.Role> roles);
 
 
 }

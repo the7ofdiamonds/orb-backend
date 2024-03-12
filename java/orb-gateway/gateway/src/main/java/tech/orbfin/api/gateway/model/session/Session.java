@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.model;
+package tech.orbfin.api.gateway.model.session;
 
 import java.io.Serializable;
 import java.util.Collection;

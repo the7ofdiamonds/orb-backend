@@ -6,9 +6,9 @@ import tech.orbfin.api.gateway.exceptions.*;
 
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUser;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUser;
 
 import jakarta.transaction.Transactional;
 

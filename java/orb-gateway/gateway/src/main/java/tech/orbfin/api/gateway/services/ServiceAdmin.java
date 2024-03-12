@@ -12,7 +12,7 @@ import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.model.response.ResponseDeleteAccount;
-import tech.orbfin.api.gateway.repositories.IRepositoryUserAccount;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserAccount;
 
 @Slf4j
 @RequiredArgsConstructor

@@ -1,17 +1,9 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
-import com.google.api.core.ApiFuture;
-import com.google.firebase.auth.FirebaseToken;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.security.core.userdetails.UserDetails;
-import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
-import tech.orbfin.api.gateway.model.Session;
-import tech.orbfin.api.gateway.model.user.Capabilities;
-import tech.orbfin.api.gateway.model.user.Role;
-import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.repositories.IRepositorySession;
-import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
+import tech.orbfin.api.gateway.model.session.Session;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.services.ServiceSession;
 import tech.orbfin.api.gateway.services.ServiceToken;
 
@@ -27,9 +19,6 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -58,20 +47,15 @@ public class FilterTokenFirebase implements GlobalFilter {
                 log.info("Firebase Token could not be found in the header.");
                 return chain.filter(exchange);
             }
-            Capabilities capabilities = new Capabilities(iRepositoryUserDetails);
             // Assuming capabilities is an instance of the Capabilities class
 
 // Log the roles using the original getRoles() method
-            log.info("User roles (Original): {}", capabilities.getRoles().values().stream().collect(Collectors.toList()));
 
 // Serialize the roles to a string (assuming getRoles() returns a Map<String, Map<String, Boolean>>)
-            String serializedRoles = capabilities.getRoles().toString();
 
 // Deserialize the roles using the custom deserializeCapabilities method
-            Map<String, Map<String, Boolean>> deserializedRoles = capabilities.deserializeCapabilities(serializedRoles);
 
 // Log the roles after deserialization
-            log.info("User roles (Deserialized): {}", deserializedRoles.values().stream().collect(Collectors.toList()));
 
             log.info("Validating token ...");
 

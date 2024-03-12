@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.repositories;
+package tech.orbfin.api.gateway.model.wordpress.repositories;
 
 import jakarta.transaction.Transactional;
 
@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import org.springframework.stereotype.Repository;
 
-import tech.orbfin.api.gateway.model.user.User;
+import tech.orbfin.api.gateway.model.wordpress.User;
 
 import java.util.Optional;
 

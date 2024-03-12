@@ -3,11 +3,10 @@ package tech.orbfin.api.gateway.services;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.model.user.Capabilities;
-import tech.orbfin.api.gateway.model.user.User;
-import tech.orbfin.api.gateway.model.user.UserEntity;
+import tech.orbfin.api.gateway.model.wordpress.User;
+import tech.orbfin.api.gateway.model.UserEntity;
 
-import tech.orbfin.api.gateway.repositories.IRepositoryUserDetails;
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserDetails;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +30,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 throw new BadCredentialsException(ExceptionMessages.USERNAME_NOT_FOUND);
             }
 
-            return new UserEntity(user, new Capabilities(iRepositoryUserDetails));
+            return new UserEntity(user);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -45,7 +44,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
             }
 
-            boolean credentialUnexpired = iRepositoryUserDetails.unexpireCredentials(username, password);
+            boolean credentialUnexpired = iRepositoryUserDetails.unexpireCredentials(validAccount.getEmail(), username);
 
             if (!credentialUnexpired) {
                 throw new Exception(ExceptionMessages.CREDENTIALS_UNEXPIRED_ERROR);
@@ -63,15 +62,15 @@ public class ServiceUserDetails implements UserDetailsService {
 
     public UserDetails setCredentialsExpired(String username) throws Exception {
         try {
-            UserDetails user = loadUserByUsername(username);
+            User user = serviceUserUtils.findUserByUsername(username);
 
-            boolean credentialUnexpired = iRepositoryUserDetails.expireCredentials(user.getUsername(), user.getPassword());
+            boolean credentialUnexpired = iRepositoryUserDetails.expireCredentials(user.getEmail(), username);
 
             if (!credentialUnexpired) {
                 throw new Exception(ExceptionMessages.CREDENTIALS_EXPIRED_ERROR);
             }
 
-            return user;
+            return new UserEntity(user);
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -87,7 +86,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 throw new Exception(ExceptionMessages.EMAIL_NOT_FOUND);
             }
 
-            return new UserEntity(user, new Capabilities(iRepositoryUserDetails));
+            return new UserEntity(user);
         } catch (Exception e) {
             throw new Exception(e);
         }
