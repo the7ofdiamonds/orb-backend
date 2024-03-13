@@ -36,7 +36,7 @@ public class UserEntity implements UserDetails {
         }
 
         return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.toString()))
+                .map(role -> new SimpleGrantedAuthority(role))
                 .collect(Collectors.toList());
     }
 

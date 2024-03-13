@@ -1,16 +1,15 @@
 package tech.orbfin.api.gateway.model.wordpress;
 
+import tech.orbfin.api.gateway.utils.PHP;
+
 import java.util.Collection;
 
 import jakarta.persistence.*;
 import lombok.*;
-import tech.orbfin.api.gateway.model.orb.Role;
 
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Data
 @Entity
 public class User {
@@ -33,8 +32,7 @@ public class User {
     private String providerGivenID;
     @Column(name = "confirmation_code")
     private String confirmationCode;
-@Transient
-    private Collection<Object> roles;
+    private String roles;
     @Column(name = "is_authenticated")
     private Boolean isAuthenticated;
     @Column(name = "is_account_non_expired")
@@ -45,4 +43,9 @@ public class User {
     private Boolean isCredentialsNonExpired;
     @Column(name = "is_enabled")
     private Boolean isEnabled;
+
+    public Collection<String> getRoles(){
+        PHP php = new PHP();
+        return php.unserialize(roles);
+    }
 }

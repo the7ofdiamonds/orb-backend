@@ -1,18 +1,19 @@
 package tech.orbfin.api.gateway.authentication.filters;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.authentication.AuthJWT;
+
 import tech.orbfin.api.gateway.model.session.Session;
 import tech.orbfin.api.gateway.model.session.IRepositorySession;
-import tech.orbfin.api.gateway.services.ServiceToken;
-import tech.orbfin.api.gateway.services.ServiceTokenJW;
+
+import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserRoles;
+import tech.orbfin.api.gateway.services.*;
 
 import reactor.core.publisher.Mono;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.context.annotation.Primary;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -22,20 +23,19 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.stereotype.Component;
 
 import org.springframework.web.server.ServerWebExchange;
+import tech.orbfin.api.gateway.utils.PHP;
 
-import tech.orbfin.api.gateway.services.ServiceUser;
-import tech.orbfin.api.gateway.services.ServiceUserDetails;
-
-@Primary
+@AllArgsConstructor
 @Slf4j
 @Component
-@AllArgsConstructor
 public class FilterToken implements GlobalFilter {
     private final ServiceToken serviceToken;
     private final ServiceTokenJW serviceTokenJW;
-    private final ServiceUser serviceUser;
+    private final ServiceUserUtils serviceUserUtils;
     private final ServiceUserDetails serviceUserDetails;
     private final IRepositorySession iRepositorySession;
+    private final PHP php;
+    private final IRepositoryUserRoles iRepositoryUserRoles;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -57,6 +57,10 @@ public class FilterToken implements GlobalFilter {
             if (username.isEmpty()) {
                 throw new Exception("This user does not exist please login again to gain access.");
             }
+
+            var userRoles = iRepositoryUserRoles.getWPUserRoles();
+            var userRolesUnserielized = php.unserialize(userRoles);
+            log.info(userRolesUnserielized.toString());
 
             boolean tokenIsExpired = serviceTokenJW.isTokenExpired(jwt);
 

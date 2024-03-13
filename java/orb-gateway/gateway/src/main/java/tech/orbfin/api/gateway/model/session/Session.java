@@ -18,7 +18,6 @@ import org.springframework.security.core.GrantedAuthority;
 @Builder
 @Getter
 @Setter
-//@RequiredArgsConstructor(staticName = "of")
 @AllArgsConstructor
 @RedisHash("sessions")
 @Data
