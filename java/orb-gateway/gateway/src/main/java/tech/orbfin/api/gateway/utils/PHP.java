@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,44 +13,58 @@ import java.util.regex.Pattern;
 @Component
 @Slf4j
 public class PHP {
+    private final String regexInteger = "^([i]):([0-9]+);$";
+    private final String regexDouble = "^([d]):([0-9]+).([0-9]+);$";
+    private final String regexBoolean = "^([b]):([0|1]);$";
+    private final String regexString = "^([s]):([0-9]+):(.+);$";
+    private final String regexArray = "^([a]):([0-9]+):\\{(.+)\\}$";
+    private final String regexObject = "^([O]):([0-9]+):\\{(.+)\\}$";
+    private Collection<String> delimiters = new ArrayList<>();
+
+    public PHP() {
+        delimiters.add(regexInteger);
+        delimiters.add(regexDouble);
+        delimiters.add(regexBoolean);
+        delimiters.add(regexString);
+        delimiters.add(regexArray);
+        delimiters.add(regexObject);
+    }
+
     public <T> T unserialize(String sdata) {
-        if (sdata == null) {
+        if (sdata == null || sdata.startsWith("N;")) {
             return null;
         }
 
-        int sdataLength = sdata.length();
-        int fbIndex = sdata.indexOf('{');
-        int lbIndex = sdata.indexOf('}');
-        int fcIndex = sdata.indexOf(':');
-        int scIndex = sdata.indexOf(':', fcIndex + 1);
+        for (String delimiter : delimiters) {
+            Pattern pattern = Pattern.compile(delimiter);
+            Matcher matcher = pattern.matcher(sdata);
 
-        if (sdata.startsWith("N;") && scIndex == -1) {
-            log.info(null);
-            return null;
-        }
+            while (matcher.find()) {
 
-        if (sdata.equals("i:") && scIndex == -1 && fbIndex == -1 && lbIndex == -1) {
-            return (T) uInteger(sdata);
-        }
+                if (matcher.group(1).equals("i")) {
+                    return (T) uInteger(sdata);
+                }
 
-        if (sdata.equals("d:") && scIndex == -1 && fbIndex == -1 && lbIndex == -1) {
-            return (T) uDouble(sdata);
-        }
+                if (matcher.group(1).equals("d")) {
+                    return (T) uDouble(sdata);
+                }
 
-        if (sdata.equals("b:") && sdataLength == 3) {
-            return (T) uBoolean(sdata);
-        }
+                if (matcher.group(1).equals("b")) {
+                    return (T) uBoolean(sdata);
+                }
 
-        if (sdata.equals("s:") && scIndex != -1 && fbIndex == -1 && lbIndex == -1) {
-            return (T) uString(sdata);
-        }
+                if (matcher.group(1).equals("s")) {
+                    return (T) uString(Integer.valueOf(matcher.group(2)), matcher.group(3));
+                }
 
-        if (sdata.startsWith("a:")) {
-            return (T) uArray(sdata);
-        }
+                if (matcher.group(1).equals("a")) {
+                    return (T) uArray(Integer.valueOf(matcher.group(2)), matcher.group(3));
+                }
 
-        if (sdata.startsWith("O:")) {
-            return (T) uObject(sdata);
+                if (matcher.group(1).equals("O")) {
+                    return (T) uObject(Integer.valueOf(matcher.group(2)), matcher.group(3));
+                }
+            }
         }
 
         return null;
@@ -103,113 +118,40 @@ public class PHP {
         return null;
     }
 
-    public static String uString(String sdata) {
-        int fColIndex = sdata.indexOf(':');
-        int sColIndex = sdata.indexOf(':', fColIndex +1);
-        int chars = Integer.parseInt(sdata.substring(fColIndex + 1, sColIndex));
-        int fSemiIndex = sdata.indexOf(';');
+    private static String uString(int chars, String sdata) {
+        try {
+            Pattern pattern = Pattern.compile("([a-zA-Z0-9_]+)");
+            Matcher matcher = pattern.matcher(sdata);
 
-        String data = sdata.substring(sColIndex + 2, fSemiIndex - 1); // Adjust substring indices to exclude quotes
+            StringBuilder dataBuilder = new StringBuilder();
 
-        int dataLength = data.length();
-
-        Pattern pattern = Pattern.compile("[^a-z]");
-        Matcher matcher = pattern.matcher(data);
-
-        if (matcher.find()) {
-            System.out.println("Invalid characters found in the extracted data.");
-        }
-
-        if (chars != dataLength){
-            System.out.println("There has been an error number of characters expected " + chars + " and length of string "+ dataLength + " should be the same.");
-        }
-
-        return data;
-    }
-
-    public static List<String> splitOutsideCurlyBraces(String input, String delimiter) {
-        List<String> parts = new ArrayList<>();
-        Pattern pattern = Pattern.compile("(?![^{]*\\})(?=" + Pattern.quote(delimiter) + ")");
-        Matcher matcher = pattern.matcher(input);
-        int start = 0;
-        while (matcher.find()) {
-            String part = input.substring(start, matcher.end());
-            log.info(part.trim());
-            parts.add(part.trim());
-            start = matcher.end();
-        }
-        if (start < input.length()) {
-            parts.add(input.substring(start).trim());
-        }
-        return parts;
-    }
-
-    private <T> T uArray(String sdata) {
-        int sdataLength = sdata.length();
-        int fbIndex = sdata.indexOf('{');
-        int lbIndex = sdata.indexOf('}');
-        int fcIndex = sdata.indexOf(':');
-        int scIndex = sdata.indexOf(':', fcIndex + 1);
-
-        if (sdata.startsWith("a:")) {
-            int items = Integer.parseInt(sdata.substring(fcIndex + 1, scIndex));
-            String data = sdata.substring(fbIndex + 1, lbIndex);
-            log.info(String.valueOf(items));
-
-            Collection<T> array = new ArrayList<>(items);
-
-            if (items > 1) {
-                List<String> newDataList = splitOutsideCurlyBraces(data, ";{");
-                var newDataListSize = newDataList.size();
-
-                for (String newData : newDataList) {
-                    if (data.startsWith("s:")) {
-                        var s = (T) uString(newData);
-                        array.add(s);
-                    }
-                }
-
-                log.info(String.valueOf(newDataListSize));
+            while (matcher.find()) {
+                dataBuilder.append(matcher.group());
             }
 
-            return (T) array;
-        }
+            String data = dataBuilder.toString();
+            int dataLength = data.length();
 
-        return null;
+            if (chars != dataLength) {
+                throw new IllegalArgumentException("Number of characters expected " + chars + " does not match the length of the extracted string " + dataLength + ".");
+            }
+
+            return data;
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private <T> T uObject(String sdata) {
-        int sdataLength = sdata.length();
-        int fbIndex = sdata.indexOf('{');
-        int lbIndex = sdata.indexOf('}');
-        int fcIndex = sdata.indexOf(':');
-        int scIndex = sdata.indexOf(':', fcIndex + 1);
+    private <T> T uArray(int items, String sdata) {
 
-        if (sdata.startsWith("O:")) {
-            int items = Integer.parseInt(sdata.substring(fcIndex + 1, scIndex));
-            String data = sdata.substring(fbIndex + 1, lbIndex);
-            log.info(String.valueOf(items));
-            if (sdata.startsWith("a:")) {
-                Collection<T> array = new ArrayList<>(items);
+        Collection<T> array = new ArrayList<>(items);
+log.info(String.valueOf(sdata));
+        return (T) array;
+    }
 
-                if (items > 1) {
-                    List<String> newDataList = splitOutsideCurlyBraces(data, ";{");
-                    var newDataListSize = newDataList.size();
-
-                    for (String newData : newDataList) {
-                        if (data.startsWith("s:")) {
-                            var s = (T) uString(newData);
-                            array.add(s);
-                        }
-                    }
-
-                    log.info(String.valueOf(newDataListSize));
-                }
-
-                return (T) array;
-            }
-        }
-
+    private <T> T uObject(int chars, String sdata) {
+        Object object = new Object();
         return null;
     }
 }
