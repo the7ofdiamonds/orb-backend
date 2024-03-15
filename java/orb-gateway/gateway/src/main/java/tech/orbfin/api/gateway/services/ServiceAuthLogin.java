@@ -59,7 +59,7 @@ public class ServiceAuthLogin {
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            boolean sessionCreated = serviceSession.createSession(user, accessToken, refreshToken);
+            boolean sessionCreated = serviceSession.createSession(username, accessToken, refreshToken);
 
             if(!sessionCreated){
                 throw new Exception(ExceptionMessages.SESSION_CREATE_ERROR);
