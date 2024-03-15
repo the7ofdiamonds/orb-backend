@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.model.wordpress.repositories;
 
+import tech.orbfin.api.gateway.model.Role;
 import tech.orbfin.api.gateway.model.UserEntity;
 import tech.orbfin.api.gateway.model.wordpress.User;
 
@@ -60,7 +61,7 @@ public interface IRepositoryUserChange extends JpaRepository<User, Long> {
     public boolean changeRoles(
             @Param("p_user_email") String email,
             @Param("p_display_name") String username,
-            @Param("p_wp_capabilities") Collection<UserEntity.Role> roles);
+            @Param("p_wp_capabilities") Collection<Role> roles);
 
 
 }

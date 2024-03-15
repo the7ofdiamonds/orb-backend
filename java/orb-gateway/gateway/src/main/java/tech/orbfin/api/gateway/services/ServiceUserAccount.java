@@ -116,7 +116,7 @@ public class ServiceUserAccount {
                     firstname,
                     lastname,
                     phone,
-                    UserEntity.Role.SUBSCRIBER,
+                    "subscriber",
                     providerGivenID,
                     TRUE,
                     TRUE,

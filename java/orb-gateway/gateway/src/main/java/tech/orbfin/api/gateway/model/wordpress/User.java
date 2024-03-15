@@ -44,7 +44,7 @@ public class User {
     @Column(name = "is_enabled")
     private Boolean isEnabled;
 
-    public Collection<String> getRoles(){
+    public String getRoles(){
         PHP php = new PHP();
         return php.unserialize(roles);
     }

@@ -35,9 +35,10 @@ public class UserEntity implements UserDetails {
             return Collections.emptyList();
         }
 
-        return user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role))
-                .collect(Collectors.toList());
+//        return user.getRoles().stream()
+//                .map(role -> new SimpleGrantedAuthority(role))
+//                .collect(Collectors.toList());
+        return null;
     }
 
     @Override
@@ -82,22 +83,5 @@ public class UserEntity implements UserDetails {
         }
 
         return true;
-    }
-
-    @Setter
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @Data
-    @Entity
-    public static class Role {
-        public static final String SUBSCRIBER = "subscriber";
-        public static final String CONTRIBUTOR = "contributor";
-        public static final String EDITOR = "editor";
-        public static final String ADMIN = "administrator";
-
-        private String name;
-        private Map<String, Boolean> capabilities;
     }
 }

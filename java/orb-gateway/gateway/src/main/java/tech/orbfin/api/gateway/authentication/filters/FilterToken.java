@@ -7,7 +7,8 @@ import tech.orbfin.api.gateway.authentication.AuthJWT;
 import tech.orbfin.api.gateway.model.session.Session;
 import tech.orbfin.api.gateway.model.session.IRepositorySession;
 
-import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserRoles;
+import tech.orbfin.api.gateway.model.Role;
+import tech.orbfin.api.gateway.model.wordpress.User;
 import tech.orbfin.api.gateway.services.*;
 
 import reactor.core.publisher.Mono;
@@ -23,9 +24,8 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.stereotype.Component;
 
 import org.springframework.web.server.ServerWebExchange;
-import tech.orbfin.api.gateway.utils.PHP;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 @Component
 public class FilterToken implements GlobalFilter {
@@ -34,8 +34,7 @@ public class FilterToken implements GlobalFilter {
     private final ServiceUserUtils serviceUserUtils;
     private final ServiceUserDetails serviceUserDetails;
     private final IRepositorySession iRepositorySession;
-    private final PHP php;
-    private final IRepositoryUserRoles iRepositoryUserRoles;
+    private final Role role;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -58,9 +57,13 @@ public class FilterToken implements GlobalFilter {
                 throw new Exception("This user does not exist please login again to gain access.");
             }
 
-            var userRoles = iRepositoryUserRoles.getWPUserRoles();
-            var userRolesUnserielized = php.unserialize(userRoles);
-            log.info(userRolesUnserielized.toString());
+            var user2 = serviceUserUtils.findUserByUsername(username);
+            String user3 = user2.getRoles();
+            log.info(user3);
+
+            UserDetails user1 = serviceUserDetails.loadUserByUsername(username);
+            log.info(String.valueOf(user1.getAuthorities()));
+            role.getCapabilities();
 
             boolean tokenIsExpired = serviceTokenJW.isTokenExpired(jwt);
 
