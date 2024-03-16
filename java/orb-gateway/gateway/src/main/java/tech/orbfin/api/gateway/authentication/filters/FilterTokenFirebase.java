@@ -30,11 +30,13 @@ public class FilterTokenFirebase implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+//        Same as FilterToken just using a firebase token
         String accessToken = serviceToken.getToken(exchange);
         String refreshToken = serviceToken.getRefreshToken(exchange);
         String username = serviceTokenJW.extractUsername(accessToken);
 
         serviceSession.createSession(username, accessToken, refreshToken);
+
         return Mono.empty();
     }
 }

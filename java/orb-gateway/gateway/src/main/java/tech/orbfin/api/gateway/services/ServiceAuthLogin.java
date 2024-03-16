@@ -1,6 +1,5 @@
 package tech.orbfin.api.gateway.services;
 
-import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
@@ -53,8 +53,8 @@ public class ServiceAuthLogin {
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
 
-            String accessToken = serviceTokenJW.generateToken(extraClaims, user);
-            String refreshToken = serviceTokenJW.refreshToken(user);
+            String accessToken = ServiceTokenJW.generateToken(extraClaims, user);
+            String refreshToken = ServiceTokenJW.refreshToken(user);
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);

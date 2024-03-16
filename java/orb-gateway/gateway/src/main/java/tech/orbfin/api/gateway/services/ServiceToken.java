@@ -58,7 +58,6 @@ public class ServiceToken {
         String refreshToken = exchange.getRequest().getHeaders().getFirst("Refresh-Token");
 
         if (refreshToken != null) {
-            log.info(refreshToken);
             return refreshToken;
         }
 

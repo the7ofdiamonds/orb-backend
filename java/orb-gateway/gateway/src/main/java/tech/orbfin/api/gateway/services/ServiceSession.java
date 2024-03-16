@@ -48,64 +48,25 @@ public class ServiceSession {
         this.iRepositoryUser = iRepositoryUser;
     }
 
-//    Needs work
+    //    Needs work
     public boolean createSession(String username, String accessToken, String refreshToken) {
+        if (username == null) {
+            log.info("A user is required.");
+        }
 
         if (accessToken == null) {
             log.info("A Token could not be found in the header.");
         }
 
-        log.info("Validating token ...");
-
-        log.info("Username {} is attempting to gain access to resource servers.", username);
-
-        var user = serviceUserDetails.loadUserByUsername(username);
-
-        boolean tokenIsExpired = serviceTokenJW.isTokenExpired(accessToken);
-
-        if (tokenIsExpired) {
-            log.info("Token is expired");
-
-            Iterable<Session> sessions = iRepositorySession.findByRefreshToken(refreshToken);
-
-            if (sessions == null) {
-                log.info("Unable to find token by Access Token ......");
-            }
-
-            boolean refreshTokenIsExpired = serviceTokenJW.isTokenExpired(refreshToken);
-
-            if (refreshTokenIsExpired) {
-                log.info("Refresh Token is expired.");
-            }
-
-            log.info("Searching for session to use Refresh Token ......");
-
-        } else {
-            log.info("Searching for session using validated token ......");
-
-            log.info("Session has been located.");
-
-            log.info("Access Granted");
-
+        if (refreshToken == null) {
+            log.info("A Refresh Token could not be found in the header.");
         }
 
+        log.info("Validating token ...");
 
-//        if (user != null) {
-//            AuthJWT authJWT = new AuthJWT(
-//                    true,
-//                    user.getUsername()
-//            );
-//
-//            SecurityContextHolder.getContext().setAuthentication(authJWT);
-//
-//            log.info("Valid token found for user: {}", user);
-//        }
+        UserDetails user = serviceUserDetails.loadUserByUsername(username);
 
-        log.info(SecurityContextHolder.getContext().toString());
-
-
-
-//        Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) user.getAuthorities();
+        log.info("Username {} is attempting to gain access to resource servers.", username);
 
         boolean accountValid = serviceUserUtils.validateAccount(user);
 
@@ -113,44 +74,50 @@ public class ServiceSession {
             return false;
         }
 
-        var authorities = user.getAuthorities();
+        Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) user.getAuthorities();
+
+        log.info("Searching for session using validated token ......");
+
+        log.info("Session has been located.");
+
+        log.info("Access Granted");
+
+        AuthJWT authJWT = new AuthJWT(
+                true,
+                user.getUsername()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authJWT);
+
         long issued = System.currentTimeMillis();
         long expiration = System.currentTimeMillis() + refreshExpiration;
 
-        Session session = new Session(serviceTokenJW.ALGORITHM, accessToken, refreshToken, username, (Collection<GrantedAuthority>) authorities, issued, expiration, false);
+        Session session = new Session(ServiceTokenJW.ALGORITHM, accessToken, refreshToken, username, authorities, issued, expiration, false);
 
         iRepositorySession.save(session);
 
         return true;
     }
 
-    public Session findByAccessToken(String token) throws Exception {
-        log.info("Find by access token called.");
+    public boolean validateSession(String refreshToken) {
+        Session session = iRepositorySession.findByRefreshToken(refreshToken);
 
-        List<Session> sessions = iRepositorySession.findAll();
-
-        for (Session session : sessions) {
-            if (token.equals(session.getAccessToken())) {
-                return session;
-            }
+        if (session == null) {
+            log.info("Unable to find session by Refresh Token.");
+            return false;
         }
 
-        return null;
-    }
-
-    public Session findByRefreshToken(String token) throws Exception {
-        log.info("Find by refresh token called.");
-
-        List<Session> sessions = iRepositorySession.findAll();
-
-        for (Session session : sessions) {
-            if (token.equals(session.getRefreshToken())) {
-                return session;
-            }
+        if (System.currentTimeMillis() < session.getExpiration()) {
+            return false;
         }
 
-        return null;
+        if (session.isRevoked()) {
+            return false;
+        }
+
+        return true;
     }
+
     public Iterable<Session> getAllTokens(String username) throws Exception {
         boolean user = iRepositoryUser.existsByUsername(username);
 

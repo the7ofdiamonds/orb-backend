@@ -26,16 +26,36 @@ import org.springframework.stereotype.Service;
 @Getter
 @Service
 public class ServiceTokenJW {
-    @Value("${application.security.jwt.secret-key}")
-    private String secretKey;
-    @Value(value = "${application.security.jwt.algorithm}")
-    public SignatureAlgorithm ALGORITHM;
-    @Value("${application.security.jwt.access-token.expiration}")
-    private long expiration;
-    @Value("${application.security.jwt.refresh-token.expiration}")
-    private long refreshExpiration;
+    private static String secretKey;
+    public static SignatureAlgorithm ALGORITHM;
+    private static long expiration;
+    private static long refreshExpiration;
 
-    private String buildToken(
+    @Value("${application.security.jwt.secret-key}")
+    private void setSecretKey(String secretKey) {
+        ServiceTokenJW.secretKey = secretKey;
+    }
+
+    @Value(value = "${application.security.jwt.algorithm}")
+    private void setALGORITHM(String ALGORITHM) {
+        ServiceTokenJW.ALGORITHM = SignatureAlgorithm.valueOf(ALGORITHM);
+    }
+
+    @Value("${application.security.jwt.access-token.expiration}")
+    private void setExpiration(String expiration) {
+        ServiceTokenJW.expiration = Long.parseLong(expiration);
+    }
+
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private void setRefreshExpiration(String refreshExpiration) {
+        ServiceTokenJW.refreshExpiration = Long.parseLong(refreshExpiration);
+    }
+
+    private static long getExpirationTime(long expiresIn) {
+        return System.currentTimeMillis() + expiresIn;
+    }
+
+    private static String buildToken(
             Map<String, Object> extraClaims,
             UserDetails user,
             long expiration
@@ -50,26 +70,30 @@ public class ServiceTokenJW {
                 .compact();
     }
 
-    public String generateToken(
+    public static String generateToken(
             Map<String, Object> extraClaims,
             UserDetails user
     ) {
-        return buildToken(extraClaims, user, expiration);
+        long expires = getExpirationTime(expiration);
+
+        return buildToken(extraClaims, user, expires);
     }
 
-    public String refreshToken(
+    public static String refreshToken(
             UserDetails user
     ) {
-        return buildToken(new HashMap<>(), user, refreshExpiration);
+        long expires = getExpirationTime(refreshExpiration);
+
+        return buildToken(new HashMap<>(), user, expires);
     }
 
     //    Make parameters for secret keys
-    private Key getSignInKey() {
+    private static Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public Claims extractAllClaims(String token) {
+    public static Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSignInKey())
@@ -78,23 +102,23 @@ public class ServiceTokenJW {
                 .getBody();
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public static <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    public String extractUsername(String token) {
+    public static String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    private static long extractExpiration(String token) {
+        return (extractClaim(token, Claims::getExpiration)).getTime();
     }
 
-    public boolean isTokenExpired(String token) {
+    public static boolean isTokenExpired(String token) {
         long currentTime = (new Date()).getTime();
-        long tokenExpiration = (extractExpiration(token)).getTime();
+        long tokenExpiration = extractExpiration(token);
 
-        return currentTime <= tokenExpiration;
+        return currentTime < tokenExpiration;
     }
 }
