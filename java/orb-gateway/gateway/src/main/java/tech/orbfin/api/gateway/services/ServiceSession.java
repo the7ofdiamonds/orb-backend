@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.services;
 
+import org.springframework.web.server.ServerWebExchange;
 import tech.orbfin.api.gateway.authentication.AuthJWT;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
@@ -12,7 +13,9 @@ import tech.orbfin.api.gateway.model.wordpress.User;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUser;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
 
 @Slf4j
 @Setter
@@ -35,17 +39,19 @@ public class ServiceSession {
     private final ServiceUserUtils serviceUserUtils;
     private final ServiceUserDetails serviceUserDetails;
     private final IRepositoryUser iRepositoryUser;
+    private final ServiceTokenFirebase serviceTokenFirebase;
 
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
 
     @Autowired
-    public ServiceSession(IRepositorySession iRepositorySession, ServiceTokenJW serviceTokenJW, ServiceUserUtils serviceUserUtils, ServiceUserDetails serviceUserDetails, IRepositoryUser iRepositoryUser) {
+    public ServiceSession(IRepositorySession iRepositorySession, ServiceTokenJW serviceTokenJW, ServiceUserUtils serviceUserUtils, ServiceUserDetails serviceUserDetails, IRepositoryUser iRepositoryUser, ServiceTokenFirebase serviceTokenFirebase) {
         this.iRepositorySession = iRepositorySession;
         this.serviceTokenJW = serviceTokenJW;
         this.serviceUserUtils = serviceUserUtils;
         this.serviceUserDetails = serviceUserDetails;
         this.iRepositoryUser = iRepositoryUser;
+        this.serviceTokenFirebase = serviceTokenFirebase;
     }
 
     //    Needs work
@@ -99,7 +105,97 @@ public class ServiceSession {
         return true;
     }
 
-    public boolean validateSession(String refreshToken) {
+    public boolean updateSession(String username, String accessToken, String refreshToken) {
+        if (username == null) {
+            log.info("A user is required.");
+        }
+
+        if (accessToken == null) {
+            log.info("A Token could not be found in the header.");
+        }
+
+        if (refreshToken == null) {
+            log.info("A Refresh Token could not be found in the header.");
+        }
+
+        log.info("Validating token ...");
+
+        UserDetails user = serviceUserDetails.loadUserByUsername(username);
+
+        log.info("Username {} is attempting to gain access to resource servers.", username);
+
+        boolean accountValid = serviceUserUtils.validateAccount(user);
+
+        if (!accountValid) {
+            return false;
+        }
+
+        Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) user.getAuthorities();
+
+        log.info("Searching for session using validated token ......");
+
+        log.info("Session has been located.");
+
+        log.info("Access Granted");
+
+        AuthJWT authJWT = new AuthJWT(
+                true,
+                user.getUsername()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authJWT);
+
+        long issued = System.currentTimeMillis();
+        long expiration = System.currentTimeMillis() + refreshExpiration;
+
+        Session session = new Session(ServiceTokenJW.ALGORITHM, accessToken, refreshToken, username, authorities, issued, expiration, false);
+
+        iRepositorySession.update(session);
+
+        return true;
+    }
+
+    public boolean validateSession(ServerWebExchange exchange) {
+        String accessToken = ServiceToken.getToken(exchange);
+
+        if (accessToken == null) {
+            return false;
+        }
+
+        String refreshToken = ServiceToken.getRefreshToken(exchange);
+
+        if (refreshToken == null) {
+            return false;
+        }
+
+        String header = ServiceToken.getTokenHeader(accessToken);
+        String algo = ServiceToken.getTokenAlgo(header);
+
+        if (algo == null) {
+            return false;
+        }
+
+        String username = null;
+        boolean tokenValid = false;
+
+        if (algo.equals("HS256")) {
+            tokenValid = serviceTokenJW.isAccessTokenValid(accessToken);
+            username = serviceTokenJW.getUsernameFromAccessToken(accessToken);
+
+            if (tokenValid && username != null) {
+                return true;
+            }
+        }
+
+        if (algo.equals("RS256")) {
+            tokenValid = serviceTokenFirebase.isAccessTokenValid(accessToken);
+            username = serviceTokenFirebase.getUsernameFromAccessToken(accessToken);
+
+            if (tokenValid && username != null) {
+                return true;
+            }
+        }
+
         Session session = iRepositorySession.findByRefreshToken(refreshToken);
 
         if (session == null) {
@@ -112,6 +208,33 @@ public class ServiceSession {
         }
 
         if (session.isRevoked()) {
+            return false;
+        }
+
+        var longitude = "here";
+        var latitude = "there";
+
+        Map<String, String> location = new HashMap<>();
+        location.put("longitude", longitude);
+        location.put("latitude", latitude);
+
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        extraClaims.put("location", location);
+
+        UserDetails user = serviceUserDetails.loadUserByUsername(username);
+
+        if (user == null) {
+            return false;
+        }
+
+        String newAccessToken = ServiceTokenJW.generateToken(extraClaims, user);
+
+        log.info("New Access Token issued to username: {}", username);
+
+        boolean sessionUpdated = updateSession(username, newAccessToken, refreshToken);
+
+        if (!sessionUpdated) {
             return false;
         }
 
@@ -135,7 +258,7 @@ public class ServiceSession {
     }
 
     public String removeSession(String token) throws Exception {
-        String username = serviceTokenJW.extractUsername(token);
+        String username = ServiceTokenJW.extractUsername(token);
 
         if (username == null) {
             throw new BadCredentialsException(ExceptionMessages.USERNAME_NULL);
@@ -172,7 +295,7 @@ public class ServiceSession {
         return true;
     }
 
-    public boolean deleteAllRevokedSessions() throws Exception {
+    public boolean deleteAllRevokedSessions() {
         List<Session> sessions = iRepositorySession.findAll();
 
         if (sessions == null) {

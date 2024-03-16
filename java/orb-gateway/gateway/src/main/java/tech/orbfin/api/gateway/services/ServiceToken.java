@@ -43,12 +43,14 @@ public class ServiceToken {
     }
 
     public static String getTokenAlgo(String header) {
-        if (header != null) {
-            try {
-                return new JSONObject(header).getString("alg");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        if (header == null) {
+            return null;
+        }
+
+        try {
+            return new JSONObject(header).getString("alg");
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
         return null;

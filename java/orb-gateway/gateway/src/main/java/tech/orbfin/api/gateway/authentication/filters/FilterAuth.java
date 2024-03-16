@@ -19,31 +19,14 @@ import reactor.core.publisher.Mono;
 @Component
 public class FilterAuth implements GatewayFilterFactory<FilterAuth.Config> {
     private final FilterToken filterToken;
-    private final FilterTokenFirebase filterTokenFirebase;
 
     @Override
     public GatewayFilter apply(Config config) {
         log.info("Gateway Filter Apply");
         return (exchange, chain) -> Mono.fromRunnable(() -> {
             System.out.println("FilterAuth is being applied.");
-            String token = ServiceToken.getToken(exchange);
 
-            if (token == null) {
-                Mono.empty();
-            }
-
-            String header = ServiceToken.getTokenHeader(token);
-            String algo = ServiceToken.getTokenAlgo(header);
-
-            if (algo.equals("HS256")){
-                log.info("Filter JWT is being used");
-                filterToken.filter(exchange, chain);
-            }
-
-            if (algo.equals("RS256")) {
-                log.info("Filter Firebase Token is being used");
-                filterTokenFirebase.filter(exchange, chain);
-            }
+            filterToken.filter(exchange, chain);
         });
     }
 

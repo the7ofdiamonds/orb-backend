@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 @Setter
 @Getter
 @Service
-public class ServiceTokenJW {
+public class ServiceTokenJW implements IServiceToken{
     private static String secretKey;
     public static SignatureAlgorithm ALGORITHM;
     private static long expiration;
@@ -120,5 +120,27 @@ public class ServiceTokenJW {
         long tokenExpiration = extractExpiration(token);
 
         return currentTime < tokenExpiration;
+    }
+
+    @Override
+    public boolean isAccessTokenValid(String accessToken) {
+        return false;
+    }
+
+    @Override
+    public String getUsernameFromAccessToken(String accessToken){
+        boolean tokenExpired = isTokenExpired(accessToken);
+
+        if(tokenExpired){
+            return null;
+        }
+
+        String username = extractUsername(accessToken);
+
+        if(username == null){
+            return null;
+        }
+
+        return username;
     }
 }

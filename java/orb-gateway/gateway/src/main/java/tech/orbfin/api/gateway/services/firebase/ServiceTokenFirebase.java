@@ -10,6 +10,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
 import org.springframework.stereotype.Service;
+import tech.orbfin.api.gateway.services.IServiceToken;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ServiceTokenFirebase {
+public class ServiceTokenFirebase implements IServiceToken {
     private final ServiceAuthFirebase auth;
 
     public String createSessionCookie(String idToken) throws FirebaseAuthException {
@@ -54,6 +55,38 @@ public class ServiceTokenFirebase {
             return refreshTokenVerified != null;
         } catch (FirebaseAuthException e) {
             throw new FirebaseAuthException(e);
+        }
+    }
+
+    @Override
+    public boolean isAccessTokenValid(String accessToken) {
+        try {
+            FirebaseToken tokenVerified = auth.firebaseAuth.verifyIdToken(accessToken, true);
+
+            if (tokenVerified instanceof FirebaseToken) {
+                return true;
+            }
+
+            return false;
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public String getUsernameFromAccessToken(String token) {
+        try {
+            FirebaseToken accessTokenVerified = auth.firebaseAuth.verifyIdTokenAsync(token).get();
+
+            if (accessTokenVerified == null) {
+                return null;
+            }
+
+            String username = accessTokenVerified.getName();
+
+            return username;
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

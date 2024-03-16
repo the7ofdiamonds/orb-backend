@@ -1,28 +1,19 @@
 package tech.orbfin.api.gateway.authentication;
 
-import com.google.api.core.ApiFuture;
-import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.services.*;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
-
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
-import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
-import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
+
+import org.springframework.web.server.ServerWebExchange;
+
+import org.springframework.security.core.AuthenticationException;
+
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -30,66 +21,18 @@ import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 @Getter
 @Component
 public class AuthEntryPoint implements ServerAuthenticationEntryPoint {
-    private final ServiceToken serviceToken;
-    private final ServiceTokenJW serviceTokenJW;
-    private final ServiceTokenFirebase serviceTokenFirebase;
-    private final ServiceUserFirebase serviceUserFirebase;
-    private final ServiceUserDetails serviceUserDetails;
-    private final ServiceUserUtils serviceUserUtils;
+    private final ServiceSession serviceSession;
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
         try {
             log.info("Authentication entry point commence");
-            String token = ServiceToken.getToken(exchange);
 
-            if (token == null) throw new Exception("A Token could not be found.");
+            boolean sessionValid = serviceSession.validateSession(exchange);
 
-            String header = ServiceToken.getTokenHeader(token);
-            String algo = ServiceToken.getTokenAlgo(header);
-
-            log.info("Token is valid. Extracting username...");
-
-            UserDetails user = null;
-
-            if (algo.equals("HS256")){
-                boolean tokenExpired = serviceTokenJW.isTokenExpired(token);
-
-                if(tokenExpired) {
-                    log.info("Token is expired.");
-                }
-
-                log.info("Token is valid");
-
-                String username = serviceTokenJW.extractUsername(token);
-                user = serviceUserDetails.loadUserByUsername(username);
-            }
-
-            if (algo.equals("RS256")) {
-                ApiFuture<FirebaseToken> verifiedToken = serviceTokenFirebase.verifyToken(token);
-
-                if (verifiedToken == null) {
-                    log.info("IDToken is not valid.");
-                }
-
-                log.info("IDToken is valid");
-
-                UserRecord firebaseUser = serviceUserFirebase.getUser(verifiedToken.get().getUid());
-                user = serviceUserUtils.loadUserByEmail(firebaseUser.getEmail());
-            }
-
-            log.info("Setting authentication in SecurityContextHolder...");
-
-            if(user != null) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        user,
-                        null,
-                        user.getAuthorities()
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-                log.info("Valid token found for user: {}", user);
+            if (!sessionValid) {
+                log.info("Session is not valid.");
+                return Mono.empty();
             }
 
             return exchange.getResponse().setComplete();
