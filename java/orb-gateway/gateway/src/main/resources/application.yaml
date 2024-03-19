@@ -1,5 +1,11 @@
+server:
+  port: 8080
+
 spring:
+  application:
+    name: orb-gateway
   session:
+    type: redis
     redis:
       repository-type: default
     timeout: 30m
@@ -7,13 +13,13 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-#      password: =<password>
-#      username: =<username>
+  #      password: =<password>
+  #      username: =<username>
 
   datasource:
-    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/wordpress}
-    username: ${DATABASE_USERNAME:root}
-    password: ${DATABASE_PASSWORD:password}
+    url: ${WP_DATABASE_URL:jdbc:mysql://localhost:3306/wordpress}
+    username: ${WP_DATABASE_USERNAME:root}
+    password: ${WP_DATABASE_PASSWORD:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   orb:
@@ -38,43 +44,12 @@ spring:
   cloud:
     gateway:
       routes:
-#        - id: orb-authentication-signup
-#          uri: http://localhost:8080
-#          predicates:
-#            - Path=/signup/*
-#          filters:
-#            - PreserveHostHeader
-#
-#        - id: orb-authentication-change-password
-#          uri: http://localhost:8080
-#          predicates:
-#            - Path=/change-password
-#          filters:
-#            - PreserveHostHeader
-#
-#        - id: orb-authentication-forgot-password
-#          uri: http://localhost:8080
-#          predicates:
-#            - Path=/forgot-password
-#          filters:
-#            - PreserveHostHeader
-#
-#        - id: orb-authentication-logout
-#          uri: http://localhost:8080
-#          predicates:
-#            - Path=/logout
-#          filters:
-#            - PreserveHostHeader
-#
-#        - id: orb-authentication
-#          uri: http://localhost:8080
-#          predicates:
-#            - Path=/
-#          filters:
-#            - PreserveHostHeader
-
+        - id: health-check
+          uri: http://localhost:8080/actuator/health
+          predicates:
+            - Path=/health
         - id: orb-accounts
-          uri: ${ACCOUNTS_URI:http://localhost:8081}
+          uri: ${ACCOUNTS_URI:lb://orb-accounts}
           predicates:
             - Path=/accounts/**
           filters:
@@ -110,7 +85,7 @@ spring:
           predicates:
             - Path=/investments/**
           filters:
-            - FilterAuth
+#            - FilterAuth
             - RewritePath=/investments/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
 
@@ -121,8 +96,13 @@ spring:
           filters:
             - RewritePath=/insurance/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
-      default-filters:
-        - FilterAuth
+#      default-filters:
+#        - FilterAuth
+
+  zookeeper:
+    discovery:
+      root: /services
+    connect-string: zookeeper:2181
 
   main:
     web-application-type: reactive
@@ -130,10 +110,10 @@ spring:
     #    allow-circular-references: true
   security:
 
-
 application:
   security:
     jwt:
+      issuer: orb-gateway
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       algorithm: HS256
       access-token:
@@ -161,11 +141,19 @@ application:
 
 config:
   firebase:
-    serviceAccountFilePath: "/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/serviceAccount.json"
+    serviceAccountFilePath: serviceAccount.json
     databaseURL: "https://theorb-f3a48.firebaseio.com"
 
-server:
-  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  endpoint:
+    health:
+      show-details: always
+
 
 logging:
   level:
@@ -177,7 +165,7 @@ logging:
     web:
       server:
         authentication: debug
-    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway: TRACE
 
     org.hibernate:
       SQL: DEBUG

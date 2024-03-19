@@ -13,6 +13,7 @@
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/Database/DatabaseConfig.java
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/Database/Item/DatabaseItem.java
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceController.java
+/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/config/ConfigCORS.java
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/Database/Receipt/DatabaseReceipt.java
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/AccountsApplication.java
 /Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/orb-backend/java/orb-accounts/accounts/src/main/java/tech/orbfin/api/Database/Invoice/DatabaseInvoiceRepository.java

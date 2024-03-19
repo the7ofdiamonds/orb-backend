@@ -27,7 +27,7 @@ services:
       - api.orbfin.tech
 
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: zookeeper
     container_name: zookeeper
     ports:
       - "2181:2181"
@@ -210,7 +210,8 @@ services:
 networks:
   api.orbfin.tech:
     name: api.orbfin.tech
-      
+  the7ofdiamonds.tech:
+    name: the7ofdiamonds.tech
 volumes:
   zookeeper_data:
     driver: local

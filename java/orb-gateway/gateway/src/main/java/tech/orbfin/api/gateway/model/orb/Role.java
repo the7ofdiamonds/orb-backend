@@ -1,20 +1,23 @@
 package tech.orbfin.api.gateway.model.orb;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import lombok.*;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import java.util.Map;
 
-@Getter
 @Setter
-@RequiredArgsConstructor
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Data
 @Entity
 public class Role {
-    @Id
+    public static final String SUBSCRIBER = "subscriber";
+    public static final String CONTRIBUTOR = "contributor";
+    public static final String EDITOR = "editor";
+    public static final String ADMIN = "administrator";
+
     private String name;
-    private Object capabilities;
+    private Map<String, Boolean> capabilities;
 }

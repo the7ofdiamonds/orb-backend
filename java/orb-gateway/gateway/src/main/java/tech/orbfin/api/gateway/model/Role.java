@@ -1,70 +1,69 @@
-package tech.orbfin.api.gateway.model;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserRoles;
+import tech.orbfin.api.gateway.repositories.IRepositoryUserRoles;
 import tech.orbfin.api.gateway.utils.PHP;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @Getter
-@Setter
-@RequiredArgsConstructor
+@Data
 @Component
 public class Role {
-    @Id
+    // @Id - If Role is an entity, otherwise remove this annotation
     private String name;
     private Object capabilities;
 
     private final IRepositoryUserRoles iRepositoryUserRoles;
     private final PHP php;
 
-    public Object getCapabilities() throws JsonProcessingException {
-        var userRoles = iRepositoryUserRoles.getWPUserRoles();
-        var userRolesUnserielized = php.unserialize(userRoles);
-
-        String[] roleStrings = userRolesUnserielized.toString()
-                .substring(1, userRolesUnserielized.toString().length() - 1)
-                .split(",\\s*(?![^\\{\\}]*\\})");
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        MapType mapType = objectMapper.getTypeFactory().constructMapType(Map.class, String.class, Object.class);
-
-        for (String roleString : roleStrings) {
-            String[] parts = roleString.split("=", 2);
-            String roleName = parts[0];
-            String capabilitiesString = parts[1];
-
-            Map<String, Object> capabilities = objectMapper.readValue(capabilitiesString, mapType);
-
-            return capabilities;
-        }
-        return null; // return null if no capabilities found
+    @Autowired
+    public Role(IRepositoryUserRoles iRepositoryUserRoles, PHP php) {
+        this.iRepositoryUserRoles = iRepositoryUserRoles;
+        this.php = php;
     }
 
-    public Map<String, Object> getCapabilitiesByName(String roleName) throws JsonProcessingException {
-        if (capabilities != null) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            MapType mapType = objectMapper.getTypeFactory().constructMapType(Map.class, String.class, Object.class);
+//    public Map<String, Object> getAllCapabilities() throws JsonProcessingException {
+//        try {
+//            var userRoles = iRepositoryUserRoles.getWPUserRoles();
+//            var userRolesUnserialized = php.unserialize(userRoles);
+//
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            MapType mapType = objectMapper.getTypeFactory().constructMapType(HashMap.class, String.class, Object.class);
+//
+//            Map<String, Object> allCapabilities = new HashMap<>();
+//
+//            for (Map.Entry<String, String> entry : userRolesUnserialized.entrySet()) {
+//                String roleName = entry.getKey();
+//                String capabilitiesString = entry.getValue();
+//
+//                Map<String, Object> capabilities = objectMapper.readValue(capabilitiesString, mapType);
+//                allCapabilities.put(roleName, capabilities);
+//            }
+//            return allCapabilities;
+//        } catch (JsonProcessingException e) {
+//            log.error("Error deserializing user roles: {}", e.getMessage());
+//            throw new RuntimeException("Error deserializing user roles", e);
+//        }
+//    }
 
-            String capabilitiesString = capabilities.toString();
-            Map<String, Object> allCapabilities = objectMapper.readValue(capabilitiesString, mapType);
-
-            if (allCapabilities.containsKey(roleName)) {
-                return (Map<String, Object>) allCapabilities.get(roleName);
-            }
-        }
-        return null; // Role not found or capabilities are null
-    }
+//    public Map<String, Object> getCapabilitiesByName(String roleName) throws JsonProcessingException {
+//        try {
+//            if (capabilities != null) {
+//                Map<String, Object> allCapabilities = getAllCapabilities();
+//                return (Map<String, Object>) allCapabilities.get(roleName);
+//            }
+//            return null;
+//        } catch (JsonProcessingException e) {
+//            log.error("Error retrieving capabilities for role {}: {}", roleName, e.getMessage());
+//            throw new RuntimeException("Error retrieving capabilities for role " + roleName, e);
+//        }
+//    }
 }
