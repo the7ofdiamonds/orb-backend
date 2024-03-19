@@ -27,12 +27,16 @@ services:
       - api.orbfin.tech
 
   zookeeper:
-    image: zookeeper
+    image: wurstmeister/zookeeper
     container_name: zookeeper
     ports:
       - "2181:2181"
-    networks:
-      - api.orbfin.tech
+    # environment:
+    #   ALLOW_ANONYMOUS_LOGIN: yes
+    # networks:
+    #   - api.orbfin.tech
+    volumes:
+      - ./zookeeper:/data
       
   kafka:
     image: wurstmeister/kafka
@@ -42,8 +46,12 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    networks:
-      - api.orbfin.tech
+    depends_on:
+    - zookeeper
+    # networks:
+    #   - api.orbfin.tech
+    volumes:
+     - ./kafka:/kafka
 
   # gateway:
   #   env_file:
@@ -60,6 +68,7 @@ services:
   #   hostname: orb-gateway
   #   networks:
   #     - api.orbfin.tech
+  #     - the7ofdiamonds.tech_sites
 
   # communications:
   #   container_name: orb-communications
@@ -79,23 +88,23 @@ services:
   #   networks:
   #     - api.orbfin.tech
 
-  accounts:
-    container_name: orb-accounts
-    restart: always
-    depends_on:
-      - pgsql-db
-    ports:
-      - 8081:8081
-    build:
-      context: ./java/orb-accounts
-      dockerfile: orb-accounts.Dockerfile
-    env_file:
-    - .env
-    volumes:
-    - ./java/orb-accounts/accounts/target:/app
-    hostname: orb-accounts
-    networks:
-      - api.orbfin.tech
+  # accounts:
+  #   container_name: orb-accounts
+  #   restart: always
+  #   depends_on:
+  #     - pgsql-db
+  #   ports:
+  #     - 8081:8081
+  #   build:
+  #     context: ./java/orb-accounts
+  #     dockerfile: orb-accounts.Dockerfile
+  #   env_file:
+  #   - .env
+  #   volumes:
+  #   - ./java/orb-accounts/accounts/target:/app
+  #   hostname: orb-accounts
+  #   networks:
+  #     - api.orbfin.tech
 
   # products-services:
   #   container_name: orb-products-services
@@ -210,11 +219,13 @@ services:
 networks:
   api.orbfin.tech:
     name: api.orbfin.tech
-  the7ofdiamonds.tech:
-    name: the7ofdiamonds.tech
+  the7ofdiamonds.tech_sites:
+    name: the7ofdiamonds.tech_sites
+    external: true
+      
 volumes:
-  zookeeper_data:
+  zookeeper:
     driver: local
-  kafka_data:
+  kafka:
     driver: local
   pgdata:

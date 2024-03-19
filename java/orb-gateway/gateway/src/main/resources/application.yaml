@@ -4,11 +4,13 @@ server:
 spring:
   application:
     name: orb-gateway
+
   session:
     type: redis
     redis:
       repository-type: default
     timeout: 30m
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -37,7 +39,7 @@ spring:
 
   kafka:
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_ADDRESS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
@@ -49,12 +51,13 @@ spring:
           predicates:
             - Path=/health
         - id: orb-accounts
-          uri: ${ACCOUNTS_URI:lb://orb-accounts}
+          uri: ${ACCOUNTS_URI:http://localhost:8081}
           predicates:
             - Path=/accounts/**
           filters:
             - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
             - PreserveHostHeader
+#            - FilterAuth
 
         - id: orb-products-services
           uri: ${PRODUCTS_SERVICES_URI:http://localhost:8082}
@@ -98,11 +101,6 @@ spring:
             - PreserveHostHeader
 #      default-filters:
 #        - FilterAuth
-
-  zookeeper:
-    discovery:
-      root: /services
-    connect-string: zookeeper:2181
 
   main:
     web-application-type: reactive
@@ -153,7 +151,6 @@ management:
   endpoint:
     health:
       show-details: always
-
 
 logging:
   level:

@@ -4,15 +4,11 @@ server:
 spring:
   application:
     name: orb-communications
+
   kafka:
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_ADDRESS:localhost:9092}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: user-group
       auto-offset-reset: earliest
-
-  zookeeper:
-    discovery:
-      root: /services
-    connect-string: zookeeper:2181
