@@ -44,8 +44,14 @@ public class User {
     @Column(name = "is_enabled")
     private Boolean isEnabled;
 
-    public String getRoles(){
-        PHP php = new PHP();
-        return php.unserialize(roles);
+    public String getRoles() {
+        try {
+            PHP php = new PHP();
+            return php.unserialize(roles);
+        } catch (Exception e) {
+            System.err.println("Error deserializing roles: " + e.getMessage());
+            return null;
+        }
     }
+
 }
