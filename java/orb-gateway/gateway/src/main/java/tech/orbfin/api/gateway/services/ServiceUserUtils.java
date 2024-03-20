@@ -353,7 +353,7 @@ public class ServiceUserUtils {
 
             if (savedPassword.startsWith("$P")) {
                 kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_UPDATE, user.getEmail());
-                throw new BadCredentialsException(ExceptionMessages.PASSWORD_UPDATE_ERROR);
+                throw new BadCredentialsException(ExceptionMessages.PASSWORD_UPDATE);
             }
 
             if (!passwordEncoder().matches(password, savedPassword)) {

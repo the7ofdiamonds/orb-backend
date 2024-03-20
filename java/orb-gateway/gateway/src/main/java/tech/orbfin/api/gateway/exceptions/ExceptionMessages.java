@@ -59,4 +59,5 @@ public class ExceptionMessages {
     public static final String USERNAME_TOO_LONG = "Username provided is too long there is a max length of 15 characters.";
     public static final String USERNAME_NOT_VALID = "Username can not contain any special characters or spaces.";
     public static final String USERNAME_NOT_FOUND = "Username could not be found.";
+    public static final String PASSWORD_UPDATE = "Your password need to be updated check your email inbox.";
 }

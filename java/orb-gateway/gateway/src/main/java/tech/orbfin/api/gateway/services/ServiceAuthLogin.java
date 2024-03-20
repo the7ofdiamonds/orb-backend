@@ -52,7 +52,7 @@ public class ServiceAuthLogin {
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
-
+log.info(String.valueOf(location));
             String accessToken = ServiceTokenJW.generateToken(extraClaims, user);
             String refreshToken = ServiceTokenJW.refreshToken(user);
 

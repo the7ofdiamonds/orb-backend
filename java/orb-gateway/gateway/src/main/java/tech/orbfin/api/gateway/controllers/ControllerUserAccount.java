@@ -39,15 +39,6 @@ public class ControllerUserAccount {
             String lastname = request.getLastname();
             String phone = request.getPhone();
             Object location = request.getLocation();
-            log.info(email);
-            log.info(username);
-            log.info(password);
-            log.info(confirmPassword);
-            log.info(firstname);
-            log.info(lastname);
-            log.info(phone);
-            log.info(location.toString());
-
 
             return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserAccount.registerAccount(
                     email,
