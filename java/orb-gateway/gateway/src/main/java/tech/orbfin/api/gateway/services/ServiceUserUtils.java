@@ -154,7 +154,7 @@ public class ServiceUserUtils {
 
     public boolean validateEmail(String email) {
         try {
-            boolean emailValid = validateEmail(email);
+            boolean emailValid = validEmail(email);
 
             if (!emailValid) {
                 throw new BadCredentialsException(ExceptionMessages.EMAIL_NOT_VALID);
@@ -171,7 +171,7 @@ public class ServiceUserUtils {
             return true;
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
-        } catch (FirebaseAuthException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -217,6 +217,8 @@ public class ServiceUserUtils {
             return true;
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
+        } catch (Exception e){
+            throw new Exception(e);
         }
     }
 

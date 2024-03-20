@@ -49,6 +49,7 @@ public class ExceptionMessages {
     public static final String SESSION_CREATE_ERROR = "There was an error creating your session please try again at another time.";
     public static final String USER_EXISTS = "This user already exists check your inbox.";
     public static final String USER_CREATION_ERROR = "There was an error signing up new user please try again at another time.";
+    public static final String USER_CREATION_ERROR_FIREBASE = "There was an error signing up new user to firebase please try again at another time.";
     public static final String USER_NOT_FOUND = "User could not be found with this Username.";
     public static final String USER_SIGNUP_ERROR = "There was an error signing up new user please try again at another time.";
     public static final String USERNAME_CHANGE_ERROR = "There was an error changing your username please try again at another time.";

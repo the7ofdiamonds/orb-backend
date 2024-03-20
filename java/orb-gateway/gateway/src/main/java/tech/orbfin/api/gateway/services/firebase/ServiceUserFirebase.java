@@ -28,7 +28,7 @@ public class ServiceUserFirebase {
         }
     }
 
-    public boolean userExistByEmail(String email) throws FirebaseAuthException {
+    public boolean userExistByEmail(String email) {
         try {
             auth.firebaseAuth.getUserByEmail(email);
 

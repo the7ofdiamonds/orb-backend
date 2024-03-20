@@ -6,14 +6,12 @@ import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.exceptions.UserCreationException;
 
-import tech.orbfin.api.gateway.model.UserEntity;
 import tech.orbfin.api.gateway.model.response.*;
 
 import tech.orbfin.api.gateway.model.wordpress.User;
 
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserAccount;
 
-import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserDetails;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
 import java.util.*;
@@ -43,7 +41,6 @@ import com.google.firebase.auth.UserRecord;
 @Service
 public class ServiceUserAccount {
     private final IRepositoryUserAccount iRepositoryUserAccount;
-    private final IRepositoryUserDetails iRepositoryUserDetails;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ServiceUserFirebase serviceUserFirebase;
     private final ServiceUserDetails serviceUserDetails;
@@ -107,6 +104,11 @@ public class ServiceUserAccount {
             UserRecord firebaseUser = serviceUserFirebase.createUser(email, username, password, phone);
 
             String providerGivenID = (firebaseUser.getUid() != null) ? firebaseUser.getUid() : null;
+
+            if (providerGivenID == null) {
+                throw new UserCreationException(ExceptionMessages.USER_CREATION_ERROR_FIREBASE);
+            }
+
             String confirmationCode = UUID.randomUUID().toString();
 
             Optional<User> user = iRepositoryUserAccount.signupUser(
@@ -127,13 +129,12 @@ public class ServiceUserAccount {
             );
 
             if (user.isEmpty()) {
-                throw new UserCreationException();
+                throw new UserCreationException(ExceptionMessages.USER_CREATION_ERROR);
             }
 
             var savedUser = user.get();
 
             log.info("Username {} has been signed up successfully", username);
-            log.info("Creating a session for {} ....", username);
 
             Map<String, Object> extraClaims = new HashMap<>();
             extraClaims.put("location", location);
@@ -141,11 +142,11 @@ public class ServiceUserAccount {
             kafkaTemplate.send(ConfigKafkaTopics.USER_REGISTER, email);
 
             return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
-        } catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {log.info(e.getMessage());
             throw new BadCredentialsException(e.getMessage());
-        } catch (UserCreationException e) {
-            throw new UserCreationException();
-        } catch (Exception e) {
+        } catch (UserCreationException e) {log.info(e.getMessage());
+            throw new UserCreationException(e.getMessage());
+        } catch (Exception e) {log.info(e.getMessage());
             throw new Exception(ExceptionMessages.USER_SIGNUP_ERROR + e.getMessage());
         }
     }
