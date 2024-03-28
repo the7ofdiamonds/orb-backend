@@ -1,5 +1,12 @@
 package tech.orbfin.api.gateway.controllers;
 
+import tech.orbfin.api.gateway.model.request.RequestDeleteAccount;
+import tech.orbfin.api.gateway.model.response.ResponseDeleteAccount;
+
+import tech.orbfin.api.gateway.services.ServiceAdmin;
+
+import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
+
 import lombok.AllArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,17 +15,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.stereotype.Component;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import tech.orbfin.api.gateway.model.request.RequestDeleteAccount;
-import tech.orbfin.api.gateway.model.response.ResponseDeleteAccount;
-
-import tech.orbfin.api.gateway.services.ServiceAdmin;
-
-import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 
 @Slf4j
 @RestController

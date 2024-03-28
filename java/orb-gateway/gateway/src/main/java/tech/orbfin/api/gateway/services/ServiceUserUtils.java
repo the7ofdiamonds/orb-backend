@@ -262,16 +262,12 @@ public class ServiceUserUtils {
                 return null;
             }
 
-            log.info("Loading user by email: " + email);
-
             Optional<User> user = iRepositoryUserUtils.findUserByEmail(email);
 
             if (user.isEmpty()) {
                 throw new UserNotFoundException();
             }
 
-            log.info("Loaded user details: " + user);
-            log.info(String.valueOf(user.get()));
             return user.get();
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
@@ -290,15 +286,12 @@ public class ServiceUserUtils {
                 return null;
             }
 
-            log.info("Loading user by username: " + username);
 
             Optional<User> user = iRepositoryUserUtils.findUserByUsername(username);
 
             if (user.isEmpty()) {
                 throw new UserNotFoundException();
             }
-
-            log.info("Loaded user details for username {}: {}", username, user.get());
 
             return user.get();
         } catch (BadCredentialsException e) {
@@ -314,14 +307,12 @@ public class ServiceUserUtils {
         boolean enabled = user.isEnabled();
 
         if (!enabled) {
-            log.info("Your account is not yet verified.");
             return false;
         }
 
         boolean accountLocked = user.isAccountNonLocked();
 
         if (!accountLocked) {
-            log.info("Your account is locked.");
             return false;
         }
 
@@ -363,9 +354,6 @@ public class ServiceUserUtils {
             UserRecord userRecord = serviceUserFirebase.getUserByEmail(email);
 
             if (userRecord == null) {
-                log.info("Firebase User with the email {} does not exists.", email);
-                log.info("Adding user with the email {} to firebase", email);
-
                 serviceUserFirebase.createUser(email, username, password, null);
             }
 
@@ -379,13 +367,13 @@ public class ServiceUserUtils {
         }
     }
 
-    public User validateConfirmationCode(String username, String confirmationCode) throws Exception {
+    public User validateConfirmationCode(String email, String confirmationCode) throws Exception {
         try {
             if (confirmationCode == null) {
                 throw new BadCredentialsException(ExceptionMessages.CONFIRMATION_CODE_NULL);
             }
 
-            User user = findUserByUsername(username);
+            User user = findUserByEmail(email);
 
             if (user == null) {
                 throw new UserNotFoundException();

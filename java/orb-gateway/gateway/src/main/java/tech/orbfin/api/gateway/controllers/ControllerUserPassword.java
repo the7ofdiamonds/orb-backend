@@ -1,5 +1,6 @@
 package tech.orbfin.api.gateway.controllers;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,12 @@ public class ControllerUserPassword {
             String username = request.getUsername();
 
             return ResponseEntity.ok().body(serviceUserPassword.forgotPassword(email, username));
+        } catch (FirebaseAuthException | AuthException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseForgot.builder()
+                            .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.FORBIDDEN.value())
+                            .build());
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseForgot.builder()
@@ -82,6 +89,12 @@ public class ControllerUserPassword {
             String confirmPassword = request.getConfirmPassword();
 
             return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserPassword.changePassword(email, password, newPassword, confirmPassword));
+        } catch (FirebaseAuthException | AuthException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseChange.builder()
+                            .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.FORBIDDEN.value())
+                            .build());
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseChange.builder()
@@ -103,6 +116,12 @@ public class ControllerUserPassword {
             String newPassword = request.getNewPassword();
 
             return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserPassword.updatePassword(username, confirmationCode, newPassword));
+        } catch (FirebaseAuthException | AuthException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseUpdate.builder()
+                            .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.FORBIDDEN.value())
+                            .build());
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseUpdate.builder()

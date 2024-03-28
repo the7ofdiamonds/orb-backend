@@ -17,8 +17,9 @@ public class ResponseUpdate {
     private String email;
     private String successMessage;
     private String errorMessage;
+    private Integer statusCode;
 
-    public ResponseUpdate(String item, String email){
+    public ResponseUpdate(String item, String email) {
         this.successMessage = "Your " + item + " has been updated an email to confirm this was sent to " + email + ".";
     }
 }

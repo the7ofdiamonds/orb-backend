@@ -16,8 +16,10 @@ public class ResponseRemoveAccount {
     private String email;
     private String successMessage;
     private String errorMessage;
+    private Integer statusCode;
 
     public ResponseRemoveAccount(String email) {
         this.successMessage = "Your account with the email " + email + " was removed.";
+        this.statusCode = 200;
     }
 }

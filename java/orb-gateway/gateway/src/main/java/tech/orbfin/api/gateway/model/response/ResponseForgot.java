@@ -16,6 +16,7 @@ public class ResponseForgot {
     private String successMessage;
     private String email;
     private String errorMessage;
+    private Integer statusCode;
 
     public ResponseForgot(String email){
         this.successMessage = "Check your email at " + email + " for a link to change your password.";

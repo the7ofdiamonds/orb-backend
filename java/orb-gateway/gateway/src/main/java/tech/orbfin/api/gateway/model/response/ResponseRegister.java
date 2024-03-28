@@ -20,8 +20,9 @@ public class ResponseRegister {
     private String accessToken;
     private String refreshToken;
     private String errorMessage;
+    private Integer statusCode;
 
     public ResponseRegister(String username, String email){
-        this.successMessage = "You have been successfully signed up and logged in as " + username + ". An email has also been sent to "+ email + " check your inbox.";
+        this.successMessage = "You have been successfully signed up as " + username + ". An email has also been sent to "+ email + " check your inbox.";
     }
 }

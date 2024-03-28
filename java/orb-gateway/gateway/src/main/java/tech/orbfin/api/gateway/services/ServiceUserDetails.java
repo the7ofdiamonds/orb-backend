@@ -158,7 +158,7 @@ public class ServiceUserDetails implements UserDetailsService {
     }
 
     //    Suspicious Activity
-    public boolean setAccountLocked(String email, String username) throws Exception {
+    public boolean setAccountLocked(String email, String password) throws Exception {
         try {
             UserDetails user = loadUserByEmail(email);
 
@@ -166,7 +166,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 return true;
             }
 
-            boolean accountLocked = iRepositoryUserDetails.lockAccount(email, username);
+            boolean accountLocked = iRepositoryUserDetails.lockAccount(email, password);
 
             if (!accountLocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);

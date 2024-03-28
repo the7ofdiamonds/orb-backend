@@ -44,8 +44,6 @@ public class ServiceAuthLogout {
 
     public ResponseLogout logoutAll(String username) throws Exception {
         try {
-            log.info("Service Auth Logout");
-
             boolean sessionsRemoved = serviceSession.removeAllSessions(username);
 
             if (!sessionsRemoved) {

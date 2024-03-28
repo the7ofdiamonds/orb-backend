@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public class RequestVerify {
-    private String username;
+    private String email;
     private String password;
     private String confirmationCode;
 }

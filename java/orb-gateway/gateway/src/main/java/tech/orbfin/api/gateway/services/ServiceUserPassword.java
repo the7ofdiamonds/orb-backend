@@ -97,7 +97,9 @@ public class ServiceUserPassword {
 
             kafkaTemplate.send(ConfigKafkaTopics.PASSWORD_CHANGED, email);
 
-            return new ResponseChange("password", email);
+            return ResponseChange.builder()
+                    .successMessage("Your password has been changed successfully an email to confirm this was sent to " + email + ".")
+                    .build();
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {

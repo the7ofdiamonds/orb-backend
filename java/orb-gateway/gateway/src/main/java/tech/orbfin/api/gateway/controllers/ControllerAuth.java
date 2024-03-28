@@ -55,7 +55,7 @@ public class ControllerAuth {
             String refreshToken = request.getRefreshToken();
 
             return ResponseEntity.ok().body(serviceAuthLogout.logout(accessToken, refreshToken));
-        }catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseLogout.builder()
                             .errorMessage(e.getMessage())
@@ -72,7 +72,7 @@ public class ControllerAuth {
     public ResponseEntity<ResponseLogout> logoutAll(@RequestBody RequestLogoutAll request) {
         try {
             return ResponseEntity.ok().body(serviceAuthLogout.logoutAll(request.getUsername()));
-        }catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseLogout.builder()
                             .errorMessage(e.getMessage())

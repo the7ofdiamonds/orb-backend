@@ -1,5 +1,7 @@
 package tech.orbfin.api.gateway.controllers;
 
+import com.google.firebase.auth.FirebaseAuthException;
+import tech.orbfin.api.gateway.exceptions.AuthException;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 
 import tech.orbfin.api.gateway.model.request.*;
@@ -31,20 +33,22 @@ public class ControllerUserAccount {
     @PostMapping("/unlock-account")
     public ResponseEntity<ResponseUnlocked> unlockAccount(@RequestBody RequestVerify request) throws Exception {
         try {
-            String username = request.getUsername();
+            String email = request.getEmail();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(username, password, confirmationCode));
+            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(email, password, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseUnlocked.builder()
                             .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.BAD_REQUEST.value())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseUnlocked.builder()
                             .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                             .build());
         }
     }
@@ -52,20 +56,28 @@ public class ControllerUserAccount {
     @PostMapping("/remove-account")
     public ResponseEntity<ResponseRemoveAccount> removeAccount(@RequestBody RequestRemoveAccount request) {
         try {
-            String username = request.getUsername();
+            String email = request.getEmail();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            return ResponseEntity.ok().body(serviceUserAccount.removeAccount(username, password, confirmationCode));
-        } catch (BadCredentialsException e) {
+            return ResponseEntity.ok().body(serviceUserAccount.removeAccount(email, password, confirmationCode));
+        } catch (FirebaseAuthException | AuthException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseRemoveAccount.builder()
+                            .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.FORBIDDEN.value())
+                            .build());
+        }catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseRemoveAccount.builder()
                             .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.BAD_REQUEST.value())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ResponseRemoveAccount.builder()
                             .errorMessage(e.getMessage())
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                             .build());
         }
     }

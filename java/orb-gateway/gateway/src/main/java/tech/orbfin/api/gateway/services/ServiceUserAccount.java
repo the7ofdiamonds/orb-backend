@@ -134,29 +134,27 @@ public class ServiceUserAccount {
 
             var savedUser = user.get();
 
-            log.info("Username {} has been signed up successfully", username);
-
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("location", location);
-
             kafkaTemplate.send(ConfigKafkaTopics.USER_REGISTER, email);
 
-            return new ResponseRegister(savedUser.getUsername(), savedUser.getEmail());
-        } catch (BadCredentialsException e) {log.info(e.getMessage());
+            return ResponseRegister.builder()
+                    .successMessage("You have been successfully signed up as " + savedUser.getUsername() + ". An email has also been sent to " + savedUser.getEmail() + " check your inbox.")
+                    .statusCode(201)
+                    .build();
+        } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
-        } catch (UserCreationException e) {log.info(e.getMessage());
+        } catch (UserCreationException e) {
             throw new UserCreationException(e.getMessage());
-        } catch (Exception e) {log.info(e.getMessage());
-            throw new Exception(ExceptionMessages.USER_SIGNUP_ERROR + e.getMessage());
+        } catch (Exception e) {
+            throw new Exception(ExceptionMessages.USER_SIGNUP_ERROR);
         }
     }
 
-    public User verifyAccount(String username, String password, String confirmationCode) throws Exception {
+    public User verifyAccount(String email, String password, String confirmationCode) throws Exception {
         try {
-            User userCredentials = serviceUserUtils.validateConfirmationCode(username, confirmationCode);
+            User userCredentials = serviceUserUtils.validateConfirmationCode(email, confirmationCode);
 
             if (userCredentials == null) {
-                throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
+                throw new BadCredentialsException(ExceptionMessages.CONFIRMATION_CODE_ERROR);
             }
 
             boolean passwordIsValid = serviceUserUtils.validPassword(password);
@@ -169,7 +167,6 @@ public class ServiceUserAccount {
                 throw new BadCredentialsException(ExceptionMessages.PASSWORD_WRONG);
             }
 
-            String email = userCredentials.getEmail();
             boolean emailVerified = userCredentials.getIsEnabled();
 
             if (!emailVerified) {
@@ -200,11 +197,9 @@ public class ServiceUserAccount {
         }
     }
 
-    public ResponseUnlocked unlockAccount(String username, String password, String confirmationCode) throws Exception {
+    public ResponseUnlocked unlockAccount(String email, String password, String confirmationCode) throws Exception {
         try {
-            User verifiedAccount = verifyAccount(username, password, confirmationCode);
-
-            String email = verifiedAccount.getEmail();
+            User verifiedAccount = verifyAccount(email, password, confirmationCode);
 
             boolean accountUnlocked = serviceUserDetails.setAccountNonLocked(email, confirmationCode);
 
@@ -212,7 +207,7 @@ public class ServiceUserAccount {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
-            return new ResponseUnlocked(username, email);
+            return new ResponseUnlocked(verifiedAccount.getUsername(), verifiedAccount.getEmail());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -220,11 +215,11 @@ public class ServiceUserAccount {
         }
     }
 
-    public ResponseRemoveAccount removeAccount(String username, String password, String confirmationCode) throws Exception {
+    public ResponseRemoveAccount removeAccount(String email, String password, String confirmationCode) throws Exception {
         try {
-            User verifiedAccount = verifyAccount(username, password, confirmationCode);
+            User verifiedAccount = verifyAccount(email, password, confirmationCode);
 
-            boolean accountLocked = serviceUserDetails.setAccountLocked(verifiedAccount.getEmail(), username);
+            boolean accountLocked = serviceUserDetails.setAccountLocked(email, verifiedAccount.getPassword());
 
             if (!accountLocked) {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
@@ -236,7 +231,7 @@ public class ServiceUserAccount {
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR + e.getMessage());
+            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
         }
     }
 }
