@@ -1,0 +1,168 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: orb-gateway
+
+  session:
+    type: redis
+    redis:
+      repository-type: default
+    timeout: 30m
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  #      password: =<password>
+  #      username: =<username>
+
+  datasource:
+    url: ${WP_DATABASE_URL:jdbc:mysql://localhost:3306/wordpress}
+    username: ${WP_DATABASE_USERNAME:root}
+    password: ${WP_DATABASE_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  orb:
+    datasource:
+      url: ${ORB_DATABASE_URL:jdbc:mysql://localhost:3306/orb}
+      username: ${ORB_DATABASE_USERNAME:root}
+      password: ${ORB_DATABASE_PASSWORD:password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  kafka:
+    producer:
+      bootstrap-servers: ${KAFKA_ADDRESS:localhost:9092}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  cloud:
+    gateway:
+      routes:
+        - id: health-check
+          uri: http://localhost:8080/actuator/health
+          predicates:
+            - Path=/health
+        - id: orb-accounts
+          uri: ${ACCOUNTS_URI:http://localhost:8081}
+          predicates:
+            - Path=/accounts/**
+          filters:
+            - RewritePath=/accounts/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+#            - FilterAuth
+
+        - id: orb-products-services
+          uri: ${PRODUCTS_SERVICES_URI:http://localhost:8082}
+          predicates:
+            - Path=/products-services/**
+          filters:
+            - RewritePath=/products-services/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+
+        - id: orb-finance
+          uri: ${FINANCE_URI:http://localhost:8083}
+          predicates:
+            - Path=/finance/**
+          filters:
+            - RewritePath=/finance/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+
+        - id: orb-real-estate
+          uri: ${REAL_ESTATE_URI:http://localhost:8084}
+          predicates:
+            - Path=/real-estate/**
+          filters:
+            - RewritePath=/real-estate/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+
+        - id: orb-investments
+          uri: ${INVESTMENTS_URI:http://localhost:8085}
+          predicates:
+            - Path=/investments/**
+          filters:
+#            - FilterAuth
+            - RewritePath=/investments/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+
+        - id: orb-insurance
+          uri: ${INSURANCE_URI:http://localhost:8086}
+          predicates:
+            - Path=/insurance/**
+          filters:
+            - RewritePath=/insurance/?(?<segment>.*), /$\{segment}
+            - PreserveHostHeader
+#      default-filters:
+#        - FilterAuth
+
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+    #    allow-circular-references: true
+  security:
+
+application:
+  security:
+    jwt:
+      issuer: orb-gateway
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      algorithm: HS256
+      access-token:
+        expiration: 86400000
+      refresh-token:
+        expiration: 86400000  # a day
+      client:
+        registration:
+          gateway:
+            provider:
+              google:
+                client-id: YOUR_GOOGLE_CLIENT_ID
+                client-secret: YOUR_GOOGLE_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+              apple:
+                client-id: YOUR_APPLE_CLIENT_ID
+                client-secret: YOUR_APPLE_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+              microsoft:
+                client-id: YOUR_MICROSOFT_CLIENT_ID
+                client-secret: YOUR_MICROSOFT_CLIENT_SECRET
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+config:
+  firebase:
+    serviceAccountFilePath: serviceAccount.json
+    databaseURL: "https://theorb-f3a48.firebaseio.com"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.session: DEBUG
+    org.springframework.data.redis: DEBUG
+    org.springframework.security: trace
+    org.springframework: DEBUG
+
+    web:
+      server:
+        authentication: debug
+    org.springframework.cloud.gateway: TRACE
+
+    org.hibernate:
+      SQL: DEBUG

@@ -1,0 +1,23 @@
+{
+  "name": "orb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "gateway": "mvn -f ./java/orb-gateway/gateway/pom.xml clean install",
+    "accounts": "mvn -f /java/orb-accounts/accounts/pom.xml clean install",
+    "finance": "mvn -f /java/orb-finance/finance/pom.xml clean install",
+    "products-services": "mvn -f /java/orb-products-services/products-services/pom.xml clean install",
+    "real-estate": "mvn -f /java/orb-real-estate/real-estate/pom.xml clean install",
+    "investments": "mvn -f /java/orb-investments/investments/pom.xml clean install",
+    "insurance": "mvn -f /java/orb-insurance/insurance/pom.xml clean install",
+    "communications": "mvn -f /java/orb-communications/communications/pom.xml clean install",
+    "restart": "docker-compose restart",
+    "dev-env": "docker compose up -d",
+    "build-backend": "docker-compose build --no-cache",
+    "update-prod": "git push orb-backend production",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "THE7OFDIAMONDS.TECH",
+  "license": "ISC"
+}

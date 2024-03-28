@@ -1,0 +1,14 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: orb-communications
+
+  kafka:
+    consumer:
+      bootstrap-servers: ${KAFKA_ADDRESS:localhost:9092}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: user-group
+      auto-offset-reset: earliest

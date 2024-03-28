@@ -1,0 +1,4 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "spring-boot.ls.java.home": "/Users/jamellyons/Documents/J_C_LYONS_ENTERPRISES_LLC/ORB/Development/java/orb-backend/"
+}
