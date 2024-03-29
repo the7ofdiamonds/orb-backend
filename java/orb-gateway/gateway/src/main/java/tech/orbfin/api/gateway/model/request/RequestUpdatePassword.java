@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public class RequestUpdatePassword {
-    private String username;
     private String email;
     private String confirmationCode;
-    private String newPassword;
+    private String password;
+    private String confirmPassword;
 }

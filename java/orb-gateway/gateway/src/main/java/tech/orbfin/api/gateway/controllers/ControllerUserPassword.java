@@ -111,11 +111,12 @@ public class ControllerUserPassword {
     @PostMapping("/update-password")
     public ResponseEntity<ResponseUpdate> updatePassword(@RequestBody RequestUpdatePassword request) throws Exception {
         try {
-            String username = request.getUsername();
+            String email = request.getEmail();
             String confirmationCode = request.getConfirmationCode();
-            String newPassword = request.getNewPassword();
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserPassword.updatePassword(username, confirmationCode, newPassword));
+            String password = request.getPassword();
+            String confirmPassword = request.getConfirmPassword();
+log.info(password);
+            return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserPassword.updatePassword(email, confirmationCode, password, confirmPassword));
         } catch (FirebaseAuthException | AuthException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ResponseUpdate.builder()

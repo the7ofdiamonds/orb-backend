@@ -20,7 +20,7 @@ public class ResponseUnlocked {
     private Integer statusCode;
 
     public ResponseUnlocked(String username, String email) {
-        this.successMessage = "Your account with the username " + username + "has been unlocked. Check your email at " + email + " for a link to change your password.";
+        this.successMessage = "Your account with the username " + username + " has been unlocked. Check your email at " + email + " for a link to change your password.";
         this.statusCode = 200;
     }
 }

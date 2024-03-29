@@ -1,13 +1,5 @@
 package tech.orbfin.api.gateway.services;
 
-import com.google.firebase.auth.UserInfo;
-import com.google.firebase.auth.UserProvider;
-import com.google.firebase.auth.UserRecord;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
@@ -25,6 +17,17 @@ import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import com.google.firebase.auth.UserInfo;
+import com.google.firebase.auth.UserProvider;
+import com.google.firebase.auth.UserRecord;
+
+import org.springframework.kafka.core.KafkaTemplate;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -38,21 +41,21 @@ public class ServiceUserEmail {
     private final IRepositoryUserChange iRepositoryUserChange;
     private final IRepositoryUserEmail iRepositoryUserEmail;
 
-    public ResponseVerify verifyEmail(String username, String password, String confirmationCode) throws Exception {
+    public ResponseVerify verifyEmail(String email, String confirmationCode) throws Exception {
         try {
-            User verifiedAccount = serviceUserAccount.verifyAccount(username, password, confirmationCode);
+            User userCredentials = serviceUserUtils.validateConfirmationCode(email, confirmationCode);
 
-            if (verifiedAccount == null) {
+            if (userCredentials == null) {
                 throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
             }
 
-            boolean accountEnabled = verifiedAccount.getIsEnabled();
+            boolean accountEnabled = userCredentials.getIsEnabled();
 
             if (!accountEnabled) {
                 throw new BadCredentialsException(ExceptionMessages.ACCOUNT_ENABLED_ERROR);
             }
 
-            return new ResponseVerify("email", verifiedAccount.getEmail());
+            return new ResponseVerify("email", userCredentials.getEmail());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {

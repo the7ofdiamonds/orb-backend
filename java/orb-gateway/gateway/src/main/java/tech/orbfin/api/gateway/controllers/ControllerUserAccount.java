@@ -34,10 +34,9 @@ public class ControllerUserAccount {
     public ResponseEntity<ResponseUnlocked> unlockAccount(@RequestBody RequestVerify request) throws Exception {
         try {
             String email = request.getEmail();
-            String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
 
-            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(email, password, confirmationCode));
+            return ResponseEntity.ok().body(serviceUserAccount.unlockAccount(email, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseUnlocked.builder()
@@ -59,7 +58,7 @@ public class ControllerUserAccount {
             String email = request.getEmail();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
-
+log.info(confirmationCode);
             return ResponseEntity.ok().body(serviceUserAccount.removeAccount(email, password, confirmationCode));
         } catch (FirebaseAuthException | AuthException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -67,7 +66,7 @@ public class ControllerUserAccount {
                             .errorMessage(e.getMessage())
                             .statusCode(HttpStatus.FORBIDDEN.value())
                             .build());
-        }catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseRemoveAccount.builder()
                             .errorMessage(e.getMessage())

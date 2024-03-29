@@ -31,11 +31,10 @@ public class ControllerUserEmail {
     @PostMapping("/verify-email")
     public ResponseEntity<ResponseVerify> verifyEmail(@RequestBody RequestVerify request) {
         try {
-            String username = request.getUsername();
-            String password = request.getPassword();
+            String email = request.getEmail();
             String confirmationCode = request.getConfirmationCode();
 
-            return ResponseEntity.ok().body(serviceUserEmail.verifyEmail(username, password, confirmationCode));
+            return ResponseEntity.ok().body(serviceUserEmail.verifyEmail(email, confirmationCode));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ResponseVerify.builder()

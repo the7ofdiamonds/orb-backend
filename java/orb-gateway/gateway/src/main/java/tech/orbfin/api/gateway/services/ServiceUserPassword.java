@@ -107,23 +107,27 @@ public class ServiceUserPassword {
         }
     }
 
-    public ResponseUpdate updatePassword(String username, String confirmationCode, String newPassword) throws Exception {
+    public ResponseUpdate updatePassword(String email, String confirmationCode, String password, String confirmPassword) throws Exception {
         try {
-            boolean passwordValid = serviceUserUtils.validPassword(newPassword);
+            boolean passwordMatches = password.equals(confirmPassword);
+
+            if(!passwordMatches){
+                throw new BadCredentialsException(ExceptionMessages.PASSWORDS_DO_NOT_MATCH);
+            }
+
+            boolean passwordValid = serviceUserUtils.validPassword(password);
 
             if (!passwordValid) {
                 throw new BadCredentialsException(ExceptionMessages.PASSWORD_NOT_VALID);
             }
 
-            User userCredentials = serviceUserUtils.validateConfirmationCode(username, confirmationCode);
+            User userCredentials = serviceUserUtils.validateConfirmationCode(email, confirmationCode);
 
             if (userCredentials == null) {
                 throw new BadCredentialsException(ExceptionMessages.CREDENTIALS_BAD);
             }
 
-            String email = userCredentials.getEmail();
-
-            boolean passwordUpdated = iRepositoryUserPassword.changePassword(email, username, newPassword);
+            boolean passwordUpdated = iRepositoryUserPassword.changePassword(email, userCredentials.getPassword(), password);
 
             if (!passwordUpdated) {
                 throw new Exception(ExceptionMessages.PASSWORD_UPDATE_ERROR);
@@ -133,7 +137,7 @@ public class ServiceUserPassword {
 
             String uid = firebaseUser.getUid();
 
-            boolean passwordUpdatedFirebase = serviceUserFirebase.passwordChanged(uid, newPassword);
+            boolean passwordUpdatedFirebase = serviceUserFirebase.passwordChanged(uid, password);
 
             if (!passwordUpdatedFirebase) {
                 throw new Exception(ExceptionMessages.PASSWORD_CHANGE_ERROR);
@@ -141,7 +145,7 @@ public class ServiceUserPassword {
 
             kafkaTemplate.send(ConfigKafkaTopics.USERNAME_CHANGED, email);
 
-            return new ResponseUpdate("username", email);
+            return new ResponseUpdate("password", email);
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {

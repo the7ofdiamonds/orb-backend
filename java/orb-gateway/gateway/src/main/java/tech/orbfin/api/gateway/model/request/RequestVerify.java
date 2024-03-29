@@ -14,6 +14,5 @@ import org.springframework.stereotype.Component;
 @Component
 public class RequestVerify {
     private String email;
-    private String password;
     private String confirmationCode;
 }

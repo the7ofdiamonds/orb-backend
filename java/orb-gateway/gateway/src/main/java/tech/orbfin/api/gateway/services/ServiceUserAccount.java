@@ -197,9 +197,13 @@ public class ServiceUserAccount {
         }
     }
 
-    public ResponseUnlocked unlockAccount(String email, String password, String confirmationCode) throws Exception {
+    public ResponseUnlocked unlockAccount(String email, String confirmationCode) throws Exception {
         try {
-            User verifiedAccount = verifyAccount(email, password, confirmationCode);
+            User userCredentials = serviceUserUtils.validateConfirmationCode(email, confirmationCode);
+
+            if (userCredentials == null) {
+                throw new BadCredentialsException(ExceptionMessages.ACCOUNT_VERIFY_ERROR);
+            }
 
             boolean accountUnlocked = serviceUserDetails.setAccountNonLocked(email, confirmationCode);
 
@@ -207,7 +211,7 @@ public class ServiceUserAccount {
                 throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
             }
 
-            return new ResponseUnlocked(verifiedAccount.getUsername(), verifiedAccount.getEmail());
+            return new ResponseUnlocked(userCredentials.getUsername(), userCredentials.getEmail());
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
@@ -219,10 +223,10 @@ public class ServiceUserAccount {
         try {
             User verifiedAccount = verifyAccount(email, password, confirmationCode);
 
-            boolean accountLocked = serviceUserDetails.setAccountLocked(email, verifiedAccount.getPassword());
+            boolean accountLocked = serviceUserDetails.disableAccount(verifiedAccount.getEmail(), verifiedAccount.getPassword());
 
             if (!accountLocked) {
-                throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
+                throw new Exception(ExceptionMessages.ACCOUNT_DISABLE_ERROR);
             }
 
             kafkaTemplate.send(ConfigKafkaTopics.ACCOUNT_REMOVED, verifiedAccount.getEmail());
@@ -231,7 +235,7 @@ public class ServiceUserAccount {
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(e.getMessage());
         } catch (Exception e) {
-            throw new Exception(ExceptionMessages.ACCOUNT_LOCKED_ERROR);
+            throw new Exception(ExceptionMessages.ACCOUNT_DISABLE_ERROR);
         }
     }
 }

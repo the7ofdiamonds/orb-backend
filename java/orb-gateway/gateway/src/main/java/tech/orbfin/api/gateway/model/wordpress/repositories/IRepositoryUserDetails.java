@@ -14,17 +14,17 @@ import org.springframework.stereotype.Repository;
 public interface IRepositoryUserDetails extends JpaRepository<User, Long> {
 
     @Transactional
-    @Query(nativeQuery = true, value = "CALL enableAccount(:p_user_email, :p_display_name, :p_confirmation_code)")
+    @Query(nativeQuery = true, value = "CALL enableAccount(:p_user_email, :p_user_pass, :p_confirmation_code)")
     public boolean enableAccount(
             @Param("p_user_email") String email,
-            @Param("p_display_name") String username,
+            @Param("p_user_pass") String password,
             @Param("p_confirmation_code") String confirmationCode);
 
     @Transactional
-    @Query(nativeQuery = true, value = "CALL disableAccount(:p_user_email, :p_display_name)")
+    @Query(nativeQuery = true, value = "CALL disableAccount(:p_user_email, :p_user_pass)")
     public boolean disableAccount(
             @Param("p_user_email") String email,
-            @Param("p_display_name") String username);
+            @Param("p_user_pass") String password);
 
     @Transactional
     @Query(nativeQuery = true, value = "CALL unexpireAccount(:p_user_email, :p_display_name, :p_confirmation_code)")

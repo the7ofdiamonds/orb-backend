@@ -17,6 +17,13 @@ public class ConfigKafka {
     }
 
     @Bean
+    public NewTopic removeAccount() {
+        return TopicBuilder
+                .name(ConfigKafkaTopics.ACCOUNT_REMOVED)
+                .build();
+    }
+
+    @Bean
     public NewTopic usernameChanged() {
         return TopicBuilder
                 .name(ConfigKafkaTopics.USERNAME_CHANGED)

@@ -186,7 +186,7 @@ public class ServiceUserDetails implements UserDetailsService {
                 return true;
             }
 
-            boolean accountEnabled = iRepositoryUserDetails.enableAccount(email, user.getUsername(), confirmationCode);
+            boolean accountEnabled = iRepositoryUserDetails.enableAccount(email, user.getPassword(), confirmationCode);
 
             if (!accountEnabled) {
                 throw new Exception(ExceptionMessages.ACCOUNT_ENABLED_ERROR);
@@ -199,15 +199,15 @@ public class ServiceUserDetails implements UserDetailsService {
     }
 
     //    Account inactivity
-    public boolean disableAccount(String email, String username) throws Exception {
+    public boolean disableAccount(String email, String password) throws Exception {
         try {
             UserDetails user = loadUserByEmail(email);
-
+log.info(String.valueOf(user.isEnabled()));
             if (!user.isEnabled()) {
                 return true;
             }
 
-            boolean accountDisabled = iRepositoryUserDetails.disableAccount(email, username);
+            boolean accountDisabled = iRepositoryUserDetails.disableAccount(email, password);
 
             if (!accountDisabled) {
                 throw new Exception(ExceptionMessages.ACCOUNT_DISABLE_ERROR);
