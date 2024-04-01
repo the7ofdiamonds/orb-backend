@@ -58,7 +58,7 @@ public class ControllerUserAccount {
             String email = request.getEmail();
             String password = request.getPassword();
             String confirmationCode = request.getConfirmationCode();
-log.info(confirmationCode);
+
             return ResponseEntity.ok().body(serviceUserAccount.removeAccount(email, password, confirmationCode));
         } catch (FirebaseAuthException | AuthException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
