@@ -8,6 +8,7 @@ VIEW `user_details_view` AS
         `u`.`user_email` AS `email`,
         `u`.`display_name` AS `username`,
         `u`.`user_pass` AS `password`,
+        `u`.`user_nicename` AS `nicename`,
         MAX(CASE
             WHEN `m`.`meta_key` = 'phone_number' THEN `m`.`meta_value`
         END) AS `phone`,

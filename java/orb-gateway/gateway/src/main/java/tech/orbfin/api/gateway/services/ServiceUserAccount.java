@@ -59,6 +59,7 @@ public class ServiceUserAccount {
                                             String firstname,
                                             String lastname,
                                             String phone,
+                                            String nicename,
                                             Object location) throws Exception {
         try {
             boolean emailIsValid = serviceUserUtils.validEmail(email);
@@ -119,6 +120,7 @@ public class ServiceUserAccount {
                     lastname,
                     phone,
                     "subscriber",
+                    nicename,
                     providerGivenID,
                     TRUE,
                     TRUE,

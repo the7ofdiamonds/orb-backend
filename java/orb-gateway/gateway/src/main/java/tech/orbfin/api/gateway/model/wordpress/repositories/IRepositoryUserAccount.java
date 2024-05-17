@@ -24,6 +24,7 @@ public interface IRepositoryUserAccount extends JpaRepository<User, Long> {
             ":p_last_name, " +
             ":p_phone_number, " +
             ":p_roles, " +
+            ":p_nicename, " +
             ":p_provider_given_id, " +
             ":p_is_authenticated, " +
             ":p_is_account_non_expired, " +
@@ -39,6 +40,7 @@ public interface IRepositoryUserAccount extends JpaRepository<User, Long> {
             @Param("p_last_name") String lastName,
             @Param("p_phone_number") String phone,
             @Param("p_roles") String roles,
+            @Param("p_nicename") String nicename,
             @Param("p_provider_given_id") String providerGivenID,
             @Param("p_is_authenticated") boolean isAuthenticated,
             @Param("p_is_account_non_expired") boolean isAccountNonExpired,

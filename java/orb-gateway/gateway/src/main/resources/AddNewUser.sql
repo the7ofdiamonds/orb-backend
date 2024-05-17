@@ -2,19 +2,19 @@ CREATE DEFINER=`root`@`%` PROCEDURE `addNewUser`(
     IN p_user_email VARCHAR(255), 
     IN p_display_name VARCHAR(255), 
     IN p_user_pass VARCHAR(255),
-    IN p_user_nicename VARCHAR(255),
     IN p_nickname VARCHAR(255),
     IN p_first_name VARCHAR(255), 
     IN p_last_name VARCHAR(255), 
     IN p_phone_number VARCHAR(255),
     IN p_roles VARCHAR(255),
+    IN p_nicename VARCHAR(255),
     IN p_confirmation_code VARCHAR(255)
 )
 BEGIN
 	START TRANSACTION;
     
     INSERT INTO wp_users (user_email, user_login, display_name, user_pass, user_nicename, user_registered)
-    VALUES (p_user_email, p_user_email, p_display_name, p_user_pass, p_user_nicename, NOW());
+    VALUES (p_user_email, p_user_email, p_display_name, p_user_pass, p_nicename, NOW());
 
     SET @user_id = LAST_INSERT_ID();
 

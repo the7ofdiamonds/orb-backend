@@ -35,6 +35,7 @@ public class ControllerUserSignup {
             String firstname = request.getFirstname();
             String lastname = request.getLastname();
             String phone = request.getPhone();
+            String nicename = request.getNicename();
             Object location = request.getLocation();
 
             return ResponseEntity.status(HttpStatus.CREATED).body(serviceUserAccount.registerAccount(
@@ -45,6 +46,7 @@ public class ControllerUserSignup {
                     firstname,
                     lastname,
                     phone,
+                    nicename,
                     location));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

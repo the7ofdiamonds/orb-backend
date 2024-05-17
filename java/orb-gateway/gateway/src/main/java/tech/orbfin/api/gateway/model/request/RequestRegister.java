@@ -18,5 +18,6 @@ public class RequestRegister {
     private String phone;
     private String firstname;
     private String lastname;
+    private String nicename;
     private Object location;
 }
