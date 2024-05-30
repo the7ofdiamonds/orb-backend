@@ -7,7 +7,6 @@ CREATE DEFINER=`root`@`%` PROCEDURE `createAccount`(
     IN p_first_name VARCHAR(255), 
     IN p_last_name VARCHAR(255), 
     IN p_phone_number VARCHAR(255),
-    IN p_roles VARCHAR(255),
     IN p_user_activation_key VARCHAR(255)
 )
 BEGIN
@@ -21,12 +20,11 @@ BEGIN
         CALL addUserMeta(@user_id, 'first_name', p_first_name);
         CALL addUserMeta(@user_id, 'last_name', p_last_name);
         CALL addUserMeta(@user_id, 'phone_number', p_phone_number);
-        CALL addUserMeta(@user_id, 'wp_capabilities', p_roles);
 		CALL addUserMeta(@user_id, 'nickname', p_nickname);
         CALL addUserMeta(@user_id, 'is_authenticated', 0);
-        CALL addUserMeta(@user_id, 'is_account_non_expired', 1);
+        CALL addUserMeta(@user_id, 'is_account_non_expired', 0);
         CALL addUserMeta(@user_id, 'is_account_non_locked', 1);
-        CALL addUserMeta(@user_id, 'is_credentials_non_expired', 0);
+        CALL addUserMeta(@user_id, 'is_credentials_non_expired', 1);
 		CALL addUserMeta(@user_id, 'is_enabled', 1);
 
     CALL findUserByID(@user_id);
