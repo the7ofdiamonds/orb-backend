@@ -1,4 +1,4 @@
-CREATE DEFINER=`root`@`%` PROCEDURE `addNewUser`(
+CREATE DEFINER=`root`@`%` PROCEDURE `createAccount`(
     IN p_user_email VARCHAR(255), 
     IN p_display_name VARCHAR(255), 
     IN p_user_pass VARCHAR(255),
@@ -23,10 +23,10 @@ BEGIN
         CALL addUserMeta(@user_id, 'phone_number', p_phone_number);
         CALL addUserMeta(@user_id, 'wp_capabilities', p_roles);
 		CALL addUserMeta(@user_id, 'nickname', p_nickname);
-        CALL addUserMeta(@user_id, 'is_authenticated', 1);
+        CALL addUserMeta(@user_id, 'is_authenticated', 0);
         CALL addUserMeta(@user_id, 'is_account_non_expired', 1);
         CALL addUserMeta(@user_id, 'is_account_non_locked', 1);
-        CALL addUserMeta(@user_id, 'is_credentials_non_expired', 1);
+        CALL addUserMeta(@user_id, 'is_credentials_non_expired', 0);
 		CALL addUserMeta(@user_id, 'is_enabled', 1);
 
     CALL findUserByID(@user_id);

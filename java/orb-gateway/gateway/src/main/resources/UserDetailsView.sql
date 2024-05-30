@@ -9,15 +9,17 @@ VIEW `user_details_view` AS
         `u`.`display_name` AS `username`,
         `u`.`user_pass` AS `password`,
         `u`.`user_nicename` AS `nicename`,
+        `u`.`user_registered` AS `joined`,
+        `u`.`user_activation_key` AS `user_activation_code`,
         MAX(CASE
             WHEN `m`.`meta_key` = 'phone_number' THEN `m`.`meta_value`
         END) AS `phone`,
         MAX(CASE
             WHEN `m`.`meta_key` = 'first_name' THEN `m`.`meta_value`
-        END) AS `firstname`,
+        END) AS `first_name`,
         MAX(CASE
             WHEN `m`.`meta_key` = 'last_name' THEN `m`.`meta_value`
-        END) AS `lastname`,
+        END) AS `last_name`,
         MAX(CASE
             WHEN `m`.`meta_key` = 'wp_capabilities' THEN `m`.`meta_value`
         END) AS `roles`,
