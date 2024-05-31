@@ -7,7 +7,8 @@ CREATE DEFINER=`root`@`%` PROCEDURE `createAccount`(
     IN p_first_name VARCHAR(255), 
     IN p_last_name VARCHAR(255), 
     IN p_phone_number VARCHAR(255),
-    IN p_user_activation_key VARCHAR(255)
+    IN p_user_activation_key VARCHAR(255),
+	IN p_provider_given_id VARCHAR(255)
 )
 BEGIN
 	START TRANSACTION;
@@ -26,6 +27,7 @@ BEGIN
         CALL addUserMeta(@user_id, 'is_account_non_locked', 1);
         CALL addUserMeta(@user_id, 'is_credentials_non_expired', 1);
 		CALL addUserMeta(@user_id, 'is_enabled', 1);
+		CALL addUserMeta(@user_id, 'provider_given_id', p_provider_given_id);
 
     CALL findUserByID(@user_id);
     
