@@ -1,6 +1,6 @@
-package tech.orbfin.api.gateway.authentication.providers;
+package tech.orbfin.api.gateway.services.authentication.providers;
 
-import tech.orbfin.api.gateway.authentication.AuthJWT;
+import tech.orbfin.api.gateway.services.authentication.AuthJWT;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 
 import org.springframework.context.annotation.Configuration;

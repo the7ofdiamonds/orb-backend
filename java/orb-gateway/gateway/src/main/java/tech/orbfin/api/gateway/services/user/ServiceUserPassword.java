@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import com.google.firebase.auth.UserRecord;
 import jakarta.transaction.Transactional;
@@ -16,7 +16,6 @@ import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
 import tech.orbfin.api.gateway.model.response.ResponseChange;
 import tech.orbfin.api.gateway.model.response.ResponseForgot;
 import tech.orbfin.api.gateway.model.response.ResponseUpdate;
-import tech.orbfin.api.gateway.model.response.ResponseVerify;
 import tech.orbfin.api.gateway.model.wordpress.User;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUser;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserPassword;

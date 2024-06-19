@@ -5,6 +5,7 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserUtils;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
 
+import tech.orbfin.api.gateway.services.user.ServiceUserUtils;
 import tech.orbfin.api.gateway.utils.Patterns;
 
 import org.junit.jupiter.api.BeforeEach;

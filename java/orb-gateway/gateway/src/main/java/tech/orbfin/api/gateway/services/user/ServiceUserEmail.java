@@ -1,11 +1,9 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
-import tech.orbfin.api.gateway.exceptions.UserNotFoundException;
 import tech.orbfin.api.gateway.model.response.ResponseAdd;
-import tech.orbfin.api.gateway.model.response.ResponseForgot;
 import tech.orbfin.api.gateway.model.response.ResponseRemove;
 import tech.orbfin.api.gateway.model.response.ResponseVerify;
 import tech.orbfin.api.gateway.model.wordpress.User;

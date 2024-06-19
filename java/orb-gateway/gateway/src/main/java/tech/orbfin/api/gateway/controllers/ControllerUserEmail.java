@@ -1,6 +1,6 @@
 package tech.orbfin.api.gateway.controllers;
 
-import tech.orbfin.api.gateway.services.ServiceUserEmail;
+import tech.orbfin.api.gateway.services.user.ServiceUserEmail;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 
 import tech.orbfin.api.gateway.model.request.RequestAddEmail;

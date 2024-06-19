@@ -11,12 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.model.request.RequestRegister;
-import tech.orbfin.api.gateway.model.request.RequestRemoveAccount;
-import tech.orbfin.api.gateway.model.request.RequestVerify;
 import tech.orbfin.api.gateway.model.response.ResponseRegister;
-import tech.orbfin.api.gateway.model.response.ResponseRemoveAccount;
-import tech.orbfin.api.gateway.model.response.ResponseUnlocked;
-import tech.orbfin.api.gateway.services.ServiceUserAccount;
+import tech.orbfin.api.gateway.services.user.ServiceUserAccount;
 
 @Slf4j
 @RestController

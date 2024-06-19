@@ -10,8 +10,8 @@ public class MockUser {
         user.setEmail("test@example.com");
         user.setUsername("testuser");
         user.setPassword("password");
-        user.setFirstname("John");
-        user.setLastname("Doe");
+        user.setFirst_name("John");
+        user.setLast_name("Doe");
         user.setPhone("1234567890");
         user.setProviderGivenID("provider123");
         user.setConfirmationCode("confirm123");

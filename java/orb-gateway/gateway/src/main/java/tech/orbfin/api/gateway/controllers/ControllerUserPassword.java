@@ -16,8 +16,11 @@ import tech.orbfin.api.gateway.model.request.RequestUpdatePassword;
 import tech.orbfin.api.gateway.model.response.ResponseChange;
 import tech.orbfin.api.gateway.model.response.ResponseForgot;
 import tech.orbfin.api.gateway.model.response.ResponseUpdate;
-import tech.orbfin.api.gateway.services.*;
 import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
+import tech.orbfin.api.gateway.services.token.ServiceToken;
+import tech.orbfin.api.gateway.services.token.ServiceTokenJW;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserPassword;
 
 @Slf4j
 @RestController

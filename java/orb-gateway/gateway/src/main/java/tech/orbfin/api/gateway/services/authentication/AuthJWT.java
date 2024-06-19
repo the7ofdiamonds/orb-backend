@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.authentication;
+package tech.orbfin.api.gateway.services.authentication;
 
 import java.util.Collection;
 

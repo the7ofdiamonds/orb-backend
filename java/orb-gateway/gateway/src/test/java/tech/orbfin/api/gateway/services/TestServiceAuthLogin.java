@@ -7,7 +7,13 @@ import org.mockito.MockitoAnnotations;
 import tech.orbfin.api.gateway.MockUser;
 import tech.orbfin.api.gateway.model.UserEntity;
 import tech.orbfin.api.gateway.model.response.ResponseLogin;
+import tech.orbfin.api.gateway.model.session.Session;
 import tech.orbfin.api.gateway.model.wordpress.User;
+import tech.orbfin.api.gateway.services.authentication.ServiceAuthLogin;
+import tech.orbfin.api.gateway.services.session.ServiceSession;
+import tech.orbfin.api.gateway.services.token.ServiceTokenJW;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,9 +51,10 @@ public class TestServiceAuthLogin {
         when(serviceUserUtils.validateAccount(mockUser)).thenReturn(true);
         when(ServiceTokenJW.generateToken(anyMap(), eq(mockUser))).thenReturn("mockAccessToken");
         when(serviceTokenJW.refreshToken(mockUser)).thenReturn("mockRefreshToken");
-        when(serviceSession.createSession(anyString(), anyString(), anyString())).thenReturn(true);
+        Session session = new Session();
+        when(serviceSession.createSession(session)).thenReturn(true);
 
-        ResponseLogin response = serviceAuthLogin.login("testUser", "testPassword", new Object());
+        ResponseLogin response = serviceAuthLogin.login(anyString(), anyString(),"testUser", "testPassword", anyString());
 
         assertNotNull(response);
         assertEquals("testUser", response.getUsername());
@@ -63,6 +70,6 @@ public class TestServiceAuthLogin {
             throw new RuntimeException(e);
         }
 
-        assertThrows(IllegalArgumentException.class, () -> serviceAuthLogin.login("invalidUser", "invalidPassword", new Object()));
+        assertThrows(IllegalArgumentException.class, () -> serviceAuthLogin.login("123.123.123", "user agent","invalidUser", "invalidPassword", new Object()));
     }
 }

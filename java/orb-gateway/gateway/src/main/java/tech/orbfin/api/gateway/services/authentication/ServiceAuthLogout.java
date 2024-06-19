@@ -1,10 +1,9 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.authentication;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
-import tech.orbfin.api.gateway.model.request.RequestLogout;
 import tech.orbfin.api.gateway.model.response.ResponseLogout;
 
 import jakarta.transaction.Transactional;
@@ -13,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import tech.orbfin.api.gateway.services.session.ServiceSession;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
 
 @Slf4j
 @RequiredArgsConstructor

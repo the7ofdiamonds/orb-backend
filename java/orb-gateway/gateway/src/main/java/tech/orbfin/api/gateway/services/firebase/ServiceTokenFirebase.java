@@ -11,9 +11,8 @@ import com.google.firebase.auth.FirebaseToken;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import tech.orbfin.api.gateway.services.IServiceToken;
-import tech.orbfin.api.gateway.services.ServiceUserDetails;
-import tech.orbfin.api.gateway.services.ServiceUserUtils;
+import tech.orbfin.api.gateway.services.token.IServiceToken;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.token;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

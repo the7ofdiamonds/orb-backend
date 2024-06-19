@@ -1,6 +1,4 @@
-package tech.orbfin.api.gateway.authentication.filters;
-
-import tech.orbfin.api.gateway.services.ServiceToken;
+package tech.orbfin.api.gateway.services.authentication.filters;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

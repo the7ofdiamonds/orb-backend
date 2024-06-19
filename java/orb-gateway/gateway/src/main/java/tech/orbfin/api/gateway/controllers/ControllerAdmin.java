@@ -3,7 +3,7 @@ package tech.orbfin.api.gateway.controllers;
 import tech.orbfin.api.gateway.model.request.RequestDeleteAccount;
 import tech.orbfin.api.gateway.model.response.ResponseDeleteAccount;
 
-import tech.orbfin.api.gateway.services.ServiceAdmin;
+import tech.orbfin.api.gateway.services.admin.ServiceAdmin;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 

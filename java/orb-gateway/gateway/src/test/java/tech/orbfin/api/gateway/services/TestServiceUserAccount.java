@@ -1,27 +1,16 @@
 package tech.orbfin.api.gateway.services;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
-import tech.orbfin.api.gateway.exceptions.UserCreationException;
-import tech.orbfin.api.gateway.model.UserEntity;
-import tech.orbfin.api.gateway.model.response.ResponseRegister;
-import tech.orbfin.api.gateway.model.response.ResponseUnlocked;
-import tech.orbfin.api.gateway.model.response.ResponseRemoveAccount;
-import tech.orbfin.api.gateway.model.wordpress.User;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserAccount;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserUtils;
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import tech.orbfin.api.gateway.services.user.ServiceUserAccount;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserUtils;
 
 public class TestServiceUserAccount {
 

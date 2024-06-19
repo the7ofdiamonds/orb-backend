@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.admin;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,7 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.model.response.ResponseDeleteAccount;
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryAdmin;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
 
 @Slf4j
 @RequiredArgsConstructor

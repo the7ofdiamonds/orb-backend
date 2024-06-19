@@ -1,5 +1,9 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.authentication;
 
+import tech.orbfin.api.gateway.services.session.ServiceSession;
+import tech.orbfin.api.gateway.services.token.ServiceTokenJW;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserUtils;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -17,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
+import tech.orbfin.api.gateway.model.session.Session;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,9 +32,10 @@ public class ServiceAuthLogin {
     private final ServiceUserUtils serviceUserUtils;
     private final ServiceUserDetails serviceUserDetails;
 
-    public ResponseLogin login(String username, String password, Object location) throws Exception {
+    public ResponseLogin login(String ip, String userAgent, String username, String password, Object location) throws Exception {
         try {
-            log.info("Login function has been called.");
+            log.info("Login function has been called from {}.", ip);
+            log.info("{}", userAgent);
 
             log.info("User {} is attempting to login", username);
 
@@ -59,7 +65,9 @@ public class ServiceAuthLogin {
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            boolean sessionCreated = serviceSession.createSession(username, accessToken, refreshToken);
+            Authenticated authenticated = new Authenticated("171", "fakeuser@gmail.com", username, accessToken, refreshToken);
+            Session session = new Session(authenticated, ip, userAgent);
+            boolean sessionCreated = serviceSession.createSession(session);
 
             if(!sessionCreated){
                 throw new Exception(ExceptionMessages.SESSION_CREATE_ERROR);

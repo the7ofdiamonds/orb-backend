@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import lombok.extern.slf4j.Slf4j;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;

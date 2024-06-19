@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 

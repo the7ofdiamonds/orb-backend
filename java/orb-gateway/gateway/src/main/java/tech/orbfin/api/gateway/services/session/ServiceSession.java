@@ -1,8 +1,11 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.session;
 
 import org.springframework.web.server.ServerWebExchange;
-import tech.orbfin.api.gateway.authentication.AuthJWT;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserUtils;
+import tech.orbfin.api.gateway.services.authentication.AuthJWT;
 
+import tech.orbfin.api.gateway.services.authentication.Authenticated;
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
@@ -28,6 +31,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
+import tech.orbfin.api.gateway.services.token.ServiceToken;
+import tech.orbfin.api.gateway.services.token.ServiceTokenJW;
 
 @Slf4j
 @Setter
@@ -55,24 +60,24 @@ public class ServiceSession {
     }
 
     //    Needs work
-    public boolean createSession(String username, String accessToken, String refreshToken) {
-        if (username == null) {
+    public boolean createSession(Session session) {
+        if (session.getUsername() == null) {
             log.info("A user is required.");
         }
 
-        if (accessToken == null) {
+        if (session.getAccessToken() == null) {
             log.info("A Token could not be found in the header.");
         }
 
-        if (refreshToken == null) {
+        if (session.getRefreshToken() == null) {
             log.info("A Refresh Token could not be found in the header.");
         }
 
         log.info("Validating token ...");
-        log.info(username);
-        UserDetails user = serviceUserDetails.loadUserByUsername(username);
+        log.info(session.getUsername());
+        UserDetails user = serviceUserDetails.loadUserByUsername(session.getUsername());
 
-        log.info("Username {} is attempting to gain access to resource servers.", username);
+        log.info("Username {} is attempting to gain access to resource servers.", session.getUsername());
 
         boolean accountValid = serviceUserUtils.validateAccount(user);
 
@@ -94,11 +99,6 @@ public class ServiceSession {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authJWT);
-
-        long issued = System.currentTimeMillis();
-        long expiration = System.currentTimeMillis() + refreshExpiration;
-
-        Session session = new Session(ServiceTokenJW.ALGORITHM, accessToken, refreshToken, username, authorities, issued, expiration, false);
 
         iRepositorySession.save(session);
 
@@ -141,10 +141,8 @@ public class ServiceSession {
 
         SecurityContextHolder.getContext().setAuthentication(authJWT);
 
-        long issued = System.currentTimeMillis();
-        long expiration = System.currentTimeMillis() + refreshExpiration;
-
-        Session session = new Session(sessionID, accessToken, refreshToken, ServiceTokenJW.ALGORITHM, user.getUsername(), authorities, issued, expiration, false);
+        Authenticated authenticated = new Authenticated("171", "fakeuser@gmail.com", "fakeuser-2", accessToken, refreshToken);
+        Session session = new Session(authenticated);
 
         iRepositorySession.update(session);
 

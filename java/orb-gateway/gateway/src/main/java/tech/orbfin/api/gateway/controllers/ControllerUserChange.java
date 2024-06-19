@@ -1,19 +1,15 @@
 package tech.orbfin.api.gateway.controllers;
 
 import com.google.firebase.auth.FirebaseAuthException;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import tech.orbfin.api.gateway.exceptions.AuthException;
-import tech.orbfin.api.gateway.model.UserEntity;
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.services.ServiceToken;
-import tech.orbfin.api.gateway.services.ServiceTokenJW;
-import tech.orbfin.api.gateway.services.ServiceUserChange;
+import tech.orbfin.api.gateway.services.token.ServiceToken;
+import tech.orbfin.api.gateway.services.token.ServiceTokenJW;
+import tech.orbfin.api.gateway.services.user.ServiceUserChange;
 
 import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 
@@ -24,13 +20,8 @@ import org.springframework.stereotype.Component;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import tech.orbfin.api.gateway.services.ServiceUserDetails;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
 import tech.orbfin.api.gateway.services.firebase.ServiceTokenFirebase;
-
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-
-import static org.apache.logging.log4j.util.Strings.isEmpty;
 
 @Slf4j
 @RestController

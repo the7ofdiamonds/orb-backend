@@ -1,6 +1,6 @@
-package tech.orbfin.api.gateway.authentication.filters;
+package tech.orbfin.api.gateway.services.authentication.filters;
 
-import tech.orbfin.api.gateway.services.ServiceSession;
+import tech.orbfin.api.gateway.services.session.ServiceSession;
 
 import lombok.RequiredArgsConstructor;
 

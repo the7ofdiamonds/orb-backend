@@ -1,6 +1,6 @@
-package tech.orbfin.api.gateway.authentication;
+package tech.orbfin.api.gateway.services.authentication;
 
-import tech.orbfin.api.gateway.authentication.providers.ProviderJWT;
+import tech.orbfin.api.gateway.services.authentication.providers.ProviderJWT;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

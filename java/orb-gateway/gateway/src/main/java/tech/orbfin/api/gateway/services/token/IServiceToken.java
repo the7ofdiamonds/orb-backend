@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.token;
 
 import org.springframework.security.core.userdetails.UserDetails;
 

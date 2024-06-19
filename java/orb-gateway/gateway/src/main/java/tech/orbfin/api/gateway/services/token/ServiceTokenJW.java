@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.token;
 
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -19,6 +19,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.stereotype.Service;
+import tech.orbfin.api.gateway.services.user.ServiceUserDetails;
 
 @Slf4j
 @RequiredArgsConstructor

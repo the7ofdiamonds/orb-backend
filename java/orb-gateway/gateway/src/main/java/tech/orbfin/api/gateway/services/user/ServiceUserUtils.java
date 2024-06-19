@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -285,7 +285,6 @@ public class ServiceUserUtils {
             if (!usernameValid) {
                 return null;
             }
-
 
             Optional<User> user = iRepositoryUserUtils.findUserByUsername(username);
 

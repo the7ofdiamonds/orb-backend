@@ -7,7 +7,7 @@ import tech.orbfin.api.gateway.exceptions.BadCredentialsException;
 import tech.orbfin.api.gateway.model.request.*;
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.services.ServiceUserAccount;
+import tech.orbfin.api.gateway.services.user.ServiceUserAccount;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

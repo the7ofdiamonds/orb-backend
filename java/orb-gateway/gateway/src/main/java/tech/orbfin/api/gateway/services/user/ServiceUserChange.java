@@ -1,4 +1,4 @@
-package tech.orbfin.api.gateway.services;
+package tech.orbfin.api.gateway.services.user;
 
 import tech.orbfin.api.gateway.configurations.ConfigKafkaTopics;
 
@@ -7,15 +7,9 @@ import tech.orbfin.api.gateway.exceptions.ExceptionMessages;
 
 import tech.orbfin.api.gateway.model.response.*;
 
-import tech.orbfin.api.gateway.model.wordpress.User;
-
 import tech.orbfin.api.gateway.model.wordpress.repositories.IRepositoryUserChange;
 
 import tech.orbfin.api.gateway.services.firebase.ServiceUserFirebase;
-
-import java.util.Arrays;
-
-import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 
@@ -23,17 +17,10 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.context.annotation.Bean;
-
 import org.springframework.stereotype.Service;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import com.google.firebase.auth.UserInfo;
-import com.google.firebase.auth.UserProvider;
 import com.google.firebase.auth.UserRecord;
 
 @Slf4j

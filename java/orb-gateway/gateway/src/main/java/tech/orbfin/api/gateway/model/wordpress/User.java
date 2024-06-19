@@ -23,9 +23,9 @@ public class User {
 
     private String password;
 
-    private String firstname;
+    private String first_name;
 
-    private String lastname;
+    private String last_name;
 
     private String phone;
     @Column(name = "provider_given_id")
