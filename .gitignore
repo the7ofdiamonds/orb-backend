@@ -1,0 +1,10 @@
+/.vscode/
+/.idea
+.env
+/pgdata/
+/redis/
+/nginx/logs
+/nginx/ssl
+/kafka
+/zookeeper
+/java/
