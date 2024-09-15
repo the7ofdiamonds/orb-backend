@@ -1,17 +1,16 @@
-version: '3.9'
-
 services:
   pgsql-db:
     container_name: pgsql-db
     image: postgres:12
-    ports:
-      - 5432:5432
+    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
     networks:
       - api.orbfin.tech
 
@@ -19,31 +18,32 @@ services:
     container_name: redis-session
     image: "redis/redis-stack:edge"
     restart: always
-    ports:
-      - 6379:6379
     volumes:
       - ./redis/data:/data
+    ports:
+      - 6379:6379
     networks:
       - api.orbfin.tech
 
   zookeeper:
-    image: zookeeper
     container_name: zookeeper
-    ports:
-      - "2181:2181"
+    image: zookeeper
+    restart: always
     environment:
       ALLOW_ANONYMOUS_LOGIN: yes
-    networks:
-      - api.orbfin.tech
     volumes:
       - ./zookeeper:/data
-      
-  kafka:
-    image: wurstmeister/kafka
-    container_name: kafka
     ports:
-      - "9092:9092"
-      - "9094:9094"
+      - "2181:2181"
+    networks:
+      - api.orbfin.tech
+
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka
+    restart: always
+    depends_on:
+      - zookeeper
     environment:
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9094
       KAFKA_LISTENER_NAMES: INSIDE,OUTSIDE
@@ -51,148 +51,126 @@ services:
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    depends_on:
-      - zookeeper
-    networks:
-      - api.orbfin.tech
     volumes:
       - kafka:/kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    networks:
+      - api.orbfin.tech
 
   # gateway:
+  #   hostname: orb-gateway
+  #   container_name: gateway
+  #   image: orb-gateway:latest
+  #   restart: always
+  #   depends_on:
+  #     - kafka
   #   env_file:
   #     - ./.env
-  #   container_name: orb-gateway
-  #   restart: always
   #   ports:
   #     - 8080:8080
-  #   build:
-  #     context: ./java/orb-gateway
-  #     dockerfile: orb-gateway.Dockerfile
-  #   volumes:
-  #     - ./java/orb-gateway/gateway/target:/app
-  #   hostname: orb-gateway
   #   networks:
   #     - api.orbfin.tech
   #     - the7ofdiamonds.tech_sites
 
   communications:
-    container_name: orb-communications
+    hostname: orb-communications
+    container_name: communications
+    image: orb-communications:latest
     restart: always
     depends_on:
       - kafka
-    ports:
-      - 8087:8087
-    build:
-      context: ./java/orb-communications
-      dockerfile: orb-communications.Dockerfile
     env_file:
       - .env
-    hostname: orb-communications
+    ports:
+      - 8087:8087
     networks:
       - api.orbfin.tech
+      - the7ofdiamonds.tech_sites
 
   # accounts:
-  #   container_name: orb-accounts
+  #   hostname: orb-accounts
+  #   container_name: accounts
+  #   image: orb-accounts:latest
   #   restart: always
   #   depends_on:
   #     - pgsql-db
-  #   ports:
-  #     - 8081:8081
-  #   build:
-  #     context: ./java/orb-accounts
-  #     dockerfile: orb-accounts.Dockerfile
   #   env_file:
   #   - .env
-  #   volumes:
-  #   - ./java/orb-accounts/accounts/target:/app
-  #   hostname: orb-accounts
+  #   ports:
+  #     - 8081:8081
   #   networks:
   #     - api.orbfin.tech
 
   products-services:
-    container_name: orb-products-services
+    hostname: orb-products-services
+    container_name: products-services
+    image: orb-products-services:latest
     restart: always
     depends_on:
       - pgsql-db
       - kafka
-    ports:
-      - 8082:8082
-    build:
-      context: ./java/orb-products-services
-      dockerfile: orb-products-services.Dockerfile
     env_file:
       - .env
-    hostname: orb-products-services
+    ports:
+      - 8082:8082
     networks:
       - api.orbfin.tech
 
   # finance:
-  #   container_name: orb-finance
+  #   hostname: orb-finance
+  #   container_name: finance
+  #   image: orb-finance:latest
   #   restart: always
   #   depends_on:
   #     - pgsql-db
+  #   env_file:
+  #     - .env
   #   ports:
   #     - 8083:8083
-  #   build:
-  #     context: ./java/orb-finance
-  #     dockerfile: orb-finance.Dockerfile
-  #   env_file:
-  #   - .env
-  #   volumes:
-  #   - ./java/orb-finance/finance/target:/app
-  #   hostname: orb-finance
   #   networks:
   #     - api.orbfin.tech
 
-  real-estate:
-    container_name: orb-real-estate
-    restart: always
-    depends_on:
-      - pgsql-db
-    ports:
-      - 8084:8084
-    build:
-      context: ./java/orb-real-estate
-      dockerfile: orb-real-estate.Dockerfile
-    env_file:
-      - .env
-    hostname: orb-real-estate
-    networks:
-      - api.orbfin.tech
-
-  # investments:
-  #   container_name: orb-investments
+  # real-estate:
+  #   hostname: orb-real-estate
+  #   container_name: real-estate
+  #   image: orb-real-estate:latest
   #   restart: always
   #   depends_on:
   #     - pgsql-db
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - 8084:8084
+  #   networks:
+  #     - api.orbfin.tech
+
+  # investments:
+  #   hostname: orb-investments
+  #   container_name: investments
+  #   image: orb-investments:latest
+  #   restart: always
+  #   depends_on:
+  #     - pgsql-db
+  #   env_file:
+  #     - .env
   #   ports:
   #     - 8085:8085
-  #   build:
-  #     context: ./java/orb-investments
-  #     dockerfile: orb-investments.Dockerfile
-  #   env_file:
-  #   - .env
-  #   volumes:
-  #   - ./java/orb-investments/investments/target:/app
-  #   hostname: orb-investments
   #   networks:
   #     - api.orbfin.tech
 
   # insurance:
-  #   container_name: orb-insurance
+  #   hostname: orb-insurance
+  #   container_name: insurance
+  #   image: orb-insurance:latest
   #   restart: always
   #   depends_on:
   #     - pgsql-db
+  #   env_file:
+  #     - .env
   #   ports:
   #     - 8086:8086
-  #   build:
-  #     context: ./java/orb-insurance
-  #     dockerfile: orb-insurance.Dockerfile
-  #   env_file:
-  #   - .env
-  #   volumes:
-  #   - ./java/orb-insurance/insurance/target:/app
-  #   hostname: orb-insurance
   #   networks:
   #     - api.orbfin.tech
 
