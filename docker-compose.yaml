@@ -14,7 +14,7 @@ services:
     networks:
       - api.orbfin.tech
 
-  redis:
+  redis-session:
     container_name: redis-session
     image: "redis/redis-stack:edge"
     restart: always
@@ -27,7 +27,7 @@ services:
 
   zookeeper:
     container_name: zookeeper
-    image: zookeeper
+    image: bitnami/zookeeper
     restart: always
     environment:
       ALLOW_ANONYMOUS_LOGIN: yes
@@ -40,7 +40,7 @@ services:
 
   kafka:
     container_name: kafka
-    image: wurstmeister/kafka
+    image: bitnami/kafka
     restart: always
     depends_on:
       - zookeeper
@@ -54,25 +54,22 @@ services:
     volumes:
       - kafka:/kafka
     ports:
-      - "9092:9092"
       - "9094:9094"
     networks:
       - api.orbfin.tech
 
-  # gateway:
-  #   hostname: orb-gateway
-  #   container_name: gateway
-  #   image: orb-gateway:latest
-  #   restart: always
-  #   depends_on:
-  #     - kafka
-  #   env_file:
-  #     - ./.env
-  #   ports:
-  #     - 8080:8080
-  #   networks:
-  #     - api.orbfin.tech
-  #     - the7ofdiamonds.tech_sites
+  gateway:
+    hostname: orb-gateway
+    container_name: gateway
+    image: orb-gateway:latest
+    restart: always
+    depends_on:
+      - kafka
+    env_file:
+      - ./.env
+    networks:
+      - api.orbfin.tech
+      - the7ofdiamonds.tech_sites
 
   communications:
     hostname: orb-communications
@@ -83,8 +80,6 @@ services:
       - kafka
     env_file:
       - .env
-    ports:
-      - 8087:8087
     networks:
       - api.orbfin.tech
       - the7ofdiamonds.tech_sites
@@ -98,8 +93,6 @@ services:
   #     - pgsql-db
   #   env_file:
   #   - .env
-  #   ports:
-  #     - 8081:8081
   #   networks:
   #     - api.orbfin.tech
 
@@ -113,8 +106,6 @@ services:
       - kafka
     env_file:
       - .env
-    ports:
-      - 8082:8082
     networks:
       - api.orbfin.tech
 
@@ -127,24 +118,20 @@ services:
   #     - pgsql-db
   #   env_file:
   #     - .env
-  #   ports:
-  #     - 8083:8083
   #   networks:
   #     - api.orbfin.tech
 
-  # real-estate:
-  #   hostname: orb-real-estate
-  #   container_name: real-estate
-  #   image: orb-real-estate:latest
-  #   restart: always
-  #   depends_on:
-  #     - pgsql-db
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 8084:8084
-  #   networks:
-  #     - api.orbfin.tech
+  real-estate:
+    hostname: orb-real-estate
+    container_name: real-estate
+    image: orb-real-estate:latest
+    restart: always
+    depends_on:
+      - pgsql-db
+    env_file:
+      - .env
+    networks:
+      - api.orbfin.tech
 
   # investments:
   #   hostname: orb-investments
@@ -155,8 +142,6 @@ services:
   #     - pgsql-db
   #   env_file:
   #     - .env
-  #   ports:
-  #     - 8085:8085
   #   networks:
   #     - api.orbfin.tech
 
@@ -169,30 +154,30 @@ services:
   #     - pgsql-db
   #   env_file:
   #     - .env
-  #   ports:
-  #     - 8086:8086
   #   networks:
   #     - api.orbfin.tech
 
-  # server:
-  #   container_name: api.orbfin.development
-  #   image: nginx:latest
-  #   restart: always
-  #   depends_on:
-  #     - gateway
-  #   ports:
-  #     - ${NGINX_PORT_ONE}:8000
-  #     - ${NGINX_PORT_ONE_SECURE}:443
-  #   volumes:
-  #     - ./nginx/templates/:/etc/nginx/templates
-  #     - ./nginx/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem
-  #     - ./nginx/ssl/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
-  #     - ./nginx/ssl/private/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
-  #     - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
-  #     - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
-  #   networks:
-  #     - api.orbfin.tech
-  #   env_file: .env
+  server:
+    hostname: api.orbfin.development
+    container_name: api.orbfin.development
+    image: nginx:latest
+    restart: always
+    depends_on:
+      - gateway
+    env_file:
+      - .env
+    volumes:
+      - ./nginx/templates/:/etc/nginx/templates
+      - ./nginx/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem
+      - ./nginx/ssl/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
+      - ./nginx/ssl/private/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
+      - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
+      - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
+    ports:
+      - ${NGINX_PORT_ONE}:8080
+      - ${NGINX_PORT_ONE_SECURE}:443
+    networks:
+      - api.orbfin.tech
 
 networks:
   api.orbfin.tech:
