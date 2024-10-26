@@ -12,18 +12,20 @@ services:
     ports:
       - 5432:5432
     networks:
-      - api.orbfin.tech
+      - j.c.lyons_enterprises
+      - seven_tech
+      - orb
 
-  redis-session:
-    container_name: redis-session
-    image: "redis/redis-stack:edge"
-    restart: always
-    volumes:
-      - ./redis/data:/data
-    ports:
-      - 6379:6379
-    networks:
-      - api.orbfin.tech
+  # redis-session:
+  #   container_name: redis-session
+  #   image: "redis/redis-stack:edge"
+  #   restart: always
+  #   volumes:
+  #     - ./redis/data:/data
+  #   ports:
+  #     - 6379:6379
+  #   networks:
+  #     - orb
 
   zookeeper:
     container_name: zookeeper
@@ -36,7 +38,7 @@ services:
     ports:
       - "2181:2181"
     networks:
-      - api.orbfin.tech
+      - orb
 
   kafka:
     container_name: kafka
@@ -56,7 +58,7 @@ services:
     ports:
       - "9094:9094"
     networks:
-      - api.orbfin.tech
+      - orb
 
   gateway:
     hostname: orb-gateway
@@ -68,8 +70,10 @@ services:
     env_file:
       - ./.env
     networks:
-      - api.orbfin.tech
-      - the7ofdiamonds.tech_sites
+      - j.c.lyons_enterprises
+      - seven_tech
+      - orb
+
 
   communications:
     hostname: orb-communications
@@ -81,8 +85,9 @@ services:
     env_file:
       - .env
     networks:
-      - api.orbfin.tech
-      - the7ofdiamonds.tech_sites
+      - j.c.lyons_enterprises
+      - seven_tech
+      - orb
 
   # accounts:
   #   hostname: orb-accounts
@@ -94,7 +99,7 @@ services:
   #   env_file:
   #   - .env
   #   networks:
-  #     - api.orbfin.tech
+  #     - orb
 
   products-services:
     hostname: orb-products-services
@@ -107,7 +112,7 @@ services:
     env_file:
       - .env
     networks:
-      - api.orbfin.tech
+      - orb
 
   # finance:
   #   hostname: orb-finance
@@ -131,7 +136,9 @@ services:
     env_file:
       - .env
     networks:
-      - api.orbfin.tech
+      - j.c.lyons_enterprises
+      - seven_tech
+      - orb
 
   # investments:
   #   hostname: orb-investments
@@ -143,7 +150,9 @@ services:
   #   env_file:
   #     - .env
   #   networks:
-  #     - api.orbfin.tech
+  #     - j.c.lyons_enterprises
+  #     - seven_tech
+  #     - orb
 
   # insurance:
   #   hostname: orb-insurance
@@ -155,35 +164,44 @@ services:
   #   env_file:
   #     - .env
   #   networks:
-  #     - api.orbfin.tech
+  #     - j.c.lyons_enterprises
+  #     - seven_tech
+  #     - orb
 
-  server:
-    hostname: api.orbfin.development
-    container_name: api.orbfin.development
-    image: nginx:latest
-    restart: always
-    depends_on:
-      - gateway
-    env_file:
-      - .env
-    volumes:
-      - ./nginx/templates/:/etc/nginx/templates
-      - ./nginx/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem
-      - ./nginx/ssl/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
-      - ./nginx/ssl/private/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
-      - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
-      - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
-    ports:
-      - ${NGINX_PORT_ONE}:8080
-      - ${NGINX_PORT_ONE_SECURE}:443
-    networks:
-      - api.orbfin.tech
+  # server:
+  #   hostname: api.orbfin.development
+  #   container_name: api.orbfin.development
+  #   image: nginx:latest
+  #   restart: always
+  #   depends_on:
+  #     - gateway
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./nginx/templates/:/etc/nginx/templates
+  #     - ./nginx/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem
+  #     - ./nginx/ssl/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
+  #     - ./nginx/ssl/private/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
+  #     - ./nginx/snippets/self-signed.conf:/etc/nginx/snippets/self-signed.conf
+  #     - ./nginx/snippets/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf
+  #   ports:
+  #     - ${BACK_PORT}:8080
+  #     - ${BACK_PORT_SECURE}:8443
+  #   networks:
+  #     - j.c.lyons_enterprises
+  #     - seven_tech
+  #     - orb
+
 
 networks:
-  api.orbfin.tech:
-    name: api.orbfin.tech
-  the7ofdiamonds.tech_sites:
-    name: the7ofdiamonds.tech_sites
+  j.c.lyons_enterprises:
+    name: j.c.lyons_enterprises
+    external: true
+  seven_tech:
+    name: seven_tech
+    external: true
+  orb:
+    name: orb
     external: true
       
 volumes:
